@@ -1,29 +1,52 @@
-from datetime import datetime, timedelta
 import time
-import matplotlib.pyplot as plt
 from config import *
-from signal_prophet.prophet_service import TurkishGekkoProphetService
-# from swing_utils import *
-from swing_trader.swing_trader_class import SwingTrader
 from trade_logic.utils import *
+from swing_trader.swing_trader_class import SwingTrader
 
 
-def ciz(coin):
-    sonuclar = pd.read_csv(f'./coindata/{coin}/tahminler.csv')
-    sonuclar = sonuclar.iloc[-200:]
-    # plt.style.use('dark_background')
-    plt.plot(sonuclar['High'], label='High', linestyle='--', color='green')
-    plt.plot(sonuclar['Low'], label='Low', linestyle='--', color='red')
-    plt.plot(sonuclar['Open'], label='Open', color='black')
-    # cuzdan = sonuclar['USDT'] + (sonuclar['Open'] * sonuclar['ETH'])
-    # plt.plot(cuzdan)
-    plt.scatter(sonuclar.index, sonuclar['Alis'], marker='^', color='#00ff00')
-    plt.scatter(sonuclar.index, sonuclar['Satis'], marker='v', color='#ff00ff')
-    plt.legend(loc='upper left')
-    plt.show()
+def tahmin_getir(_config, baslangic_gunu, cesit):
+    arttir = _config.get('arttir')
+    train = model_verisini_getir(_config, baslangic_gunu, cesit)
+    forecast = model_egit_tahmin_et(train)
+    try:
+        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("Close").values[0]
+    except:
+        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("y").values[0]
+    return forecast, _close
 
 
-def propheti_calistir(_config, baslangic_gunu, bitis_gunu):
+def al_sat_hesapla(tahmin, swing_data, _config):
+    wallet = _config.get("wallet")
+    suanki_fiyat = tahmin["Open"]
+    tahmin["Alis"] = float("nan")
+    tahmin["Satis"] = float("nan")
+    _high = tahmin.get("High")
+    _low = tahmin.get("Low")
+    karar = None
+    if suanki_fiyat < _low:
+        karar = 'al'
+    elif suanki_fiyat > _high:
+        karar = 'sat'
+    # eger open >high cik
+    # open < low enter
+    if wallet["USDT"] != 0:
+        if karar == 'al':
+            tahmin["Alis"] = suanki_fiyat
+            wallet["ETH"] = wallet["USDT"] / suanki_fiyat
+            wallet["USDT"] = 0
+    elif wallet["ETH"] != 0:
+        if karar == 'sat':
+            tahmin["Satis"] = suanki_fiyat
+            wallet["USDT"] = wallet["ETH"] * suanki_fiyat
+            wallet["ETH"] = 0
+
+    _config["wallet"] = wallet
+    tahmin["ETH"] = wallet["ETH"]
+    tahmin["USDT"] = wallet["USDT"]
+    # tahmin["Neden"] = neden
+    return tahmin, _config
+
+def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
     arttir = _config.get('arttir')
     coin = _config.get('coin')
     pencere = _config.get('pencere')
@@ -31,9 +54,8 @@ def propheti_calistir(_config, baslangic_gunu, bitis_gunu):
 
     tahminler_cache = eski_tahminleri_yukle(_config)
     while baslangic_gunu <= bitis_gunu:
-        tahmin = {}
-        tahmin = {"ds": datetime.strftime(baslangic_gunu, '%Y-%m-%d %H:%M:%S')}
         start = time.time()
+        tahmin = {"ds": datetime.strftime(baslangic_gunu, '%Y-%m-%d %H:%M:%S')}
         if not tahmin_onceden_hesaplanmis_mi(baslangic_gunu, _config, tahminler_cache):
             high_tahmin, _close = tahmin_getir(_config, baslangic_gunu, _config.get("high"))
             low_tahmin, _close = tahmin_getir(_config, baslangic_gunu, _config.get("low"))
@@ -47,14 +69,12 @@ def propheti_calistir(_config, baslangic_gunu, bitis_gunu):
             tahmin["Low"] = _row["Low"].values[0]
             tahmin["Open"] = _row["Open"].values[0]
 
+        print(f'egitim bitti sure: {time.time() - start}')
+
         series = dosya_yukle(coin, baslangic_gunu, pencere)
         swing_data = SwingTrader(series)
 
-        #TODO:: al salt mod hesaplayi guncelle
-        mod = swing_data.al_sat_mod_hesapla2(tahmin, mod)
-        print(f'egitim bitti sure: {time.time() - start}')
-
-        tahmin, _config = islem_hesapla_swing(_config, tahmin, swing_data)
+        tahmin, _config = al_sat_hesapla(tahmin, swing_data, _config)
         tahminlere_ekle(_config, tahmin)
         print(f'{baslangic_gunu} icin bitti!')
 
@@ -64,17 +84,11 @@ def propheti_calistir(_config, baslangic_gunu, bitis_gunu):
 if __name__ == '__main__':
     _config = {
         "API_KEY": API_KEY, "API_SECRET": API_SECRET, "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
-        "high": "Open", "low": "Close", "wallet": {"ETH": 0, "USDT": 1000}
+        "high": "High", "low": "Low", "wallet": {"ETH": 0, "USDT": 1000}
     }
 
+    baslangic_gunu = datetime.strptime('2021-12-04 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-01-15 08:00:00', '%Y-%m-%d %H:%M:%S')
 
-    baslangic_gunu = datetime.strptime('2021-12-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-    # son gun degerinin datasi da geliyor
-    bitis_gunu = datetime.strptime('2022-01-07 20:00:00', '%Y-%m-%d %H:%M:%S')
-
-    # propheti_calistir(_config, baslangic_gunu, bitis_gunu)
-
-    prophet_service = TurkishGekkoProphetService(_config)
-    # export_all_data(prophet_service, _config, baslangic_gunu, bitis_gunu)
-
+    # al_sat_basla(_config, baslangic_gunu, bitis_gunu)
     ciz(_config.get('coin'))

@@ -1,4 +1,4 @@
 matplotlib==3.5.1
 pandas==1.3.4
-git+git://github.com/turkish-gekko/signal-prophet@master#egg=signal-prophet
-git+git://github.com/turkish-gekko/signal-swing-trader@master#egg=swing-trader
+git+https://github.com/turkish-gekko/signal-prophet@master#egg=signal_prophet
+git+https://github.com/turkish-gekko/signal-swing-trader@master#egg=swing-trader

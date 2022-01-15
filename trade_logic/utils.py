@@ -2,7 +2,22 @@ import pandas as pd
 from csv import DictWriter
 from signal_prophet.ml.model_classes.prophet_model import ProphetModel
 from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
 
+
+def ciz(coin):
+    sonuclar = pd.read_csv(f'./coindata/{coin}/tahminler.csv')
+    sonuclar = sonuclar.iloc[-200:]
+    # plt.style.use('dark_background')
+    plt.plot(sonuclar['High'], label='High', linestyle='--', color='green')
+    plt.plot(sonuclar['Low'], label='Low', linestyle='--', color='red')
+    plt.plot(sonuclar['Open'], label='Open', color='black')
+    # cuzdan = sonuclar['USDT'] + (sonuclar['Open'] * sonuclar['ETH'])
+    # plt.plot(cuzdan)
+    plt.scatter(sonuclar.index, sonuclar['Alis'], marker='^', color='#00ff00')
+    plt.scatter(sonuclar.index, sonuclar['Satis'], marker='v', color='#ff00ff')
+    plt.legend(loc='upper left')
+    plt.show()
 
 def tahmin_getir(_config, baslangic_gunu, cesit):
     arttir = _config.get('arttir')
@@ -16,12 +31,6 @@ def tahmin_getir(_config, baslangic_gunu, cesit):
 
 
 def model_egit_tahmin_et(train):
-    m_params = {
-        "changepoint_prior_scale": 0.1,
-        "seasonality_prior_scale": 1,
-        "holidays_prior_scale": 1,
-        "outlier_remove_window": 0,
-    }
     model = ProphetModel(
         train=train,
         horizon=1,
