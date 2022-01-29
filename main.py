@@ -1,7 +1,9 @@
 import time
 from config import *
 from trade_logic.utils import *
+from trade_logic.trader import Trader
 from swing_trader.swing_trader_class import SwingTrader
+from signal_prophet.prophet_service import TurkishGekkoProphetService
 
 
 def tahmin_getir(_config, baslangic_gunu, cesit):
@@ -15,42 +17,11 @@ def tahmin_getir(_config, baslangic_gunu, cesit):
     return forecast, _close
 
 
-def al_sat_hesapla(tahmin, swing_data, _config):
-    wallet = _config.get("wallet")
-    suanki_fiyat = tahmin["Open"]
-    tahmin["Alis"] = float("nan")
-    tahmin["Satis"] = float("nan")
-    _high = tahmin.get("High")
-    _low = tahmin.get("Low")
-    karar = None
-    if suanki_fiyat < _low:
-        karar = 'al'
-    elif suanki_fiyat > _high:
-        karar = 'sat'
-    # eger open >high cik
-    # open < low enter
-    if wallet["USDT"] != 0:
-        if karar == 'al':
-            tahmin["Alis"] = suanki_fiyat
-            wallet["ETH"] = wallet["USDT"] / suanki_fiyat
-            wallet["USDT"] = 0
-    elif wallet["ETH"] != 0:
-        if karar == 'sat':
-            tahmin["Satis"] = suanki_fiyat
-            wallet["USDT"] = wallet["ETH"] * suanki_fiyat
-            wallet["ETH"] = 0
-
-    _config["wallet"] = wallet
-    tahmin["ETH"] = wallet["ETH"]
-    tahmin["USDT"] = wallet["USDT"]
-    # tahmin["Neden"] = neden
-    return tahmin, _config
-
 def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
     arttir = _config.get('arttir')
     coin = _config.get('coin')
     pencere = _config.get('pencere')
-    mod = None
+    trader = Trader()
 
     tahminler_cache = eski_tahminleri_yukle(_config)
     while baslangic_gunu <= bitis_gunu:
@@ -70,11 +41,12 @@ def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
             tahmin["Open"] = _row["Open"].values[0]
 
         print(f'egitim bitti sure: {time.time() - start}')
+        print('##################################')
 
         series = dosya_yukle(coin, baslangic_gunu, pencere)
         swing_data = SwingTrader(series)
 
-        tahmin, _config = al_sat_hesapla(tahmin, swing_data, _config)
+        tahmin, _config = trader.al_sat_hesapla(trader, tahmin, swing_data, _config)
         tahminlere_ekle(_config, tahmin)
         print(f'{baslangic_gunu} icin bitti!')
 
@@ -87,8 +59,9 @@ if __name__ == '__main__':
         "high": "High", "low": "Low", "wallet": {"ETH": 0, "USDT": 1000}
     }
 
-    baslangic_gunu = datetime.strptime('2021-12-04 00:00:00', '%Y-%m-%d %H:%M:%S')
-    bitis_gunu = datetime.strptime('2022-01-15 08:00:00', '%Y-%m-%d %H:%M:%S')
-
-    # al_sat_basla(_config, baslangic_gunu, bitis_gunu)
+    baslangic_gunu = datetime.strptime('2022-01-03 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-01-28 20:00:00', '%Y-%m-%d %H:%M:%S')
+    # prophet_service = TurkishGekkoProphetService(_config)
+    # export_all_data(prophet_service, _config, baslangic_gunu, bitis_gunu)
+    al_sat_basla(_config, baslangic_gunu, bitis_gunu)
     ciz(_config.get('coin'))

@@ -16,7 +16,7 @@ def ciz(coin):
     # plt.plot(cuzdan)
     plt.scatter(sonuclar.index, sonuclar['Alis'], marker='^', color='#00ff00')
     plt.scatter(sonuclar.index, sonuclar['Satis'], marker='v', color='#ff00ff')
-    plt.legend(loc='upper left')
+    plt.legend(loc='upper right')
     plt.show()
 
 def tahmin_getir(_config, baslangic_gunu, cesit):
@@ -125,8 +125,9 @@ def dosya_yukle(coin, baslangic, pencere):
     main_dataframe = main_dataframe.sort_values(by='Open Time', ascending=False, ignore_index=True)
     main_dataframe = main_dataframe[main_dataframe['Open Time'] < baslangic].reset_index(drop=True)
     main_dataframe = main_dataframe.iloc[0:200]
-    print('Tum data !')
+    print(f'Dosya yukleme tamamlandi {baslangic}!')
     return main_dataframe
+
 
 
 def train_kirp_yeniden_adlandir(df, cesit):
