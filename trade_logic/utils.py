@@ -5,17 +5,31 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 
 
+def tahmin_getir(_config, baslangic_gunu, cesit):
+    arttir = _config.get('arttir')
+    train = model_verisini_getir(_config, baslangic_gunu, cesit)
+    forecast = model_egit_tahmin_et(train)
+    try:
+        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("Close").values[0]
+    except:
+        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("y").values[0]
+    return forecast, _close
+
+
 def ciz(coin):
     sonuclar = pd.read_csv(f'./coindata/{coin}/tahminler.csv')
-    sonuclar = sonuclar.iloc[-200:]
+    # sonuclar = sonuclar.iloc[-200:]
     # plt.style.use('dark_background')
+    sonuclar["ds"] = sonuclar["ds"].astype("datetime64")
+
+    sonuclar = sonuclar.set_index(sonuclar['ds'])
     plt.plot(sonuclar['High'], label='High', linestyle='--', color='green')
     plt.plot(sonuclar['Low'], label='Low', linestyle='--', color='red')
     plt.plot(sonuclar['Open'], label='Open', color='black')
     # cuzdan = sonuclar['USDT'] + (sonuclar['Open'] * sonuclar['ETH'])
     # plt.plot(cuzdan)
-    plt.scatter(sonuclar.index, sonuclar['Alis'], marker='^', color='#00ff00')
-    plt.scatter(sonuclar.index, sonuclar['Satis'], marker='v', color='#ff00ff')
+    plt.scatter(sonuclar.index, sonuclar['Alis'], s=500,marker='^', color='#00ff00')
+    plt.scatter(sonuclar.index, sonuclar['Satis'], s=500, marker='v', color='#ff0f02')
     plt.legend(loc='upper right')
     plt.show()
 

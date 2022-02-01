@@ -3,18 +3,6 @@ from config import *
 from trade_logic.utils import *
 from trade_logic.trader import Trader
 from swing_trader.swing_trader_class import SwingTrader
-from signal_prophet.prophet_service import TurkishGekkoProphetService
-
-
-def tahmin_getir(_config, baslangic_gunu, cesit):
-    arttir = _config.get('arttir')
-    train = model_verisini_getir(_config, baslangic_gunu, cesit)
-    forecast = model_egit_tahmin_et(train)
-    try:
-        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("Close").values[0]
-    except:
-        _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("y").values[0]
-    return forecast, _close
 
 
 def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
@@ -41,16 +29,19 @@ def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
             tahmin["Open"] = _row["Open"].values[0]
 
         print(f'egitim bitti sure: {time.time() - start}')
-        print('##################################')
-
-        series = dosya_yukle(coin, baslangic_gunu, pencere)
+        # gunluk veriden swing trader ile dalga analizi, eger yukari ise sadece alis ile kisitla ve tam tersi
+        
+        series = dosya_yukle(coin, baslangic_gunu, '1d')  # veri oldugunu varsayar
         swing_data = SwingTrader(series)
+
 
         tahmin, _config = trader.al_sat_hesapla(trader, tahmin, swing_data, _config)
         tahminlere_ekle(_config, tahmin)
-        print(f'{baslangic_gunu} icin bitti!')
 
         baslangic_gunu = baslangic_gunu + timedelta(hours=arttir)
+
+        print('##################################')
+        print(f'{baslangic_gunu} icin bitti!')
 
 
 if __name__ == '__main__':
@@ -59,9 +50,12 @@ if __name__ == '__main__':
         "high": "High", "low": "Low", "wallet": {"ETH": 0, "USDT": 1000}
     }
 
-    baslangic_gunu = datetime.strptime('2022-01-03 00:00:00', '%Y-%m-%d %H:%M:%S')
-    bitis_gunu = datetime.strptime('2022-01-28 20:00:00', '%Y-%m-%d %H:%M:%S')
+    baslangic_gunu = datetime.strptime('2021-10-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-01-31 20:00:00', '%Y-%m-%d %H:%M:%S')
+
+    # from signal_prophet.prophet_service import TurkishGekkoProphetService
     # prophet_service = TurkishGekkoProphetService(_config)
     # export_all_data(prophet_service, _config, baslangic_gunu, bitis_gunu)
-    al_sat_basla(_config, baslangic_gunu, bitis_gunu)
+
+    # al_sat_basla(_config, baslangic_gunu, bitis_gunu)
     ciz(_config.get('coin'))

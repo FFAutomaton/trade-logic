@@ -8,6 +8,19 @@ class Trader:
         self.islem_fiyati = 0
         self.high = 0
         self.low = 0
+        self.trend = 0
+
+    def swing_data_trend_hesapla(self, swing_data):
+        last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
+        prev_high = max(swing_data.highNodes[1].close, swing_data.highNodes[1].open)
+
+        last_low = min(swing_data.lowNodes[0].close, swing_data.lowNodes[0].open)
+        prev_low = min(swing_data.lowNodes[1].close, swing_data.lowNodes[1].open)
+
+        if last_high > prev_high and last_low > prev_low:
+            self.trend = 1
+        elif last_high < prev_high and last_low < prev_low:
+            self.trend = -1
 
     def al_sat_hesapla(self, trader, tahmin, swing_data, _config):
         self.suanki_fiyat = tahmin["Open"]
@@ -15,7 +28,7 @@ class Trader:
         tahmin["Satis"] = float("nan")
         self.high = tahmin.get("High")
         self.low = tahmin.get("Low")
-
+        self.swing_data_trend_hesapla(swing_data)
         trader.kesme_durumu_hesapla()
         if trader.kesme_durumu in ['uste kesti', 'alttan uste kesti'] :
             trader.karar = 'al'
@@ -24,25 +37,6 @@ class Trader:
         else:
             trader.karar = 'notr'
 
-        # if trader.kesme_durumu == 'alttan uste kesti':
-        #     _max = max(swing_data.highNodes[len(swing_data.highNodes) - 1].close,
-        #                swing_data.highNodes[len(swing_data.highNodes) - 1].open)
-        #     if suanki_fiyat > _max:
-        #         trader.karar = 'al'
-        #         trader.kesme_durumu = None
-        #     else:
-        #         trader.karar = 'notr'
-        # elif trader.kesme_durumu == 'ustten alta kesti':
-        #     _min = min(swing_data.lowNodes[len(swing_data.lowNodes) - 1].close,
-        #                swing_data.lowNodes[len(swing_data.lowNodes) - 1].open)
-        #     if suanki_fiyat < _min:
-        #         trader.karar = 'sat'
-        #         trader.kesme_durumu = None
-        #     else:
-        #         trader.karar = 'notr'
-
-
-        # tahmin["Neden"] = neden
         return self.backtest_cuzdana_isle(tahmin, _config)
 
     def kesme_durumu_hesapla(self):
@@ -75,7 +69,7 @@ class Trader:
 
     def backtest_cuzdana_isle(self, tahmin, _config):
         wallet = _config.get("wallet")
-        if self.karar == 'al':
+        if self.karar == 'al' and self.trend > 0:
             if self.pozisyon == 'short':
                 self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
                 self.islem_miktari = self.dolar / self.suanki_fiyat
@@ -87,7 +81,7 @@ class Trader:
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["Alis"] = self.islem_fiyati
                 self.pozisyon = 'long'
-        elif self.karar == 'sat':
+        elif self.karar == 'sat' and self.trend < 0:
             if self.pozisyon == 'long':
                 self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
                 self.islem_miktari = self.dolar / self.suanki_fiyat
