@@ -47,6 +47,7 @@ def al_sat_basla(_config, baslangic_gunu, bitis_gunu):
 if __name__ == '__main__':
     _config = {
         "API_KEY": API_KEY, "API_SECRET": API_SECRET, "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
+        "swing_pencere": "1d", "swing_arttir": 24,
         "high": "High", "low": "Low", "wallet": {"ETH": 0, "USDT": 1000}
     }
 
