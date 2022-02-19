@@ -1,92 +1,141 @@
 import pandas as pd
 import sqlite3
+from trade_logic.utils import okunur_date_yap
+from schemas import *
+from trade_logic.utils import integer_date_yap
 
 
 class SqlLite_Service:
     def __init__(self, _config):
         self.conn = None
-        self.conn = self.get_conn(_config.get("coin"))
-        self._tablo_yoksa_olustur(_config)
+        self._config = _config
+        self.db = _config.get("coin")
+        self.conn = self.get_conn()
+        self._tablo_yoksa_olustur()
 
-    def get_conn(self, db_name):
+    def get_conn(self):
         if self.conn:
             return self.conn
-        self.conn = sqlite3.connect(f'./coindata/{db_name}.db')
+        self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
         return self.conn
 
-    def _tablo_yoksa_olustur(self, _conf):
-        tip = _conf.get('pencere')
-        swing_tip = _conf.get('swing_pencere')
-        coin = _conf.get('coin')
+    def schemayi_query_texte_cevir(self, schema):
+        _query = []
+        for el in schema:
+            _query.append(f'{el["name"]} {el["type"]} {el["primary"]}')
+
+        return ', '.join(_query)
+
+    def _tablo_yoksa_olustur(self):
+        tip = self._config.get('pencere')
+        swing_tip = self._config.get('swing_pencere')
+        coin = self._config.get('coin')
+
         candles = f'{coin}_{tip}'
         swing_candles = f'{coin}_{swing_tip}'
         islemler = f'islemler_{coin}_{tip}'
         prophet_tahminler = f'prophet_{coin}_{tip}'
-        self.get_conn().cursor().execute(f"""CREATE TABLE IF NOT EXISTS {candles}(
-              open_ts INTEGER PRIMARY KEY, open REAL,
-              high REAL, low REAL, close REAL, volume REAL);""")
-        self.get_conn().cursor().execute(f"""CREATE TABLE IF NOT EXISTS {swing_candles}(
-                      open_ts INTEGER PRIMARY KEY, open REAL,
-                      high REAL, low REAL, close REAL, volume REAL);""")
-        self.get_conn().cursor().execute(f"""CREATE TABLE IF NOT EXISTS {islemler}(
-              ds INTEGER PRIMARY KEY, open REAL,
-              high REAL, low REAL, alis REAL, 
-              satis REAL, eth REAL, usdt REAL, neden TEXT);""")
-        self.get_conn().cursor().execute(f"""CREATE TABLE IF NOT EXISTS {prophet_tahminler}(
-                      ds INTEGER PRIMARY KEY,
-                      high REAL, low REAL, open REAL);""")
+
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS {candles}({self.schemayi_query_texte_cevir(mum_schema)});'
+        )
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS {swing_candles}({self.schemayi_query_texte_cevir(mum_schema)});'
+        )
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS {islemler}({self.schemayi_query_texte_cevir(islem_schema)});'
+        )
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS {prophet_tahminler}({self.schemayi_query_texte_cevir(prophet_tahmin_schema)});'
+        )
         self.get_conn().commit()
 
-    def mum_datasi_yukle(self, _conf, prophet_service, baslangic_gunu, bitis_gunu):
-        tip = _conf.get('pencere')
-        coin = _conf.get('coin')
-        if self.veri_var_mi(f'{coin}_{tip}', baslangic_gunu, bitis_gunu):
-            print('data zaten var pas geciyor')
-            pass
-        else:
-            data = prophet_service.tg_binance_service.get_client().get_historical_klines(
-                symbol=coin, interval=tip,
-                start_str=str(int(baslangic_gunu)), end_str=str(int(bitis_gunu)), limit=500
-            )
-            self.mum_verisi_yukle(f'{coin}_{tip}', data)
-            print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
+    def mum_datasi_yukle(self, tip, prophet_service, baslangic_gunu, bitis_gunu):
+        coin = self._config.get('coin')
+        data = prophet_service.tg_binance_service.get_client().get_historical_klines(
+            symbol=coin, interval=tip,
+            start_str=str(baslangic_gunu), end_str=str(bitis_gunu), limit=500
+        )
+        data = self.veri_listesi_olustur(data)
+        _query = f"""INSERT INTO {f'{coin}_{tip}'} {self.values_ifadesi_olustur(mum_schema)}
+                ON CONFLICT({mum_schema[0]["name"]}) {self.update_ifadesi_olustur(mum_schema)};"""
 
-    def veri_listesi_olustur(self, tempdata):
+        self.get_conn().cursor().executemany(_query, data)
+        self.get_conn().commit()
+        print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
+
+    @staticmethod
+    def veri_listesi_olustur(tempdata):
         data = []
-        i = len(tempdata) - 1
-        while i >= 0:
-            row = (
-                int(tempdata[i][0] / 1000),
-                float(tempdata[i][1]),
-                float(tempdata[i][2]),
-                float(tempdata[i][3]),
-                float(tempdata[i][4]),
-                float(tempdata[i][5])
-            )
+        for i in range(len(tempdata)):
+            row = (int(tempdata[i][0]), okunur_date_yap(tempdata[i][0]), float(tempdata[i][1]),
+                   float(tempdata[i][2]), float(tempdata[i][3]),
+                   float(tempdata[i][4]), float(tempdata[i][5])
+                   )
             data.append(row)
-
-            i = i - 1
         return data
 
-    def mum_verisi_yukle(self, tablo, data):
-        data = self.veri_listesi_olustur(data)
-        self.get_conn().cursor().executemany\
-            (f"""INSERT INTO {tablo} VALUES(?, ?, ?, ?, ?, ?);""", data)
+    @staticmethod
+    def values_ifadesi_olustur(_schema):
+        soru_isaretleri = ', '.join("?" for el in _schema)
+        return f"VALUES({soru_isaretleri})"
+
+    @staticmethod
+    def update_ifadesi_olustur(_schema):
+        guncelle = ', '.join(f'{el["name"]}=excluded.{el["name"]}' for el in _schema)
+        return f"DO UPDATE SET {guncelle}"
+
+    def tahmin_yaz(self, tahmin):
+        coin = self._config.get('coin')
+        tip = self._config.get('pencere')
+        data = [str(integer_date_yap(tahmin['ds']))] + [str(el) for el in tahmin.values()]
+        # data = '(' + ', '.join(data) + ')'
+        _query = f"""INSERT INTO {f'prophet_{coin}_{tip}'} {self.values_ifadesi_olustur(prophet_tahmin_schema)}
+                ON CONFLICT({prophet_tahmin_schema[0]["name"]}) {self.update_ifadesi_olustur(prophet_tahmin_schema)};"""
+
+        self.get_conn().cursor().executemany(_query, [data])
+        self.get_conn().commit()
+        print(f'tahmin yazildi {coin}_{tip} ')
+
+    def islem_yaz(self, islem):
+        coin = self._config.get('coin')
+        tip = self._config.get('pencere')
+        data = [str(integer_date_yap(islem['ds']))] + [el for el in islem.values()]
+        # data = '(' + ', '.join(data) + ')'
+        _query = f"""INSERT INTO islemler_{coin}_{tip} {self.values_ifadesi_olustur(islem_schema)}
+                ON CONFLICT({islem_schema[0]["name"]}) {self.update_ifadesi_olustur(islem_schema)};"""
+
+        self.get_conn().cursor().executemany(_query, [data])
+        self.get_conn().commit()
+        print(f'------->    islem yazildi {coin}_{tip} ')
+
+    def islemleri_temizle(self):
+        coin = self._config.get('coin')
+        tip = self._config.get('pencere')
+        _query = f"DELETE FROM islemler_{coin}_{tip};"
+        self.get_conn().cursor().execute(_query)
         self.get_conn().commit()
 
-    def mum_verisi_getir(self, _conf, baslangic, bitis):
-        coin = _conf.get('coin')
-        tip = _conf.get('pencere')
-        curr = self.get_conn().cursor().execute(f"""SELECT * FROM {f'{coin}_{tip}'}
-                    WHERE open_ts >= {int(baslangic)} and open_ts < {int(bitis)}
-                """)
-
+    def veri_getir(self, coin, pencere, type, baslangic=None, bitis=None):
+        schema = None
+        if type == 'prophet':
+            query = f'SELECT * FROM prophet_{coin}_{pencere}'
+            schema = prophet_tahmin_schema
+        elif type == 'mum':
+            query = f"""SELECT * FROM {f'{coin}_{pencere}'}
+                    WHERE open_ts_int < {int(bitis.timestamp())*1000}"""
+            schema = mum_schema
+        elif type == 'islem':
+            query = f"""SELECT * FROM islemler_{coin}_{pencere}"""
+            schema = islem_schema
+        curr = self.get_conn().cursor().execute(query)
         data = curr.fetchall()
-        main_dataframe = pd.DataFrame(data, columns=["open_ts", "open", "high", "low", "close", "volume"])
+        main_dataframe = pd.DataFrame(data, columns=[el["name"] for el in schema])
+        main_dataframe[schema[1]['name']] = pd.to_datetime(main_dataframe[schema[1]['name']], format='%Y-%m-%d %H:%M:%S')
 
-        # main_dataframe['open_ts'] = main_dataframe[["open_ts"]].apply(pd.to_datetime)
-        main_dataframe = main_dataframe.sort_values(by='open_ts', ascending=False, ignore_index=True)
-        # main_dataframe = main_dataframe[main_dataframe['Open Time'] < baslangic].reset_index(drop=True)
-        # main_dataframe = main_dataframe.iloc[0:200]
-        print('mum datasi yuklendi!')
+        main_dataframe = main_dataframe.sort_values(by=schema[0]['name'], ascending=False, ignore_index=True)
+        if baslangic:
+            main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(baslangic.timestamp())*1000].reset_index(drop=True)
+
+        print(f'{type} datasi yuklendi!')
         return main_dataframe

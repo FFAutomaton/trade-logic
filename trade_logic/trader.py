@@ -23,16 +23,18 @@ class Trader:
             self.trend = -1
 
     def al_sat_hesapla(self, trader, tahmin, swing_data, _config):
-        self.suanki_fiyat = tahmin["Open"]
-        tahmin["Alis"] = float("nan")
-        tahmin["Satis"] = float("nan")
-        self.high = tahmin.get("High")
-        self.low = tahmin.get("Low")
+        self.suanki_fiyat = tahmin["open"]
+        tahmin["alis"] = float("nan")
+        tahmin["satis"] = float("nan")
+        self.high = tahmin.get("high")
+        self.low = tahmin.get("low")
         self.swing_data_trend_hesapla(swing_data)
         trader.kesme_durumu_hesapla()
-        if trader.kesme_durumu in ['uste kesti', 'alttan uste kesti'] :
+        if (trader.onceki_kesme_durumu == 0 and trader.kesme_durumu == 1) \
+                or (trader.onceki_kesme_durumu == -1 and trader.kesme_durumu == 0):
             trader.karar = 'al'
-        elif trader.kesme_durumu in ['alta kesti', 'ustten alta kesti']:
+        elif (trader.onceki_kesme_durumu == 1 and trader.kesme_durumu == 0) \
+                or (trader.onceki_kesme_durumu == 0 and trader.kesme_durumu == -1):
             trader.karar = 'sat'
         else:
             trader.karar = 'notr'
@@ -40,25 +42,31 @@ class Trader:
         return self.backtest_cuzdana_isle(tahmin, _config)
 
     def kesme_durumu_hesapla(self):
-        if self.kesme_durumu in [None, 'arada']:
+        if self.kesme_durumu in [None, 0]:
             if self.high > self.suanki_fiyat > self.low:
-                self.kesme_durumu = 'arada'
+                self.onceki_kesme_durumu = 0
+                self.kesme_durumu = 0
             # TODO:: bir onceki tahmine gore de kontrol etmek lazim belki ustten alta kesti su an arada
             elif self.suanki_fiyat >= self.high:
-                self.kesme_durumu = 'uste kesti'
+                self.onceki_kesme_durumu = 0
+                self.kesme_durumu = 1
             elif self.suanki_fiyat <= self.low:
-                self.kesme_durumu = 'alta kesti'
+                self.onceki_kesme_durumu = 0
+                self.kesme_durumu = -1
             else:
                 raise Exception("Bu kodun burada olmamasi lazim! trader.kesme_durumu_hesapla fonksiyonu!")
-        elif self.kesme_durumu == 'uste kesti':
+        elif self.kesme_durumu == 1:
             if self.suanki_fiyat < self.high:
-                self.kesme_durumu = 'ustten alta kesti'
-        elif self.kesme_durumu == 'alta kesti':
+                self.onceki_kesme_durumu = 1
+                self.kesme_durumu = 0
+        elif self.kesme_durumu == -1:
             if self.suanki_fiyat > self.low:
-                self.kesme_durumu = 'alttan uste kesti'
-        elif self.kesme_durumu in ['ustten alta kesti', 'alttan uste kesti']:
-            self.kesme_durumu = 'arada'
-            self.kesme_durumu_hesapla()
+                self.onceki_kesme_durumu = -1
+                self.kesme_durumu = 0
+        # elif self.onceki_kesme_durumu in [1, -1]:
+        #     print("##\n\n\n\n\n\n\####\n EXTREME CASE")
+        #     self.kesme_durumu = 0
+        #     self.kesme_durumu_hesapla()
 
     @staticmethod
     def en_dusuk_veya_yuksek_hesapla(node, tip):
@@ -69,29 +77,33 @@ class Trader:
 
     def backtest_cuzdana_isle(self, tahmin, _config):
         wallet = _config.get("wallet")
-        if self.karar == 'al' and self.trend > 0:
+        tahmin["alis"] = None
+        tahmin["satis"] = None
+        # if self.karar == 'al' and self.trend > 0:
+        if self.karar == 'al':
             if self.pozisyon == 'short':
                 self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
                 self.islem_miktari = self.dolar / self.suanki_fiyat
                 self.islem_fiyati = self.suanki_fiyat
-                tahmin["Alis"] = self.islem_fiyati
+                tahmin["alis"] = self.islem_fiyati
                 self.pozisyon = 'long'
             elif self.pozisyon is None:
                 self.islem_miktari = self.dolar / self.suanki_fiyat
                 self.islem_fiyati = self.suanki_fiyat
-                tahmin["Alis"] = self.islem_fiyati
+                tahmin["alis"] = self.islem_fiyati
                 self.pozisyon = 'long'
-        elif self.karar == 'sat' and self.trend < 0:
+        # elif self.karar == 'sat' and self.trend < 0:
+        elif self.karar == 'sat':
             if self.pozisyon == 'long':
                 self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
                 self.islem_miktari = self.dolar / self.suanki_fiyat
                 self.islem_fiyati = self.suanki_fiyat
-                tahmin["Satis"] = self.islem_fiyati
+                tahmin["satis"] = self.islem_fiyati
                 self.pozisyon = 'short'
             elif self.pozisyon is None:
                 self.islem_miktari = self.dolar / self.suanki_fiyat
                 self.islem_fiyati = self.suanki_fiyat
-                tahmin["Satis"] = self.islem_fiyati
+                tahmin["satis"] = self.islem_fiyati
                 self.pozisyon = 'short'
 
 
