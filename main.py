@@ -5,7 +5,7 @@ from trade_logic.trader import Trader
 from swing_trader.swing_trader_class import SwingTrader
 from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
-from datetime import timezone
+from signal_atr.atr import ATR
 
 
 class App:
@@ -15,7 +15,8 @@ class App:
             "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 200, "doldur": True
+            "prophet_window": 200, "doldur": False,
+            "atr_window": 10, "supertrend_mult": 1
         }
         self.secrets.update(self.config)
 
@@ -43,7 +44,7 @@ class App:
         return forecast, _close
 
     def backtest_basla(self):
-        trader = Trader()
+        trader = Trader(self.config)
 
         tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
         self.sqlite_service.islemleri_temizle()
@@ -73,8 +74,8 @@ class App:
                 self.config.get("coin"), self.config.get("swing_pencere"), "mum", baslangic_gunu, self.bitis_gunu
             )
             swing_data = SwingTrader(series)
-
-            islem, self.config = trader.al_sat_hesapla(trader, tahmin, swing_data, self.config)
+            trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
+            islem, self.config = trader.al_sat_hesapla(tahmin, swing_data)
             self.sqlite_service.islem_yaz(islem)
 
             print('##################################')
@@ -104,6 +105,7 @@ class App:
         # plt.plot(cuzdan)
         plt.scatter(sonuclar.index, sonuclar['alis'], s=500, marker='^', color='#00ff00')
         plt.scatter(sonuclar.index, sonuclar['satis'], s=500, marker='v', color='#ff0f02')
+        plt.scatter(sonuclar.index, sonuclar['cikis'], s=500, marker='.', color='#1a1d33')
         plt.legend(loc='upper right')
         plt.show()
 
@@ -113,9 +115,9 @@ if __name__ == '__main__':
     baslangic_gunu = baslangic_gunu.replace(tzinfo=None)
     app = App(baslangic_gunu)
 
-    if app.config["doldur"]:
-        app.mum_verilerini_guncelle()
-
-    app.backtest_basla()
+    # if app.config["doldur"]:
+    #     app.mum_verilerini_guncelle()
+    #
+    # app.backtest_basla()
 
     app.ciz()

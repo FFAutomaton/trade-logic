@@ -6,6 +6,7 @@ islem_schema = [
     {"name": "low", "type": "REAL", "primary": ""},
     {"name": "alis", "type": "REAL", "primary": ""},
     {"name": "satis", "type": "REAL", "primary": ""},
+    {"name": "cikis", "type": "REAL", "primary": ""},
     {"name": "eth", "type": "REAL", "primary": ""},
     {"name": "usdt", "type": "REAL", "primary": ""}
 ]
