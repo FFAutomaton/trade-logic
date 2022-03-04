@@ -1,3 +1,4 @@
+import json
 import time
 from config import *
 from trade_logic.trader import Trader
@@ -6,6 +7,7 @@ from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
 from signal_atr.atr import ATR
 from trade_logic.utils import *
+from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 
 class App:
@@ -24,9 +26,10 @@ class App:
         self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir"))
         # self.bitis_gunu = datetime.strptime('2021-10-15 00:00:00', '%Y-%m-%d %H:%M:%S')
         self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
-        self.baslangic_gunu = self.bitis_gunu if baslangic_gunu is None else baslangic_gunu
+        self.baslangic_gunu = self.bitis_gunu - timedelta(hours=240) if baslangic_gunu is None else baslangic_gunu
 
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
+        self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.trader = Trader(self.config)
 
@@ -54,7 +57,7 @@ class App:
             tahmin["high"] = high_tahmin["yhat_upper"].values[0]
             tahmin["low"] = low_tahmin["yhat_lower"].values[0]
             tahmin["open"] = _close
-            self.sqlite_service.tahmin_yaz(tahmin)
+            self.sqlite_service.veri_yaz(tahmin, "tahmin")
         else:
             print('prophet onceden calismis devam ediyorum')
             _row = tahminler_cache[tahminler_cache["ds_str"] == pd.Timestamp(baslangic_gunu)]
@@ -64,19 +67,36 @@ class App:
 
         return tahmin
 
+    def trader_geri_yukle(self):
+        trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
+        if not trader.empty:
+            conf_ = json.loads(trader[3])
+            for key in conf_:
+                self.trader[key] = conf_[key]
+
+    def trader_kaydet(self):
+        dict_ = self.trader.config.__dict__()
+
     def calis(self):
-        # TODO:: trader objesini yukle
+        self.trader_geri_yukle()
         islem = self.tekil_islem_hesapla(self.baslangic_gunu)
+
         # TODO:: normal islemleri ayri bir tabloya kaydet
+
         # TODO:: islem verisine gore api istek gonder
-        # TODO:: trader objesini kaydet
+        if islem:
+            self.prophet_service.tg_binance_service.market_buy()
+        elif islem["bisey"]:
+            self.prophet_service.tg_binance_service.market_sell()
+
+        self.sqlite_service.veri_yaz(islem, "trader")
 
     def backtest_basla(self):
         self.sqlite_service.islemleri_temizle()
         baslangic_gunu = self.baslangic_gunu
         while baslangic_gunu <= self.bitis_gunu:
             islem = self.tekil_islem_hesapla(baslangic_gunu)
-            self.sqlite_service.islem_yaz(islem)
+            self.sqlite_service.veri_yaz(islem, "islem")
             print('##################################')
             print(f'{baslangic_gunu} icin bitti!')
             baslangic_gunu = baslangic_gunu + timedelta(hours=self.config.get('arttir'))
@@ -87,9 +107,8 @@ class App:
         tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic_gunu)
         print(f'egitim bitti sure: {time.time() - start}')
 
-        series = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("swing_pencere"), "mum", baslangic_gunu, self.bitis_gunu
-        )
+        series = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+                                                baslangic_gunu, self.bitis_gunu)
         swing_data = SwingTrader(series)
         self.trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
         islem, self.config = self.trader.al_sat_hesapla(tahmin, swing_data)
@@ -108,9 +127,7 @@ class App:
         return sonuclar.iloc[0]
 
     def ciz(self):
-        sonuclar = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere"), "islem"
-        )
+        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "islem")
         # sonuclar = sonuclar.iloc[-200:]
         # plt.style.use('dark_background')
 

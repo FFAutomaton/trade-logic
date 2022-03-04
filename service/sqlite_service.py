@@ -35,6 +35,7 @@ class SqlLite_Service:
         swing_candles = f'{coin}_{swing_tip}'
         islemler = f'islemler_{coin}_{tip}'
         prophet_tahminler = f'prophet_{coin}_{tip}'
+        trader = f'trader_{coin}_{tip}'
 
         self.get_conn().cursor().execute(
             f'CREATE TABLE IF NOT EXISTS {candles}({self.schemayi_query_texte_cevir(mum_schema)});'
@@ -47,6 +48,9 @@ class SqlLite_Service:
         )
         self.get_conn().cursor().execute(
             f'CREATE TABLE IF NOT EXISTS {prophet_tahminler}({self.schemayi_query_texte_cevir(prophet_tahmin_schema)});'
+        )
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS {trader}({self.schemayi_query_texte_cevir(trader_schema)});'
         )
         self.get_conn().commit()
 
@@ -85,29 +89,23 @@ class SqlLite_Service:
         guncelle = ', '.join(f'{el["name"]}=excluded.{el["name"]}' for el in _schema)
         return f"DO UPDATE SET {guncelle}"
 
-    def tahmin_yaz(self, tahmin):
+    def veri_yaz(self, data, _type):
         coin = self._config.get('coin')
         tip = self._config.get('pencere')
-        data = [str(integer_date_yap(tahmin['ds']))] + [str(el) for el in tahmin.values()]
-        # data = '(' + ', '.join(data) + ')'
-        _query = f"""INSERT INTO {f'prophet_{coin}_{tip}'} {self.values_ifadesi_olustur(prophet_tahmin_schema)}
+        data = [str(integer_date_yap(data['ds']))] + [str(el) for el in data.values()]
+        if _type == "tahmin":
+            _query = f"""INSERT INTO {f'prophet_{coin}_{tip}'} {self.values_ifadesi_olustur(prophet_tahmin_schema)}
                 ON CONFLICT({prophet_tahmin_schema[0]["name"]}) {self.update_ifadesi_olustur(prophet_tahmin_schema)};"""
+        elif _type == "islem":
+            _query = f"""INSERT INTO islemler_{coin}_{tip} {self.values_ifadesi_olustur(islem_schema)}
+                            ON CONFLICT({islem_schema[0]["name"]}) {self.update_ifadesi_olustur(islem_schema)};"""
+        elif _type == "trader":
+            _query = f"""INSERT INTO trader_{coin}_{tip} {self.values_ifadesi_olustur(trader_schema)}
+                            ON CONFLICT({trader_schema[0]["name"]}) {self.update_ifadesi_olustur(trader_schema)};"""
 
         self.get_conn().cursor().executemany(_query, [data])
         self.get_conn().commit()
-        print(f'tahmin yazildi {coin}_{tip} ')
-
-    def islem_yaz(self, islem):
-        coin = self._config.get('coin')
-        tip = self._config.get('pencere')
-        data = [str(integer_date_yap(islem['ds']))] + [el for el in islem.values()]
-        # data = '(' + ', '.join(data) + ')'
-        _query = f"""INSERT INTO islemler_{coin}_{tip} {self.values_ifadesi_olustur(islem_schema)}
-                ON CONFLICT({islem_schema[0]["name"]}) {self.update_ifadesi_olustur(islem_schema)};"""
-
-        self.get_conn().cursor().executemany(_query, [data])
-        self.get_conn().commit()
-        print(f'------->    islem yazildi {coin}_{tip} ')
+        print(f'------->    {_type} yazildi {coin}_{tip} ')
 
     def islemleri_temizle(self):
         coin = self._config.get('coin')
@@ -116,18 +114,21 @@ class SqlLite_Service:
         self.get_conn().cursor().execute(_query)
         self.get_conn().commit()
 
-    def veri_getir(self, coin, pencere, type, baslangic=None, bitis=None):
+    def veri_getir(self, coin, pencere, _type, baslangic=None, bitis=None):
         schema = None
-        if type == 'prophet':
+        if _type == 'prophet':
             query = f'SELECT * FROM prophet_{coin}_{pencere}'
             schema = prophet_tahmin_schema
-        elif type == 'mum':
+        elif _type == 'mum':
             query = f"""SELECT * FROM {f'{coin}_{pencere}'}
                     WHERE open_ts_int < {int(bitis.timestamp())*1000}"""
             schema = mum_schema
-        elif type == 'islem':
+        elif _type == 'islem':
             query = f"""SELECT * FROM islemler_{coin}_{pencere}"""
             schema = islem_schema
+        elif _type == 'trader':
+            query = f"""SELECT * FROM trader_{coin}_{pencere}"""
+            schema = trader_schema
         curr = self.get_conn().cursor().execute(query)
         data = curr.fetchall()
         main_dataframe = pd.DataFrame(data, columns=[el["name"] for el in schema])
@@ -137,5 +138,5 @@ class SqlLite_Service:
         if baslangic:
             main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(baslangic.timestamp())*1000].reset_index(drop=True)
 
-        print(f'{type} datasi yuklendi!')
+        print(f'{_type} datasi yuklendi!')
         return main_dataframe

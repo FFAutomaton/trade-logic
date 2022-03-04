@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 class Trader:
     def __init__(self, conf):
         self.config = conf
-        self.cooldown = conf.get("colldown")
         self.dolar = 1000
         self.karar = 0
         self.onceki_karar = 0
@@ -38,17 +37,6 @@ class Trader:
             if self.suanki_fiyat > last_high:
                 self.trend = 1
 
-    def cooldown_hesapla(self):
-        if not self.islem_ts:
-            return False
-
-        islem_ts = datetime.strptime(self.islem_ts, '%Y-%m-%d %H:%M:%S')
-        suanki_ts = datetime.strptime(self.suanki_ts, '%Y-%m-%d %H:%M:%S')
-        if islem_ts > suanki_ts - timedelta(hours=self.config.get("cooldown") * self.config.get("arttir")):
-            if self.onceki_karar * self.karar < 0:
-                return True
-        return False
-
     def al_sat_hesapla(self, tahmin, swing_data):
         self.suanki_fiyat = tahmin["open"]
         self.suanki_ts = tahmin["ds"]
@@ -63,9 +51,6 @@ class Trader:
         self.low = tahmin.get("low")
         self.swing_data_trend_hesapla(swing_data)
         self.kesme_durumu_hesapla()
-
-        # if self.cooldown_hesapla():
-        #     return tahmin, self.config
 
         self.kesme_durumundan_karar_hesapla(swing_data)
 
