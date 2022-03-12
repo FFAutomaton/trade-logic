@@ -9,15 +9,15 @@ if __name__ == '__main__':
     if app.config["doldur"]:
         app.mum_verilerini_guncelle()
 
-    # st_mult = [1.5]
-    # rapor = {}
-    # for mult in st_mult:
-    #     app.config["supertrend_mult"] = mult
-    #
-    #     app.backtest_basla()
-    #     sonuc = app.sonuc_getir()
-    #     rapor[mult] = (sonuc.get("usdt") - 1000)/1000
-    #
-    # for res in rapor:
-    #     print(f"{res} icin ", "{0:.0%}".format(rapor[res]))
+    st_mult = [1.5, 2, 3]
+    rapor = {}
+    for mult in st_mult:
+        app.config["supertrend_mult"] = mult
+
+        app.backtest_basla()
+        sonuc = app.sonuc_getir()
+        rapor[mult] = (sonuc.get("usdt") - 1000)/1000
+
+    for res in rapor:
+        print(f"{res} icin ", "{0:.0%}".format(rapor[res]))
     app.ciz()

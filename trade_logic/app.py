@@ -77,12 +77,12 @@ class App:
     def trader_kaydet(self):
         dict_ = self.trader.config.__dict__()
 
+
     def calis(self):
         self.trader_geri_yukle()
-        islem = self.tekil_islem_hesapla(self.baslangic_gunu)
-
+        islem = self.tekil_islem_hesapla(self.bitis_gunu)
         # TODO:: normal islemleri ayri bir tabloya kaydet
-
+        self.trader_kaydet()
         # TODO:: islem verisine gore api istek gonder
         if islem:
             self.prophet_service.tg_binance_service.market_buy()

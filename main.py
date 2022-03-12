@@ -6,5 +6,4 @@ if __name__ == '__main__':
     app.mum_verilerini_guncelle()
     app.trader.wallet = app.binance_service.futures_hesap_bakiyesi()
     app.calis()
-    # TODO:: Wallet cekip confige ekle (blocker: futures api baglantisi)
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder
