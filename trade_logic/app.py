@@ -70,26 +70,28 @@ class App:
     def trader_geri_yukle(self):
         trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
         if not trader.empty:
-            conf_ = json.loads(trader[3])
+            conf_ = json.loads(trader.config[0])
             for key in conf_:
-                self.trader[key] = conf_[key]
+                setattr(self.trader, key, conf_[key])
 
     def trader_kaydet(self):
-        dict_ = self.trader.config.__dict__()
-
+        self.trader.atr = None  # atr'yi veritabaninda tutmaya gerek yok, json.dumps patliyor zaten
+        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(self.trader.__dict__)}
+        self.sqlite_service.veri_yaz(data, "trader")
 
     def calis(self):
         self.trader_geri_yukle()
+        self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
         islem = self.tekil_islem_hesapla(self.bitis_gunu)
-        # TODO:: normal islemleri ayri bir tabloya kaydet
         self.trader_kaydet()
-        # TODO:: islem verisine gore api istek gonder
         if islem:
             self.prophet_service.tg_binance_service.market_buy()
         elif islem["bisey"]:
             self.prophet_service.tg_binance_service.market_sell()
 
-        self.sqlite_service.veri_yaz(islem, "trader")
+
+        # TODO:: normal islemleri ayri bir tabloya kaydet
+        # TODO:: islem verisine gore api istek gonder
 
     def backtest_basla(self):
         self.sqlite_service.islemleri_temizle()
