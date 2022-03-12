@@ -79,9 +79,20 @@ class App:
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(self.trader.__dict__)}
         self.sqlite_service.veri_yaz(data, "trader")
 
+    def update_trader_onceki_durumlar(self, onceki_durumlar):
+        for attr, value in vars(self.trader).items():
+            print(attr, '=', value)
+            if "onceki" in attr:
+                atr_ = attr.split('_')
+                atr_ = "_".join(atr_[1:]) if len(atr_) > 2 else atr_[1]
+                setattr(self.trader, attr, getattr(self.trader, atr_))
+
     def calis(self):
         self.trader_geri_yukle()
         self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
+
+        onceki_durumlar = self.tekil_islem_hesapla(self.bitis_gunu - timedelta(hours=4))
+        self.update_trader_onceki_durumlar(onceki_durumlar)
         islem = self.tekil_islem_hesapla(self.bitis_gunu)
         self.trader_kaydet()
         if islem:
