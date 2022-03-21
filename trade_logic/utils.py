@@ -1,5 +1,7 @@
 import pandas as pd
 from csv import DictWriter
+
+import pytz
 from signal_prophet.ml.model_classes.prophet_model import ProphetModel
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -17,7 +19,7 @@ def okunur_date_yap(unix_ts):
 
 
 def integer_date_yap(date_str):
-    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=None).timestamp())
+    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=pytz.utc).timestamp())
 
 
 def model_egit_tahmin_et(train, pencere):

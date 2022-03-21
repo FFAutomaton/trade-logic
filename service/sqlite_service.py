@@ -134,7 +134,7 @@ class SqlLite_Service:
         main_dataframe = pd.DataFrame(data, columns=[el["name"] for el in schema])
         main_dataframe[schema[1]['name']] = pd.to_datetime(main_dataframe[schema[1]['name']], format='%Y-%m-%d %H:%M:%S')
 
-        main_dataframe = main_dataframe.sort_values(by=schema[0]['name'], ascending=False, ignore_index=True)
+        main_dataframe = main_dataframe.sort_values(by=schema[0]['name'], ascending=True, ignore_index=True)
         if baslangic:
             main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(baslangic.timestamp())*1000].reset_index(drop=True)
 

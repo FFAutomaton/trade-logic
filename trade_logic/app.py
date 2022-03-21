@@ -1,5 +1,6 @@
 import json
 import time
+import pytz
 from config import *
 from trade_logic.trader import Trader
 from swing_trader.swing_trader_class import SwingTrader
@@ -8,13 +9,15 @@ from signal_prophet.prophet_service import TurkishGekkoProphetService
 from signal_atr.atr import ATR
 from trade_logic.utils import *
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
-
+# from ta.trend import SMAIndicator
+from ta.trend import EMAIndicator
+from ta.momentum import RSIIndicator
 
 class App:
     def __init__(self, baslangic_gunu=None):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
-            "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
+            "coin": 'ETHUSDT', "pencere": "1m", "arttir": 1,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 200, "doldur": False,
@@ -24,8 +27,8 @@ class App:
         self.secrets.update(self.config)
 
         self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir"))
-        # self.bitis_gunu = datetime.strptime('2021-10-15 00:00:00', '%Y-%m-%d %H:%M:%S')
-        self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
+        self.bitis_gunu = datetime.strptime('2022-03-20 10:00:00', '%Y-%m-%d %H:%M:%S')
+        self.bitis_gunu = self.bitis_gunu.replace(tzinfo=pytz.utc)
         self.baslangic_gunu = self.bitis_gunu - timedelta(hours=240) if baslangic_gunu is None else baslangic_gunu
 
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
@@ -112,19 +115,18 @@ class App:
             self.sqlite_service.veri_yaz(islem, "islem")
             print('##################################')
             print(f'{baslangic_gunu} icin bitti!')
-            baslangic_gunu = baslangic_gunu + timedelta(hours=self.config.get('arttir'))
+            baslangic_gunu = baslangic_gunu + timedelta(minutes=self.config.get('arttir'))
 
     def tekil_islem_hesapla(self, baslangic_gunu):
         start = time.time()
-        tahmin = {"ds": datetime.strftime(baslangic_gunu, '%Y-%m-%d %H:%M:%S')}
-        tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic_gunu)
-        print(f'egitim bitti sure: {time.time() - start}')
-
-        series = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+        series = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "mum",
                                                 baslangic_gunu, self.bitis_gunu)
-        swing_data = SwingTrader(series)
-        self.trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
-        islem, self.config = self.trader.al_sat_hesapla(tahmin, swing_data)
+        rsi_ = RSIIndicator(series["close"], 14)
+        rsi_ = rsi_.rsi()
+        ema_ = EMAIndicator(series["close"], 35)
+        ema_ = ema_.ema_indicator()
+        islem, self.config = self.trader.al_sat_hesapla(rsi_, ema_, series, baslangic_gunu)
+        print(f'egitim bitti sure: {time.time() - start}')
         return islem
 
     def mum_verilerini_guncelle(self):
@@ -145,8 +147,8 @@ class App:
         # plt.style.use('dark_background')
 
         sonuclar = sonuclar.set_index(sonuclar['ds_str'])
-        plt.plot(sonuclar['high'], label='high', linestyle='--', color='green')
-        plt.plot(sonuclar['low'], label='low', linestyle='--', color='red')
+        # plt.plot(sonuclar['high'], label='high', linestyle='--', color='green')
+        # plt.plot(sonuclar['low'], label='low', linestyle='--', color='red')
         plt.plot(sonuclar['open'], label='open', color='black')
         # cuzdan = sonuclar['USDT'] + (sonuclar['Open'] * sonuclar['ETH'])
         # plt.plot(cuzdan)
