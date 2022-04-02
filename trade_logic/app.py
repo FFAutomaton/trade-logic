@@ -1,5 +1,6 @@
 import json
 import time
+import math
 from config import *
 from trade_logic.trader import Trader
 from swing_trader.swing_trader_class import SwingTrader
@@ -14,7 +15,7 @@ class App:
     def __init__(self, baslangic_gunu=None):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
-            "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
+            "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 200, "doldur": False,
@@ -79,9 +80,8 @@ class App:
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(self.trader.__dict__)}
         self.sqlite_service.veri_yaz(data, "trader")
 
-    def update_trader_onceki_durumlar(self, onceki_durumlar):
+    def update_trader_onceki_durumlar(self):
         for attr, value in vars(self.trader).items():
-            print(attr, '=', value)
             if "onceki" in attr:
                 atr_ = attr.split('_')
                 atr_ = "_".join(atr_[1:]) if len(atr_) > 2 else atr_[1]
@@ -90,19 +90,30 @@ class App:
     def calis(self):
         self.trader_geri_yukle()
         self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
-
-        onceki_durumlar = self.tekil_islem_hesapla(self.bitis_gunu - timedelta(hours=4))
-        self.update_trader_onceki_durumlar(onceki_durumlar)
+        self.trader.wallet_isle()
+        self.tekil_islem_hesapla(self.bitis_gunu - timedelta(hours=4))
+        self.update_trader_onceki_durumlar()
         islem = self.tekil_islem_hesapla(self.bitis_gunu)
         self.trader_kaydet()
-        if islem:
-            self.prophet_service.tg_binance_service.market_buy()
-        elif islem["bisey"]:
-            self.prophet_service.tg_binance_service.market_sell()
-
+        miktar = None
+        # TODO:: miktar hesapla
+        if islem["alis"] > 0:
+            miktar = self.dolar / self.trader.suanki_fiyat
+            miktar = math.floor(miktar * 100)/100
+            self.prophet_service.tg_binance_service.\
+                futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=miktar, kaldirac=1)
+        elif islem["satis"] > 0:
+            miktar = self.wallet.get(self.config.get("symbol"))
+            self.prophet_service.tg_binance_service.\
+                futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=miktar, kaldirac=1)
+        elif self.islem["cikis"] > 0:
+            self.prophet_service.tg_binance_service.\
+                futures_market_exit(self.config.get("coin"))
 
         # TODO:: normal islemleri ayri bir tabloya kaydet
-        # TODO:: islem verisine gore api istek gonder
+        # TODO:: aws'de makine ac
+        # TODO:: makineye baglanip repoyu cek, calistir
+
 
     def backtest_basla(self):
         self.sqlite_service.islemleri_temizle()

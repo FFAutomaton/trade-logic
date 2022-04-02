@@ -9,7 +9,7 @@ if __name__ == '__main__':
     if app.config["doldur"]:
         app.mum_verilerini_guncelle()
 
-    st_mult = [1.5, 2, 3]
+    st_mult = [1.5]
     rapor = {}
     for mult in st_mult:
         app.config["supertrend_mult"] = mult
