@@ -18,7 +18,7 @@ class App:
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 200, "doldur": False,
+            "prophet_window": 200, "doldur": True,
             "atr_window": 10, "supertrend_mult": 2,
             "cooldown": 4
         }
