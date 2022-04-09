@@ -18,7 +18,7 @@ class App:
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 200, "doldur": False,
+            "prophet_window": 200, "doldur": True,
             "atr_window": 10, "supertrend_mult": 3,
             "cooldown": 4
         }
@@ -52,7 +52,7 @@ class App:
     def tahmin_islemlerini_hallet(self, tahmin, baslangic_gunu):
         tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
         if not tahmin_onceden_hesaplanmis_mi(baslangic_gunu, self.config, tahminler_cache):
-            print('prophet calisiyor......')
+            print(f'prophet calisiyor......{baslangic_gunu}')
             high_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("high"))
             low_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("low"))
             tahmin["high"] = high_tahmin["yhat_upper"].values[0]
@@ -97,21 +97,32 @@ class App:
         self.trader_kaydet()
         miktar = None
         # TODO:: miktar hesapla
+
+        print(f"trade bot çalıştı....... :=) {self.baslangic_gunu}   {self.bitis_gunu}")
         if islem["alis"] > 0:
-            miktar = self.dolar / self.trader.suanki_fiyat
+            self.prophet_service.tg_binance_service. \
+                futures_market_exit(self.config.get("coin"))
+            miktar = self.trader.dolar / self.trader.suanki_fiyat
             miktar = math.floor(miktar * 100)/100
             self.prophet_service.tg_binance_service.\
                 futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=miktar, kaldirac=1)
+            print(f"Alış gerçekleştirdi  up!")
         elif islem["satis"] > 0:
+            self.prophet_service.tg_binance_service. \
+                futures_market_exit(self.config.get("coin"))
             miktar = self.wallet.get(self.config.get("symbol"))
             self.prophet_service.tg_binance_service.\
                 futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=miktar, kaldirac=1)
-        elif self.islem["cikis"] > 0:
+            print(f"Satış gerçekleştirdi  down!")
+        elif islem["cikis"] > 0:
             self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
+            print(f"Kaçışşşşş  go go go!!")
 
+        print(f"işlem detaylar: {json.dumps(islem)}")
+        print(f"############^^^^^###########")
+        print(f"trader detaylar: {json.dumps(self.trader.__dict__)}")
         # TODO:: normal islemleri ayri bir tabloya kaydet
-        # TODO:: aws'de makine ac
         # TODO:: makineye baglanip repoyu cek, calistir
 
 

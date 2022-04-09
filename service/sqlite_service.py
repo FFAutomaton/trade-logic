@@ -138,5 +138,5 @@ class SqlLite_Service:
         if baslangic:
             main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(baslangic.timestamp())*1000].reset_index(drop=True)
 
-        print(f'{_type} datasi yuklendi!')
+        print(f'{_type} datasi yuklendi! {baslangic}   {bitis}')
         return main_dataframe

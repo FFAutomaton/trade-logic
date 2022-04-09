@@ -40,7 +40,8 @@ class Trader:
     def wallet_isle(self):
         for symbol in self.wallet:
             self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
-        self.dolar = self.config["wallet"].get('USDT')
+        self.dolar = float(self.config["wallet"].get('USDT'))
+        self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
     def al_sat_hesapla(self, tahmin, swing_data):
         self.suanki_fiyat = tahmin["open"]
