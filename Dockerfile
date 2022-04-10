@@ -2,15 +2,20 @@
 
 FROM python:3.8-slim-buster
 
-WORKDIR /app
+ENV WORKDIR=/app
+WORKDIR ${WORKDIR}
 
-RUN apt-get update && apt-get install -y git
+RUN apt-get update && apt-get upgrade -y && apt-get install -y git && apt-get install -y cron
+
 RUN apt-get install -y python3-dev
 RUN apt install -y gcc
 RUN apt install -y g++
 
-
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 COPY . .
-CMD [ "python3", "main.py"]
+RUN chmod +x $WORKDIR/main.py $WORKDIR/run.sh $WORKDIR/entrypoint.sh
+
+CMD ["bash"]
+ENTRYPOINT $WORKDIR/entrypoint.sh
+
