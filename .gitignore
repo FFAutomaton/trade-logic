@@ -102,7 +102,7 @@ celerybeat.pid
 .docker/
 # SageMath parsed files
 *.sage.py
-
+*.tar
 # Environments
 .env
 .venv
