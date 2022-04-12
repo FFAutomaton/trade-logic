@@ -97,7 +97,8 @@ class App:
         self.trader_kaydet()
         miktar = None
         # TODO:: miktar hesapla
-
+        self.prophet_service.tg_binance_service. \
+            futures_market_exit(self.config.get("coin"))
         print(f"trade bot çalıştı....... :=) {self.baslangic_gunu}   {self.bitis_gunu}")
         if islem["alis"] > 0:
             self.prophet_service.tg_binance_service. \
