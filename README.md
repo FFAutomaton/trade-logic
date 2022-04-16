@@ -49,7 +49,12 @@ arttiralim. Eger makineyi kaldirirken disk buyuk secildiyse bu adim atlanabilir
 - tar dosyasini acip docker'a yukleyelim
 `docker load < prophet-trader.tar`
 - En son islemlerden sonra olay calistirmaya geldi
-`docker run -t -i --rm --name prophet-trader -v /trade-bot-logs:/output prophet-trader`
+```
+docker run -t -i -d --rm \
+    --name prophet-trader -v /trade-bot-logs:/output \
+     -v /home/sevki/Documents/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
+     prophet-trader
+```
 - Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
 `docker ps`
 `docker container exec -it <container_id> /bin/bash`
