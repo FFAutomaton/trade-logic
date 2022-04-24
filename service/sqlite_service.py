@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 import sqlite3
 from trade_logic.utils import okunur_date_yap
@@ -16,7 +18,10 @@ class SqlLite_Service:
     def get_conn(self):
         if self.conn:
             return self.conn
-        self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
+        if os.getenv("PYTHON_ENV") == "TEST":
+            self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
+        else:
+            self.conn = sqlite3.connect(f'/app/coindata/{self.db}.db')
         return self.conn
 
     def schemayi_query_texte_cevir(self, schema):

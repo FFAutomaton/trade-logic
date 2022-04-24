@@ -66,6 +66,7 @@ class Trader:
     def backtest_cuzdana_isle(self, tahmin):
         wallet = self.config.get("wallet")
         if self.karar == 1:
+
             if self.pozisyon in [0, -1]:
                 if self.islem_miktari:
                     self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
@@ -76,6 +77,7 @@ class Trader:
                 self.pozisyon = 1
                 self.reset_trader()
         elif self.karar == -1:
+            # pass
             if self.pozisyon in [0, 1]:
                 if self.islem_miktari:
                     self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari

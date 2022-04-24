@@ -6,6 +6,9 @@ kodun yazıldığı repodur.
 Binance'e baglanmak icin `API_KEY` = "xxxx" `API_SECRET` = "xxxxxx" degiskenleri config.py dosyasina 
 koyarak debug yapabilirsiniz.
 
+### ENV 
+PYTHON_ENV = "TEST"
+
 # AWS EC2 instance'a baglanma
 EC2 instance olustur, default degerler ile ilerle, sadece disk size arttirabilirsin,
 eger bunu yaparsen docker ayarlarinda volume arttirma adimlarini gecebilirsin.
