@@ -6,3 +6,6 @@ git+https://github.com/turkish-gekko/signal-swing-trader@master#egg=swing-trader
 git+https://github.com/turkish-gekko/signal-atr@master#egg=signal-atr
 git+https://github.com/turkish-gekko/service-binance-rest@main#egg=turkish_gekko_binance_service
 
+
+requests~=2.27.1
+matplotlib~=3.5.1

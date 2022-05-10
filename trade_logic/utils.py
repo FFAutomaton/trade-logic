@@ -60,6 +60,5 @@ def tahmin_onceden_hesaplanmis_mi(baslangic_gunu, _config, tahminler_cache):
     return False
 
 
-
 if __name__ == '__main__':
     bugun = '2021-12-06'

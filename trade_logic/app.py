@@ -9,6 +9,7 @@ from signal_prophet.prophet_service import TurkishGekkoProphetService
 from signal_atr.atr import ATR
 from trade_logic.utils import *
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
+from service.bam_bam_service import bam_bama_sinyal_gonder
 
 
 class App:
@@ -97,11 +98,9 @@ class App:
         self.trader_kaydet()
         miktar = None
         # TODO:: miktar hesapla
-        self.prophet_service.tg_binance_service. \
-            futures_market_exit(self.config.get("coin"))
-        print(f"trade bot çalıştı....... :=) {self.baslangic_gunu}   {self.bitis_gunu}")
+
         if islem["alis"] > 0:
-            self.prophet_service.tg_binance_service. \
+            _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
             miktar = self.trader.dolar / self.trader.suanki_fiyat
             miktar = math.floor(miktar * 100)/100
@@ -109,17 +108,17 @@ class App:
                 futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=miktar, kaldirac=1)
             print(f"Alış gerçekleştirdi  up!")
         elif islem["satis"] > 0:
-            self.prophet_service.tg_binance_service. \
+            _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
             miktar = self.wallet.get(self.config.get("symbol"))
             self.prophet_service.tg_binance_service.\
                 futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=miktar, kaldirac=1)
             print(f"Satış gerçekleştirdi  down!")
         elif islem["cikis"] > 0:
-            self.prophet_service.tg_binance_service.\
+            _exit_, yon = self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
             print(f"Kaçışşşşş  go go go!!")
-
+        bam_bama_sinyal_gonder(islem, yon)
         print(f"işlem detaylar: {json.dumps(islem)}")
         print(f"############^^^^^###########")
         print(f"trader detaylar: {json.dumps(self.trader.__dict__)}")
