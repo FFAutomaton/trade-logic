@@ -1,8 +1,11 @@
+import os
 from trade_logic.utils import *
 from trade_logic.app import App
 
+
 if __name__ == '__main__':
-    baslangic_gunu = datetime.strptime('2022-04-20 00:00:00', '%Y-%m-%d %H:%M:%S')
+    os.environ["PYTHON_ENV"] = "TEST"
+    baslangic_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     baslangic_gunu = baslangic_gunu.replace(tzinfo=None)
     app = App(baslangic_gunu)
 
