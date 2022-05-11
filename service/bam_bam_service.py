@@ -13,7 +13,7 @@ def bam_bama_sinyal_gonder(islem, yon):
             resp = requests.post(bambam_url, data=short_buy)
 
         elif islem["cikis"] > 0:
-            if yon > 1:
+            if yon > 0:
                 resp = requests.post(bambam_url, data=long_buy_close)
             else:
                 resp = requests.post(bambam_url, data=short_buy_close)
