@@ -5,6 +5,7 @@ from config import bambam_url, long_buy, long_buy_close, short_buy, short_buy_cl
 
 def bam_bama_sinyal_gonder(islem, yon):
     try:
+        resp = None
         if islem["alis"] > 0:
             resp = requests.post(bambam_url, data=long_buy)
 
