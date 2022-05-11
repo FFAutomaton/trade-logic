@@ -96,7 +96,7 @@ class App:
         self.update_trader_onceki_durumlar()
         islem = self.tekil_islem_hesapla(self.bitis_gunu)
         self.trader_kaydet()
-        miktar = None
+        yon = None
         # TODO:: miktar hesapla
 
         if islem["alis"] > 0:
