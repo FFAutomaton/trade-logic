@@ -5,6 +5,6 @@ if __name__ == '__main__':
     islem = {}
     islem["alis"] = 0
     islem["satis"] = 0
-    islem["cikis"] = 1000
+    islem["cikis"] = 10
     yon = -1
     bam_bama_sinyal_gonder(islem, yon)
