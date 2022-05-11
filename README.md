@@ -54,8 +54,8 @@ arttiralim. Eger makineyi kaldirirken disk buyuk secildiyse bu adim atlanabilir
 - En son islemlerden sonra olay calistirmaya geldi
 ```
 docker run -t -i -d --rm \
-    --name prophet-trader -v /trade-bot-logs:/output \
-     -v /home/sevki/Documents/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
+    --name prophet-trader -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
+     -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
      prophet-trader
 ```
 - Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
