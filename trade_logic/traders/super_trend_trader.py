@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta
+import time
+from trade_logic.utils import tahmin_onceden_hesaplanmis_mi
 
 
 class Trader:
@@ -21,21 +23,45 @@ class Trader:
         self.islem_ts = 0
         self.islem_miktari = 0
 
-    def swing_data_trend_hesapla(self, swing_data):
-        last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
-        prev_high = max(swing_data.highNodes[1].close, swing_data.highNodes[1].open)
+    def tekil_islem_hesapla(self, sqlite_service, baslangic_gunu):
+        start = time.time()
+        tahmin = {"ds": datetime.strftime(baslangic_gunu, '%Y-%m-%d %H:%M:%S')}
+        tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic_gunu)
+        print(f'egitim bitti sure: {time.time() - start}')
 
-        last_low = min(swing_data.lowNodes[0].close, swing_data.lowNodes[0].open)
-        prev_low = min(swing_data.lowNodes[1].close, swing_data.lowNodes[1].open)
+        # series = sqlite_service.veri_getir(self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+        #                                         baslangic_gunu, self.bitis_gunu)
+        # self.trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
+        self.kesme_durumu_hesapla()
+        self.backtest_cuzdana_isle(tahmin)
+        islem, self.config = self.al_sat_hesapla(tahmin)
+        # return islem
 
-        if last_high > prev_high and last_low > prev_low:
-            self.trend = 1
-            if self.suanki_fiyat < last_high:
-                self.trend = -1
-        elif last_high < prev_high and last_low < prev_low:
-            self.trend = -1
-            if self.suanki_fiyat > last_high:
-                self.trend = 1
+    def update_trader_onceki_durumlar(self):
+        for attr, value in vars(self).items():
+            if "onceki" in attr:
+                atr_ = attr.split('_')
+                atr_ = "_".join(atr_[1:]) if len(atr_) > 2 else atr_[1]
+                setattr(self, attr, getattr(self, atr_))
+
+    def tahmin_islemlerini_hallet(self, tahmin, baslangic_gunu):
+        tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
+        if not tahmin_onceden_hesaplanmis_mi(baslangic_gunu, self.config, tahminler_cache):
+            print(f'prophet calisiyor......{baslangic_gunu}')
+            high_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("high"))
+            low_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("low"))
+            tahmin["high"] = high_tahmin["yhat_upper"].values[0]
+            tahmin["low"] = low_tahmin["yhat_lower"].values[0]
+            tahmin["open"] = _close
+            self.sqlite_service.veri_yaz(tahmin, "tahmin")
+        else:
+            print('prophet onceden calismis devam ediyorum')
+            _row = tahminler_cache[tahminler_cache["ds_str"] == pd.Timestamp(baslangic_gunu)]
+            tahmin["high"] = _row["high"].values[0]
+            tahmin["low"] = _row["low"].values[0]
+            tahmin["open"] = _row["open"].values[0]
+
+        return tahmin
 
     def wallet_isle(self):
         for symbol in self.wallet:
@@ -43,7 +69,7 @@ class Trader:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
-    def al_sat_hesapla(self, tahmin, swing_data):
+    def al_sat_hesapla(self, tahmin):
         self.suanki_fiyat = tahmin["open"]
         self.suanki_ts = tahmin["ds"]
         # if tahmin["ds"] == "2022-01-20 00:00:00":
@@ -55,57 +81,9 @@ class Trader:
         tahmin["USDT"] = self.config["wallet"]["USDT"]
         self.high = tahmin.get("high")
         self.low = tahmin.get("low")
-        self.swing_data_trend_hesapla(swing_data)
-        self.kesme_durumu_hesapla()
+        # self.tp_guncelle()
 
-        self.kesme_durumundan_karar_hesapla(swing_data)
-
-        self.tp_guncelle()
-        return self.backtest_cuzdana_isle(tahmin)
-
-    def backtest_cuzdana_isle(self, tahmin):
-        wallet = self.config.get("wallet")
-        if self.karar == 1:
-
-            if self.pozisyon in [0, -1]:
-                if self.islem_miktari:
-                    self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
-                self.islem_fiyati = self.suanki_fiyat
-                tahmin["alis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
-                self.pozisyon = 1
-                self.reset_trader()
-        elif self.karar == -1:
-            # pass
-            if self.pozisyon in [0, 1]:
-                if self.islem_miktari:
-                    self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
-                self.islem_fiyati = self.suanki_fiyat
-                tahmin["satis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
-                self.pozisyon = -1
-                self.reset_trader()
-
-        elif self.karar == 3:
-            self.dolar = self.dolar - self.pozisyon * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-            tahmin["cikis"] = self.suanki_fiyat
-            self.islem_miktari = 0
-            self.islem_fiyati = 0
-            self.pozisyon = 0
-            self.karar = 0
-            self.reset_trader()
-
-        wallet["ETH"] = 0
-        wallet["USDT"] = self.dolar
-
-        self.config["wallet"] = wallet
-        tahmin["ETH"] = wallet["ETH"]
-        tahmin["USDT"] = wallet["USDT"]
-        return tahmin, self.config
-
-    def kesme_durumundan_karar_hesapla(self, swing_data):
+    def kesme_durumundan_karar_hesapla(self):
         if (self.onceki_kesme_durumu == 0 and self.kesme_durumu == 1) \
                 or (self.onceki_kesme_durumu == -1 and self.kesme_durumu == 0):
             self.onceki_karar = self.karar
@@ -118,10 +96,9 @@ class Trader:
             self.onceki_karar = self.karar
             self.karar = 0
 
-        self.swing_data_trend_hesapla(swing_data)
-        if self.trend * self.karar < 0:
-            self.onceki_karar = self.karar
-            self.karar = 0
+        # if self.trend * self.karar < 0:
+        #     self.onceki_karar = self.karar
+        #     self.karar = 0
 
     def tp_guncelle(self):
         if self.onceki_karar * self.karar < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma

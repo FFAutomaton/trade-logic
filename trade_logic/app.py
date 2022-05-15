@@ -2,7 +2,8 @@ import json
 import time
 import math
 from config import *
-from trade_logic.trader import Trader
+from trade_logic.traders.prophet_trader import Trader as prophet_trader
+from trade_logic.traders.swing_trader import Trader as swing_trader
 from swing_trader.swing_trader_class import SwingTrader
 from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
@@ -10,6 +11,8 @@ from signal_atr.atr import ATR
 from trade_logic.utils import *
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
+from schemas.enums.pozisyon import Pozisyon
+from schemas.enums.karar import Karar
 
 
 class App:
@@ -19,12 +22,16 @@ class App:
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 200, "doldur": True,
+            "prophet_window": 200, "doldur": True, "swing_window": 200,
             "atr_window": 10, "supertrend_mult": 3,
             "cooldown": 4
         }
         self.secrets.update(self.config)
-
+        self.tp = 0
+        self.onceki_tp = 0
+        self.islem_ts = 0
+        self.islem_miktari = 0
+        self.pozisyon = 0  # 0-baslangic, 1 long, -1 short
         self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir"))
         # self.bitis_gunu = datetime.strptime('2021-10-15 00:00:00', '%Y-%m-%d %H:%M:%S')
         self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
@@ -33,7 +40,55 @@ class App:
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
-        self.trader = Trader(self.config)
+        self.swing_trader = swing_trader(self.config)
+        self.prophet_trader = prophet_trader(self.config)
+        # self.atr_trader = Trader(self.config)  # trailing stop icin
+
+    def karar_calis(self):
+        swing_karar = self.swing_trader.karar.value
+        prophet_karar = self.prophet_trader.karar.value
+        if swing_karar * prophet_karar > 0:
+            self.pozisyon = Pozisyon.long
+        elif swing_karar * prophet_karar < 0:
+            self.pozisyon = Pozisyon.short
+        elif swing_karar == 0:
+            if prophet_karar == Karar.alis.value:
+                self.pozisyon = Pozisyon.long
+            elif prophet_karar == Karar.satis.value:
+                self.pozisyon = Pozisyon.short
+            else:
+                self.pozisyon = Pozisyon.notr
+        else:
+            raise NotImplementedError("karar fonksiyonu beklenmedik durum")
+
+    def prophet_karar_hesapla(self):
+        self.prophet_trader.tahmin_hesapla(self.bitis_gunu - timedelta(hours=4))
+        self.prophet_trader.kesme_durumu_hesapla()
+        self.prophet_trader.update_trader_onceki_durumlar()
+        self.prophet_trader.tahmin_hesapla(self.bitis_gunu)
+        self.prophet_trader.kesme_durumu_hesapla()
+        self.prophet_trader.kesme_durumundan_karar_hesapla()
+
+    def swing_trader_karar_hesapla(self):
+        series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+            self.bitis_gunu - timedelta(days=self.config.get("swing_window")), self.bitis_gunu
+        )
+        self.swing_trader.swing_data = SwingTrader(series)
+        return self.swing_trader.swing_data_trend_hesapla()
+
+    def al_sat_hesapla(self, tahmin):
+        self.suanki_fiyat = tahmin["open"]
+        self.suanki_ts = tahmin["ds"]
+        # if tahmin["ds"] == "2022-01-20 00:00:00":
+        #     print('here')
+        tahmin["alis"] = float("nan")
+        tahmin["satis"] = float("nan")
+        tahmin["cikis"] = float("nan")
+        tahmin["ETH"] = self.config["wallet"]["ETH"]
+        tahmin["USDT"] = self.config["wallet"]["USDT"]
+
+        # self.tp_guncelle()
 
     def tahmin_getir(self, baslangic_gunu, cesit):
         arttir = self.config.get('arttir')
@@ -50,24 +105,53 @@ class App:
             _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("y").values[0]
         return forecast, _close
 
-    def tahmin_islemlerini_hallet(self, tahmin, baslangic_gunu):
-        tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
-        if not tahmin_onceden_hesaplanmis_mi(baslangic_gunu, self.config, tahminler_cache):
-            print(f'prophet calisiyor......{baslangic_gunu}')
-            high_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("high"))
-            low_tahmin, _close = self.tahmin_getir(baslangic_gunu, self.config.get("low"))
-            tahmin["high"] = high_tahmin["yhat_upper"].values[0]
-            tahmin["low"] = low_tahmin["yhat_lower"].values[0]
-            tahmin["open"] = _close
-            self.sqlite_service.veri_yaz(tahmin, "tahmin")
-        else:
-            print('prophet onceden calismis devam ediyorum')
-            _row = tahminler_cache[tahminler_cache["ds_str"] == pd.Timestamp(baslangic_gunu)]
-            tahmin["high"] = _row["high"].values[0]
-            tahmin["low"] = _row["low"].values[0]
-            tahmin["open"] = _row["open"].values[0]
+    def backtest_cuzdana_isle(self, tahmin):
+        wallet = self.config.get("wallet")
+        if self.karar == 1:
 
-        return tahmin
+            if self.pozisyon in [0, -1]:
+                if self.islem_miktari:
+                    self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_fiyati = self.suanki_fiyat
+                tahmin["alis"] = self.islem_fiyati
+                self.islem_ts = tahmin['ds']
+                self.pozisyon = 1
+                self.reset_trader()
+        elif self.karar == -1:
+            # pass
+            if self.pozisyon in [0, 1]:
+                if self.islem_miktari:
+                    self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_fiyati = self.suanki_fiyat
+                tahmin["satis"] = self.islem_fiyati
+                self.islem_ts = tahmin['ds']
+                self.pozisyon = -1
+                self.reset_trader()
+
+        elif self.karar == 3:
+            self.dolar = self.dolar - self.pozisyon * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+            tahmin["cikis"] = self.suanki_fiyat
+            self.islem_miktari = 0
+            self.islem_fiyati = 0
+            self.pozisyon = 0
+            self.karar = 0
+            self.reset_trader()
+
+        wallet["ETH"] = 0
+        wallet["USDT"] = self.dolar
+
+        self.config["wallet"] = wallet
+        tahmin["ETH"] = wallet["ETH"]
+        tahmin["USDT"] = wallet["USDT"]
+        return tahmin, self.config
+
+    def wallet_isle(self):
+        for symbol in self.wallet:
+            self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
+        self.dolar = float(self.config["wallet"].get('USDT'))
+        self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
     def trader_geri_yukle(self):
         trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
@@ -81,21 +165,13 @@ class App:
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(self.trader.__dict__)}
         self.sqlite_service.veri_yaz(data, "trader")
 
-    def update_trader_onceki_durumlar(self):
-        for attr, value in vars(self.trader).items():
-            if "onceki" in attr:
-                atr_ = attr.split('_')
-                atr_ = "_".join(atr_[1:]) if len(atr_) > 2 else atr_[1]
-                setattr(self.trader, attr, getattr(self.trader, atr_))
-
     def calis(self):
-        self.trader_geri_yukle()
-        self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
-        self.trader.wallet_isle()
-        self.tekil_islem_hesapla(self.bitis_gunu - timedelta(hours=4))
-        self.update_trader_onceki_durumlar()
-        islem = self.tekil_islem_hesapla(self.bitis_gunu)
-        self.trader_kaydet()
+        # self.trader_geri_yukle()
+        # self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
+        # self.trader.wallet_isle()
+
+        # self.trader_kaydet()
+        islem = None
         yon = None
         # TODO:: miktar hesapla
 
@@ -135,19 +211,6 @@ class App:
             print('##################################')
             print(f'{baslangic_gunu} icin bitti!')
             baslangic_gunu = baslangic_gunu + timedelta(hours=self.config.get('arttir'))
-
-    def tekil_islem_hesapla(self, baslangic_gunu):
-        start = time.time()
-        tahmin = {"ds": datetime.strftime(baslangic_gunu, '%Y-%m-%d %H:%M:%S')}
-        tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic_gunu)
-        print(f'egitim bitti sure: {time.time() - start}')
-
-        series = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("swing_pencere"), "mum",
-                                                baslangic_gunu, self.bitis_gunu)
-        swing_data = SwingTrader(series)
-        self.trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
-        islem, self.config = self.trader.al_sat_hesapla(tahmin, swing_data)
-        return islem
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(
