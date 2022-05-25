@@ -1,7 +1,7 @@
 from schemas.enums.karar import Karar
 
 
-class Trader:
+class SwingStrategy:
     def __init__(self, conf):
         self.config = conf
         self.swing_data = None

@@ -4,7 +4,7 @@ from trade_logic.utils import tahmin_onceden_hesaplanmis_mi, pd
 from schemas.enums.karar import Karar
 
 
-class Trader:
+class ProphetStrategy:
     def __init__(self, conf, sqlite_service):
         self.config = conf
         self.sqlite_service = sqlite_service

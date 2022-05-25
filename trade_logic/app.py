@@ -2,12 +2,11 @@ import json
 import time
 import math
 from config import *
-from trade_logic.traders.prophet_trader import Trader as prophet_trader
-from trade_logic.traders.swing_trader import Trader as swing_trader
+from trade_logic.traders.prophet_strategy import ProphetStrategy
+from trade_logic.traders.swing_strategy import SwingStrategy
 from swing_trader.swing_trader_class import SwingTrader
 from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
-from signal_atr.atr import ATR
 from trade_logic.utils import *
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
@@ -40,13 +39,13 @@ class App:
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
-        self.swing_trader = swing_trader(self.config)
-        self.prophet_trader = prophet_trader(self.config)
-        # self.atr_trader = Trader(self.config)  # trailing stop icin
+        self.swing_strategy = SwingStrategy(self.config)
+        self.prophet_strategy = ProphetStrategy(self.config, self.sqlite_service)
+        # self.atr_strategy = SuperTrendStrategy(self.config)  # trailing stop icin
 
     def karar_calis(self):
-        swing_karar = self.swing_trader.karar.value
-        prophet_karar = self.prophet_trader.karar.value
+        swing_karar = self.swing_strategy.karar.value
+        prophet_karar = self.prophet_strategy.karar.value
         if swing_karar * prophet_karar > 0:
             self.pozisyon = Pozisyon.long
         elif swing_karar * prophet_karar < 0:
@@ -62,20 +61,20 @@ class App:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
     def prophet_karar_hesapla(self):
-        self.prophet_trader.tahmin_hesapla(self.bitis_gunu - timedelta(hours=4))
-        self.prophet_trader.kesme_durumu_hesapla()
-        self.prophet_trader.update_trader_onceki_durumlar()
-        self.prophet_trader.tahmin_hesapla(self.bitis_gunu)
-        self.prophet_trader.kesme_durumu_hesapla()
-        self.prophet_trader.kesme_durumundan_karar_hesapla()
+        self.prophet_strategy.tahmin_hesapla(self.bitis_gunu - timedelta(hours=4))
+        self.prophet_strategy.kesme_durumu_hesapla()
+        self.prophet_strategy.update_trader_onceki_durumlar()
+        self.prophet_strategy.tahmin_hesapla(self.bitis_gunu)
+        self.prophet_strategy.kesme_durumu_hesapla()
+        self.prophet_strategy.kesme_durumundan_karar_hesapla()
 
     def swing_trader_karar_hesapla(self):
         series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
             self.bitis_gunu - timedelta(days=self.config.get("swing_window")), self.bitis_gunu
         )
-        self.swing_trader.swing_data = SwingTrader(series)
-        return self.swing_trader.swing_data_trend_hesapla()
+        self.swing_strategy.swing_data = SwingTrader(series)
+        return self.swing_strategy.swing_data_trend_hesapla()
 
     def al_sat_hesapla(self, tahmin):
         self.suanki_fiyat = tahmin["open"]

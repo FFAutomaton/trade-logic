@@ -3,7 +3,7 @@ import time
 from trade_logic.utils import tahmin_onceden_hesaplanmis_mi
 
 
-class Trader:
+class SuperTrendStrategy:
     def __init__(self, conf):
         self.config = conf
         self.dolar = 1000
