@@ -15,15 +15,15 @@ from schemas.enums.karar import Karar
 
 
 class App:
-    def __init__(self, baslangic_gunu=None):
+    def __init__(self, bitis_gunu=None):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 200, "doldur": True, "swing_window": 200,
+            "prophet_window": 2400, "swing_window": 200, "backfill_window": 20,
             "atr_window": 10, "supertrend_mult": 3,
-            "cooldown": 4
+            "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
         self.tp = 0
@@ -31,10 +31,11 @@ class App:
         self.islem_ts = 0
         self.islem_miktari = 0
         self.pozisyon = 0  # 0-baslangic, 1 long, -1 short
-        self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir"))
-        # self.bitis_gunu = datetime.strptime('2021-10-15 00:00:00', '%Y-%m-%d %H:%M:%S')
+        self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir")) if not bitis_gunu else bitis_gunu
         self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
-        self.baslangic_gunu = self.bitis_gunu - timedelta(hours=240) if baslangic_gunu is None else baslangic_gunu
+        self.backfill_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("backfill_window"))
+        self.swing_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("swing_window"))
+        self.prophet_baslangic_gunu = self.bitis_gunu - timedelta(hours=self.config.get("prophet_window"))
 
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
@@ -71,7 +72,7 @@ class App:
     def swing_trader_karar_hesapla(self):
         series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
-            self.bitis_gunu - timedelta(days=self.config.get("swing_window")), self.bitis_gunu
+            self.swing_baslangic_gunu, self.bitis_gunu
         )
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()
@@ -88,21 +89,6 @@ class App:
         tahmin["USDT"] = self.config["wallet"]["USDT"]
 
         # self.tp_guncelle()
-
-    def tahmin_getir(self, baslangic_gunu, cesit):
-        arttir = self.config.get('arttir')
-        coin = self.config.get('coin')
-        pencere = self.config.get('pencere')
-
-        df = self.sqlite_service.veri_getir(coin, pencere, "mum", baslangic_gunu, self.bitis_gunu)
-        train = train_kirp_yeniden_adlandir(df, cesit)
-
-        forecast = model_egit_tahmin_et(train, self.config.get("pencere").upper())
-        try:
-            _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("close").values[0]
-        except:
-            _close = train[train['ds'] == baslangic_gunu - timedelta(hours=arttir)].get("y").values[0]
-        return forecast, _close
 
     def backtest_cuzdana_isle(self, tahmin):
         wallet = self.config.get("wallet")
@@ -200,7 +186,6 @@ class App:
         # TODO:: normal islemleri ayri bir tabloya kaydet
         # TODO:: makineye baglanip repoyu cek, calistir
 
-
     def backtest_basla(self):
         self.sqlite_service.islemleri_temizle()
         baslangic_gunu = self.baslangic_gunu
@@ -213,10 +198,10 @@ class App:
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere"), self.prophet_service, self.baslangic_gunu, self.bitis_gunu
+            self.config.get("pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
         )
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("swing_pencere"), self.prophet_service, self.baslangic_gunu, self.bitis_gunu
+            self.config.get("swing_pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
         )
 
     def sonuc_getir(self):

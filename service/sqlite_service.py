@@ -120,6 +120,7 @@ class SqlLite_Service:
         self.get_conn().commit()
 
     def veri_getir(self, coin, pencere, _type, baslangic=None, bitis=None):
+        # zaman serisi ---> (baslangic=2022-01-01, ......, bitis=2022-05-25)
         schema = None
         if _type == 'prophet':
             query = f'SELECT * FROM prophet_{coin}_{pencere}'
@@ -140,8 +141,8 @@ class SqlLite_Service:
         main_dataframe[schema[1]['name']] = pd.to_datetime(main_dataframe[schema[1]['name']], format='%Y-%m-%d %H:%M:%S')
 
         main_dataframe = main_dataframe.sort_values(by=schema[0]['name'], ascending=False, ignore_index=True)
-        if baslangic:
-            main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(baslangic.timestamp())*1000].reset_index(drop=True)
+        # if bitis:
+        #     main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(bitis.timestamp())*1000].reset_index(drop=True)
 
         print(f'{_type} datasi yuklendi! {baslangic}   {bitis}')
         return main_dataframe

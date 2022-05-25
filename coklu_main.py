@@ -2,7 +2,11 @@ from datetime import datetime
 from trade_logic.app import App
 
 if __name__ == '__main__':
-    app = App()
+    bitis_gunu = None
+    # bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    # bitis_gunu = bitis_gunu.replace(tzinfo=None)
+    app = App(bitis_gunu)
+
     if app.config["doldur"]:
         app.mum_verilerini_guncelle()
 
