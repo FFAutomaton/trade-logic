@@ -127,7 +127,8 @@ class SqlLite_Service:
             schema = prophet_tahmin_schema
         elif _type == 'mum':
             query = f"""SELECT * FROM {f'{coin}_{pencere}'}
-                    WHERE open_ts_int < {int(bitis.timestamp())*1000}"""
+                    WHERE open_ts_int < {int(bitis.timestamp())*1000}
+                    and open_ts_int > {int(baslangic.timestamp())*1000}"""
             schema = mum_schema
         elif _type == 'islem':
             query = f"""SELECT * FROM islemler_{coin}_{pencere}"""

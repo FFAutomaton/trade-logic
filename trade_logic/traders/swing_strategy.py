@@ -16,11 +16,13 @@ class SwingStrategy:
         last_low = min(swing_data.lowNodes[0].close, swing_data.lowNodes[0].open)
         prev_low = min(swing_data.lowNodes[1].close, swing_data.lowNodes[1].open)
 
-        if last_high > prev_high and last_low > prev_low:
+        self.karar = Karar.notr
+
+        if last_high >= prev_high and last_low > prev_low:
             self.karar = Karar.alis
             if self.suanki_fiyat < last_low:
                 self.karar = Karar.satis
-        elif last_high < prev_high and last_low < prev_low:
+        elif last_high < prev_high and last_low <= prev_low:
             self.karar = Karar.satis
             if self.suanki_fiyat > last_high:
                 self.karar = Karar.alis

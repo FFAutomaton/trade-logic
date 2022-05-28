@@ -26,6 +26,7 @@ class App:
             "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
+        self.suanki_fiyat = 0
         self.tp = 0
         self.onceki_tp = 0
         self.islem_ts = 0
@@ -43,6 +44,15 @@ class App:
         self.swing_strategy = SwingStrategy(self.config)
         self.prophet_strategy = ProphetStrategy(self.config, self.sqlite_service)
         # self.atr_strategy = SuperTrendStrategy(self.config)  # trailing stop icin
+
+    def init(self):
+        series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+            self.bitis_gunu - timedelta(days=1), self.bitis_gunu
+        )
+        self.suanki_fiyat = series.iloc[0]["close"]
+        self.swing_strategy.suanki_fiyat = self.suanki_fiyat
+        self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
 
     def karar_calis(self):
         swing_karar = self.swing_strategy.karar.value

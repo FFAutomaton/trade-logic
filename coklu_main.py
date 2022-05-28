@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     if app.config["doldur"]:
         app.mum_verilerini_guncelle()
-
+    app.init()
     app.swing_trader_karar_hesapla()
     app.prophet_karar_hesapla()
 
@@ -18,7 +18,10 @@ if __name__ == '__main__':
     # TODO:: bunu trader kaydet ve geri yukle ile yapabiliriz
     # self.backtest_cuzdana_isle(tahmin)
     # TODO:: trailing stop karar durumu ??
+    # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
+
     # TODO:: backtest ayarla
+    # TODO:: swing traderda noise temizlemek icin acilis ve kapanisin ortalamasini alip swing traderi ona gore hesapla
 
     # self.al_sat_hesapla(tahmin)
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder
