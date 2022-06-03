@@ -1,15 +1,19 @@
 import json
-import time
 import math
 from config import *
+
 from trade_logic.traders.prophet_strategy import ProphetStrategy
 from trade_logic.traders.swing_strategy import SwingStrategy
+from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
+
 from swing_trader.swing_trader_class import SwingTrader
+
 from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
-from trade_logic.utils import *
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
+
+from trade_logic.utils import *
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 
@@ -19,31 +23,35 @@ class App:
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
-            "swing_pencere": "1d", "swing_arttir": 24,
+            "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 2400, "swing_window": 200, "backfill_window": 20,
+            "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
             "atr_window": 10, "supertrend_mult": 3,
             "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
         self.suanki_fiyat = 0
-        self.tp = 0
-        self.onceki_tp = 0
+        self.karar = None
+        self.onceki_karar = Karar.notr
+        self.pozisyon = 0  # 0-baslangic, 1 long, -1 short
+
         self.islem_ts = 0
         self.islem_miktari = 0
-        self.pozisyon = 0  # 0-baslangic, 1 long, -1 short
+
         self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir")) if not bitis_gunu else bitis_gunu
         self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
+
         self.backfill_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("backfill_window"))
         self.swing_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("swing_window"))
         self.prophet_baslangic_gunu = self.bitis_gunu - timedelta(hours=self.config.get("prophet_window"))
+        self.super_trend_baslangic_gunu = self.bitis_gunu - timedelta(hours=self.config.get("super_trend_window"))
 
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.swing_strategy = SwingStrategy(self.config)
         self.prophet_strategy = ProphetStrategy(self.config, self.sqlite_service)
-        # self.atr_strategy = SuperTrendStrategy(self.config)  # trailing stop icin
+        self.super_trend_strategy = SuperTrendStrategy(self.config)
 
     def init(self):
         series = self.sqlite_service.veri_getir(
@@ -53,29 +61,56 @@ class App:
         self.suanki_fiyat = series.iloc[0]["close"]
         self.swing_strategy.suanki_fiyat = self.suanki_fiyat
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
+        self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
+
+    def pozisyon_al(self):
+        pass
 
     def karar_calis(self):
         swing_karar = self.swing_strategy.karar.value
         prophet_karar = self.prophet_strategy.karar.value
+
         if swing_karar * prophet_karar > 0:
-            self.pozisyon = Pozisyon.long
+            self.karar = Karar.alis
         elif swing_karar * prophet_karar < 0:
-            self.pozisyon = Pozisyon.short
+            self.karar = Karar.satis
         elif swing_karar == 0:
             if prophet_karar == Karar.alis.value:
-                self.pozisyon = Pozisyon.long
+                self.karar = Karar.alis
             elif prophet_karar == Karar.satis.value:
-                self.pozisyon = Pozisyon.short
+                self.karar = Karar.satis
             else:
-                self.pozisyon = Pozisyon.notr
+                self.karar = Karar.notr
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
+    def super_trend_takip(self):
+        series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
+            self.prophet_baslangic_gunu, self.bitis_gunu
+        )
+        self.super_trend_strategy.atr_hesapla(series)
+        self.super_trend_cikis_kontrol()
+
+    def super_trend_cikis_kontrol(self):
+        if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
+            self.super_trend_strategy.reset_super_trend()
+            return
+
+        self.super_trend_strategy.tp_hesapla(self.pozisyon)
+
+        if self.pozisyon * self.super_trend_strategy.onceki_tp < self.pozisyon * self.super_trend_strategy.tp:
+            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
+
+        if self.pozisyon * self.suanki_fiyat < self.pozisyon * self.super_trend_strategy.onceki_tp:
+            self.karar = Karar.cikis
+            self.super_trend_strategy.reset_super_trend()
+
     def prophet_karar_hesapla(self):
-        self.prophet_strategy.tahmin_hesapla(self.bitis_gunu - timedelta(hours=4))
+        self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu - timedelta(hours=4))
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.update_trader_onceki_durumlar()
-        self.prophet_strategy.tahmin_hesapla(self.bitis_gunu)
+        self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu)
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.kesme_durumundan_karar_hesapla()
 
@@ -112,7 +147,7 @@ class App:
                 tahmin["alis"] = self.islem_fiyati
                 self.islem_ts = tahmin['ds']
                 self.pozisyon = 1
-                self.reset_trader()
+                self.reset_trader()  # ????
         elif self.karar == -1:
             # pass
             if self.pozisyon in [0, 1]:

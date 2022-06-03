@@ -14,10 +14,13 @@ if __name__ == '__main__':
     app.prophet_karar_hesapla()
 
     app.karar_calis()
-    # TODO:: onceki pozisyona gore hareket etmeyi ayarlar
+    app.super_trend_takip()
+    app.pozisyon_al()
+    # TODO:: onceki karar olayini hallet sadece db'den geri yukleyerek olabilir
+
     # TODO:: bunu trader kaydet ve geri yukle ile yapabiliriz
     # self.backtest_cuzdana_isle(tahmin)
-    # TODO:: trailing stop karar durumu ??
+
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
 
     # TODO:: backtest ayarla
