@@ -1,4 +1,5 @@
 import os
+import traceback
 
 import pandas as pd
 import sqlite3
@@ -108,9 +109,12 @@ class SqlLite_Service:
             _query = f"""INSERT INTO trader_{coin}_{tip} {self.values_ifadesi_olustur(trader_schema)}
                             ON CONFLICT({trader_schema[0]["name"]}) {self.update_ifadesi_olustur(trader_schema)};"""
 
-        self.get_conn().cursor().executemany(_query, [data])
-        self.get_conn().commit()
-        print(f'------->    {_type} yazildi {coin}_{tip} ')
+        try:
+            self.get_conn().cursor().executemany(_query, [data])
+            self.get_conn().commit()
+            print(f'------->    {_type} yazildi {coin}_{tip} ')
+        except:
+            traceback.print_exc()
 
     def islemleri_temizle(self):
         coin = self._config.get('coin')
@@ -140,10 +144,7 @@ class SqlLite_Service:
         data = curr.fetchall()
         main_dataframe = pd.DataFrame(data, columns=[el["name"] for el in schema])
         main_dataframe[schema[1]['name']] = pd.to_datetime(main_dataframe[schema[1]['name']], format='%Y-%m-%d %H:%M:%S')
-
         main_dataframe = main_dataframe.sort_values(by=schema[0]['name'], ascending=False, ignore_index=True)
-        # if bitis:
-        #     main_dataframe = main_dataframe[main_dataframe[schema[0]['name']] < int(bitis.timestamp())*1000].reset_index(drop=True)
 
-        print(f'{_type} datasi yuklendi! {baslangic}   {bitis}')
+        # print(f'{_type} datasi yuklendi! {baslangic}   {bitis}')
         return main_dataframe

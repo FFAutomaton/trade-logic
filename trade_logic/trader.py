@@ -1,6 +1,8 @@
 import json
 import math
 from config import *
+from datetime import timedelta
+import matplotlib.pyplot as plt
 
 from trade_logic.traders.prophet_strategy import ProphetStrategy
 from trade_logic.traders.swing_strategy import SwingStrategy
@@ -19,7 +21,7 @@ from schemas.enums.karar import Karar
 
 
 class Trader:
-    def __init__(self, bitis_gunu=None):
+    def __init__(self, bitis_gunu):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self._kaydedilecek = ["islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
         self.config = {
@@ -42,8 +44,7 @@ class Trader:
         self.islem_miktari = 0
         self.islem_fiyati = 0
 
-        self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir")) if not bitis_gunu else bitis_gunu
-        self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
+        self.bitis_gunu = bitis_gunu
 
         self.backfill_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("backfill_window"))
         self.swing_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("swing_window"))
@@ -67,6 +68,9 @@ class Trader:
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
+    def borsada_islemleri_hallet(self):
+        pass
+
     def pozisyon_al(self):
         tahmin = self.tahmin
         self.suanki_ts = tahmin["ds"]
@@ -88,7 +92,7 @@ class Trader:
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["alis"] = self.islem_fiyati
                 self.islem_ts = tahmin['ds']
-                self.pozisyon = 1
+                self.pozisyon = Pozisyon(1)
                 self.super_trend_strategy.reset_super_trend()
         elif self.karar == Karar.cikis:
             if self.pozisyon.value in [0, 1]:
@@ -126,7 +130,7 @@ class Trader:
             self.karar = Karar.alis
         elif swing_karar * prophet_karar < 0:
             self.karar = Karar.satis
-        elif swing_karar == 0:
+        elif swing_karar * prophet_karar == 0:
             if prophet_karar == Karar.alis.value:
                 self.karar = Karar.alis
             elif prophet_karar == Karar.satis.value:
@@ -237,16 +241,6 @@ class Trader:
         print(f"trader detaylar: {json.dumps(self.trader.__dict__)}")
         # TODO:: normal islemleri ayri bir tabloya kaydet
         # TODO:: makineye baglanip repoyu cek, calistir
-
-    def backtest_basla(self):
-        self.sqlite_service.islemleri_temizle()
-        baslangic_gunu = self.baslangic_gunu
-        while baslangic_gunu <= self.bitis_gunu:
-            islem = self.tekil_islem_hesapla(baslangic_gunu)
-            self.sqlite_service.veri_yaz(islem, "islem")
-            print('##################################')
-            print(f'{baslangic_gunu} icin bitti!')
-            baslangic_gunu = baslangic_gunu + timedelta(hours=self.config.get('arttir'))
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

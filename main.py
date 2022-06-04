@@ -17,13 +17,13 @@ def app_calis(bitis_gunu):
         trader.mum_verilerini_guncelle()
     trader.durumu_geri_yukle()  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
     trader_calis(trader)
+    trader.borsada_islemleri_hallet()
     trader.durumu_kaydet()
+
 
 
 if __name__ == '__main__':
     bitis_gunu = None
-    # bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-    # bitis_gunu = bitis_gunu.replace(tzinfo=None)
     app_calis(bitis_gunu)
     # self.backtest_cuzdana_isle(tahmin)
 

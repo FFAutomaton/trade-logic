@@ -1,8 +1,6 @@
 import pandas as pd
-from csv import DictWriter
 from signal_prophet.ml.model_classes.prophet_model import ProphetModel
-from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
+from datetime import datetime
 
 
 def bitis_gunu_truncate(arttir):
@@ -29,22 +27,6 @@ def model_egit_tahmin_et(train, pencere):
     )
     model.fit()
     return model.predict()
-
-
-def tahminlere_ekle(_config, tahminler):
-    with open(f'./coindata/{_config.get("coin")}/tahminler.csv', 'a', newline='') as f_object:
-        writer_object = DictWriter(f_object, fieldnames=tahminler.keys())
-        writer_object.writerow(tahminler)
-        f_object.close()
-
-
-def boslari_doldur(main_dataframe):
-    if main_dataframe.isnull().any().any():
-        for index, row in main_dataframe.isnull().iterrows():
-            for i, v in enumerate(row.values):
-                if v:
-                    main_dataframe.at[index, row.index[i]] = main_dataframe.mean(axis=1)[index]
-    return main_dataframe
 
 
 def train_kirp_yeniden_adlandir(df, cesit):
