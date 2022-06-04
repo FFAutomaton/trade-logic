@@ -21,6 +21,7 @@ from schemas.enums.karar import Karar
 class Trader:
     def __init__(self, bitis_gunu=None):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
+        self._kaydedilecek = ["islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
@@ -31,7 +32,7 @@ class Trader:
         }
         self.secrets.update(self.config)
         self.suanki_fiyat = 0
-        self.karar = None
+        self.karar = Karar.notr
         self.onceki_karar = Karar.notr
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
 
@@ -99,10 +100,10 @@ class Trader:
 
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
 
-        if self.pozisyon * self.super_trend_strategy.onceki_tp < self.pozisyon * self.super_trend_strategy.tp:
+        if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
 
-        if self.pozisyon * self.suanki_fiyat < self.pozisyon * self.super_trend_strategy.onceki_tp:
+        if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
 
@@ -184,21 +185,25 @@ class Trader:
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
     def durumu_geri_yukle(self):
-        trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
-        if not trader.empty:
-            conf_ = json.loads(trader.config[0])
-            for key in conf_:
-                setattr(self.trader, key, conf_[key])
+        _trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
+        _oncekiler = ["karar", "pozisyon"]
+        if not _trader.empty:
+            conf_ = json.loads(_trader.config[0])
+            for key in _oncekiler:
+                if key == "karar":
+                    self.onceki_karar = Karar(conf_[key])
+                elif key == "pozisyon":
+                    self.pozisyon = Pozisyon(conf_[key])
 
     def durumu_kaydet(self):
         _trader = {}
-        _kaydedilecek = ["islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
-        for key in _kaydedilecek:
-            if hasattr(self[key], "value"):
-                _trader[key] = self[key].value
+
+        for key in self._kaydedilecek:
+            if hasattr(getattr(self, key), "value"):
+                _trader[key] = getattr(self, key).value
             else:
-                _trader[key] = self[key]
-        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader.__dict__)}
+                _trader[key] = getattr(self, key)
+        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
         self.sqlite_service.veri_yaz(data, "trader")
 
     def calis(self):
