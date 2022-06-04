@@ -10,7 +10,6 @@ class ProphetStrategy:
         self.config = conf
         self.sqlite_service = sqlite_service
         self.agirlik = 1
-        self.dolar = 1000
         self.karar = 0
         self.kesme_durumu = None
         self.onceki_kesme_durumu = None
@@ -27,6 +26,7 @@ class ProphetStrategy:
         self.high = tahmin.get("high")
         self.low = tahmin.get("low")
         print(f'egitim bitti sure: {time.time() - start}')
+        return tahmin
 
     def update_trader_onceki_durumlar(self):
         for attr, value in vars(self).items():

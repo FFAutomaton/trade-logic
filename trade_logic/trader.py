@@ -31,13 +31,16 @@ class Trader:
             "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
+        self.tahmin = None
         self.suanki_fiyat = 0
+        self.suanki_ts = None
         self.karar = Karar.notr
         self.onceki_karar = Karar.notr
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
-
+        self.dolar = 1000
         self.islem_ts = 0
         self.islem_miktari = 0
+        self.islem_fiyati = 0
 
         self.bitis_gunu = bitis_gunu_truncate(self.config.get("arttir")) if not bitis_gunu else bitis_gunu
         self.bitis_gunu = self.bitis_gunu.replace(tzinfo=None)
@@ -65,7 +68,55 @@ class Trader:
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
     def pozisyon_al(self):
-        pass
+        tahmin = self.tahmin
+        self.suanki_ts = tahmin["ds"]
+        # if tahmin["ds"] == "2022-01-20 00:00:00":
+        #     print('here')
+        tahmin["alis"] = float("nan")
+        tahmin["satis"] = float("nan")
+        tahmin["cikis"] = float("nan")
+
+        wallet = self.config.get("wallet")
+        tahmin["ETH"] = wallet["ETH"]
+        tahmin["USDT"] = wallet["USDT"]
+
+        if self.karar == Karar.alis:
+            if self.pozisyon.value in [0, -1]:
+                if self.islem_miktari:
+                    self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_fiyati = self.suanki_fiyat
+                tahmin["alis"] = self.islem_fiyati
+                self.islem_ts = tahmin['ds']
+                self.pozisyon = 1
+                self.super_trend_strategy.reset_super_trend()
+        elif self.karar == Karar.cikis:
+            if self.pozisyon.value in [0, 1]:
+                if self.islem_miktari:
+                    self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_fiyati = self.suanki_fiyat
+                tahmin["satis"] = self.islem_fiyati
+                self.islem_ts = tahmin['ds']
+                self.pozisyon = Pozisyon(-1)
+                self.super_trend_strategy.reset_super_trend()
+
+        elif self.karar == 3:
+            self.dolar = self.dolar - self.pozisyon.value * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
+            tahmin["cikis"] = self.suanki_fiyat
+            self.islem_miktari = 0
+            self.islem_fiyati = 0
+            self.pozisyon = Pozisyon(0)
+            # self.karar = Karar(0)
+            self.super_trend_strategy.reset_super_trend()
+
+        wallet["ETH"] = self.islem_miktari
+        wallet["USDT"] = self.dolar
+
+        self.config["wallet"] = wallet
+        tahmin["ETH"] = wallet["ETH"]
+        tahmin["USDT"] = wallet["USDT"]
+        self.tahmin = tahmin
 
     def karar_calis(self):
         swing_karar = self.swing_strategy.karar.value
@@ -111,7 +162,7 @@ class Trader:
         self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu - timedelta(hours=4))
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.update_trader_onceki_durumlar()
-        self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu)
+        self.tahmin = self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu)
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.kesme_durumundan_karar_hesapla()
 
@@ -122,61 +173,6 @@ class Trader:
         )
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()
-
-    def al_sat_hesapla(self, tahmin):
-        self.suanki_fiyat = tahmin["open"]
-        self.suanki_ts = tahmin["ds"]
-        # if tahmin["ds"] == "2022-01-20 00:00:00":
-        #     print('here')
-        tahmin["alis"] = float("nan")
-        tahmin["satis"] = float("nan")
-        tahmin["cikis"] = float("nan")
-        tahmin["ETH"] = self.config["wallet"]["ETH"]
-        tahmin["USDT"] = self.config["wallet"]["USDT"]
-
-        # self.tp_guncelle()
-
-    def backtest_cuzdana_isle(self, tahmin):
-        wallet = self.config.get("wallet")
-        if self.karar == 1:
-
-            if self.pozisyon in [0, -1]:
-                if self.islem_miktari:
-                    self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
-                self.islem_fiyati = self.suanki_fiyat
-                tahmin["alis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
-                self.pozisyon = 1
-                self.reset_trader()  # ????
-        elif self.karar == -1:
-            # pass
-            if self.pozisyon in [0, 1]:
-                if self.islem_miktari:
-                    self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
-                self.islem_fiyati = self.suanki_fiyat
-                tahmin["satis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
-                self.pozisyon = -1
-                self.reset_trader()
-
-        elif self.karar == 3:
-            self.dolar = self.dolar - self.pozisyon * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-            tahmin["cikis"] = self.suanki_fiyat
-            self.islem_miktari = 0
-            self.islem_fiyati = 0
-            self.pozisyon = 0
-            self.karar = 0
-            self.reset_trader()
-
-        wallet["ETH"] = 0
-        wallet["USDT"] = self.dolar
-
-        self.config["wallet"] = wallet
-        tahmin["ETH"] = wallet["ETH"]
-        tahmin["USDT"] = wallet["USDT"]
-        return tahmin, self.config
 
     def wallet_isle(self):
         for symbol in self.wallet:
