@@ -18,7 +18,7 @@ from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 
 
-class App:
+class Trader:
     def __init__(self, bitis_gunu=None):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
@@ -33,7 +33,7 @@ class App:
         self.suanki_fiyat = 0
         self.karar = None
         self.onceki_karar = Karar.notr
-        self.pozisyon = 0  # 0-baslangic, 1 long, -1 short
+        self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
 
         self.islem_ts = 0
         self.islem_miktari = 0
@@ -183,16 +183,22 @@ class App:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
-    def trader_geri_yukle(self):
+    def durumu_geri_yukle(self):
         trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
         if not trader.empty:
             conf_ = json.loads(trader.config[0])
             for key in conf_:
                 setattr(self.trader, key, conf_[key])
 
-    def trader_kaydet(self):
-        self.trader.atr = None  # atr'yi veritabaninda tutmaya gerek yok, json.dumps patliyor zaten
-        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(self.trader.__dict__)}
+    def durumu_kaydet(self):
+        _trader = {}
+        _kaydedilecek = ["islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        for key in _kaydedilecek:
+            if hasattr(self[key], "value"):
+                _trader[key] = self[key].value
+            else:
+                _trader[key] = self[key]
+        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader.__dict__)}
         self.sqlite_service.veri_yaz(data, "trader")
 
     def calis(self):

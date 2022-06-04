@@ -19,8 +19,8 @@ class SuperTrendStrategy:
 
     def tp_hesapla(self, pozisyon):
         atr = self.atr[len(self.atr) - 1]
-        if pozisyon != 0:
-            self.tp = self.suanki_fiyat + (-1 * pozisyon * self.config.get("supertrend_mult") * atr)
+        if pozisyon.value != 0:
+            self.tp = self.suanki_fiyat + (-1 * pozisyon.value * self.config.get("supertrend_mult") * atr)
         if self.onceki_tp == 0:
             self.onceki_tp = self.tp
 

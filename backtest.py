@@ -1,13 +1,13 @@
 import os
 from trade_logic.utils import *
-from trade_logic.app import App
+from trade_logic.trader import Trader
 
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
     baslangic_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     baslangic_gunu = baslangic_gunu.replace(tzinfo=None)
-    app = App(baslangic_gunu)
+    app = Trader(baslangic_gunu)
 
     if app.config["doldur"]:
         app.mum_verilerini_guncelle()
