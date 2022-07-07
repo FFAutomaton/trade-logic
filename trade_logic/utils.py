@@ -1,6 +1,6 @@
 import pandas as pd
 from signal_prophet.ml.model_classes.prophet_model import ProphetModel
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 def bitis_gunu_truncate(arttir):

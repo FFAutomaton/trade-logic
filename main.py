@@ -1,5 +1,18 @@
-from datetime import datetime
 from trade_logic.trader import Trader
+from trade_logic.utils import *
+
+
+def backtest_calis(trader):
+    trader.sqlite_service.islemleri_temizle()
+    _son = bitis_gunu_truncate(trader.config.get("arttir"))
+    # _son = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+
+    while trader.bitis_gunu <= _son:
+        print(f'#################### {trader.bitis_gunu} icin basladi! ###################')
+        trader_calis(trader)
+        islem = trader.tahmin
+        trader.sqlite_service.veri_yaz(islem, "islem")
+        trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
 
 
 def trader_calis(trader):

@@ -60,7 +60,7 @@ class Trader:
 
     def init(self):
         series = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+            self.config.get("coin"), self.config.get("prophet_pencere"), "mum",
             self.bitis_gunu - timedelta(days=1), self.bitis_gunu
         )
         self.suanki_fiyat = series.iloc[0]["close"]
@@ -73,6 +73,8 @@ class Trader:
 
     def pozisyon_al(self):
         tahmin = self.tahmin
+        # if tahmin["ds"] == '2022-04-11 16:00:00':
+        #     print("here")
         self.suanki_ts = tahmin["ds"]
         # if tahmin["ds"] == "2022-01-20 00:00:00":
         #     print('here')
@@ -94,7 +96,7 @@ class Trader:
                 self.islem_ts = tahmin['ds']
                 self.pozisyon = Pozisyon(1)
                 self.super_trend_strategy.reset_super_trend()
-        elif self.karar == Karar.cikis:
+        elif self.karar == Karar.satis:
             if self.pozisyon.value in [0, 1]:
                 if self.islem_miktari:
                     self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
@@ -105,19 +107,20 @@ class Trader:
                 self.pozisyon = Pozisyon(-1)
                 self.super_trend_strategy.reset_super_trend()
 
-        elif self.karar == 3:
+        elif self.karar == Karar.cikis:
             self.dolar = self.dolar - self.pozisyon.value * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
             tahmin["cikis"] = self.suanki_fiyat
             self.islem_miktari = 0
             self.islem_fiyati = 0
             self.pozisyon = Pozisyon(0)
-            # self.karar = Karar(0)
+            self.karar = Karar(0)
             self.super_trend_strategy.reset_super_trend()
 
         wallet["ETH"] = self.islem_miktari
         wallet["USDT"] = self.dolar
 
         self.config["wallet"] = wallet
+        self.onceki_karar = self.karar
         tahmin["ETH"] = wallet["ETH"]
         tahmin["USDT"] = wallet["USDT"]
         self.tahmin = tahmin
@@ -127,16 +130,23 @@ class Trader:
         prophet_karar = self.prophet_strategy.karar.value
 
         if swing_karar * prophet_karar > 0:
-            self.karar = Karar.alis
-        elif swing_karar * prophet_karar < 0:
-            self.karar = Karar.satis
-        elif swing_karar * prophet_karar == 0:
-            if prophet_karar == Karar.alis.value:
+            if swing_karar > 0:
                 self.karar = Karar.alis
-            elif prophet_karar == Karar.satis.value:
-                self.karar = Karar.satis
             else:
-                self.karar = Karar.notr
+                self.karar = Karar.satis
+        elif swing_karar * prophet_karar < 0:
+            self.karar = Karar.notr
+        elif swing_karar * prophet_karar == 0:
+            if swing_karar == 0:
+                if prophet_karar == Karar.alis.value:
+                    self.karar = Karar.alis
+                elif prophet_karar == Karar.satis.value:
+                    self.karar = Karar.satis
+            elif prophet_karar == 0:
+                if swing_karar == Karar.alis.value:
+                    self.karar = Karar.alis
+                elif swing_karar == Karar.satis.value:
+                    self.karar = Karar.satis
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
