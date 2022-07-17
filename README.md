@@ -9,6 +9,9 @@ koyarak debug yapabilirsiniz.
 ### ENV 
 PYTHON_ENV = "TEST"
 
+## Localde calistirma
+`docker build --rm -t prophet-trader .`
+
 # AWS EC2 instance'a baglanma
 EC2 instance olustur, default degerler ile ilerle, sadece disk size arttirabilirsin,
 eger bunu yaparsen docker ayarlarinda volume arttirma adimlarini gecebilirsin.
@@ -37,7 +40,15 @@ icinde devam edecek. loglari da disari bir dosyaya yazacak bir kodu ekledik.
 Ayrintilar icin: https://github.com/mloning/minimal-python-app-using-docker-cron
 
 - Once docker `build` alalim, uygulamanin ana klasorunde
-`docker build --rm -t prophet-trader .`
+```
+docker build --rm -t prophet-trader .
+```
+```commandline
+docker run -t -i -d --rm \
+    --name prophet-trader -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
+     -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
+     prophet-trader
+```
 - Sonra bu `docker goruntusunu` gene bu klasore kaydedelim
 `docker save prophet-trader > prophet-trader.tar`
 - Bu olusumu aktarabilmek icin once s3 bucket'ina yuklemek gerekiyor, gerekli ayarlar icin:
@@ -60,7 +71,11 @@ docker run -t -i -d --rm \
 ```
 - Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
 `docker ps`
-`docker container exec -it <container_id> /bin/bash`
+```commandline
+docker container exec -it <container_id> /bin/bash
+docker container exec -it f0d1be977295 /bin/bash
+
+```
 - 
 
 
