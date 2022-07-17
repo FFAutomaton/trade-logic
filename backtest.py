@@ -5,7 +5,7 @@ from trade_logic.app import App
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
-    baslangic_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    baslangic_gunu = datetime.strptime('2022-04-10 00:00:00', '%Y-%m-%d %H:%M:%S')
     baslangic_gunu = baslangic_gunu.replace(tzinfo=None)
     app = App(baslangic_gunu)
 

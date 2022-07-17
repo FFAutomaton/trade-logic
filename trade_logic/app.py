@@ -147,6 +147,8 @@ class App:
         swing_data = SwingTrader(series)
         self.trader.atr = ATR(series, self.config.get("atr_window")).average_true_range
         islem, self.config = self.trader.al_sat_hesapla(tahmin, swing_data)
+        if islem["ds"] == "2022-04-11 16:00:00":
+            print("here")
         return islem
 
     def mum_verilerini_guncelle(self):

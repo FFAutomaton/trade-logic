@@ -73,6 +73,8 @@ docker run -t -i -d --rm \
 `docker ps`
 ```commandline
 docker container exec -it <container_id> /bin/bash
+docker container exec -it f0d1be977295 /bin/bash
+
 ```
 - 
 
