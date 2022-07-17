@@ -6,15 +6,15 @@ from trade_logic.utils import *
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
-    bitis_gunu = datetime.strptime('2022-04-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-06-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     bitis_gunu = bitis_gunu.replace(tzinfo=None)
     trader = Trader(bitis_gunu)
-
+    trader.config["doldur"] = False
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
 
     # st_mult = [0.2, 0.3, 0.4, 0.5]
-    st_mult = [0.2, 0.5, 1, 1.5, 2, 2.5, 3]
+    st_mult = [1.5]
     rapor = {}
     for mult in st_mult:
         trader = Trader(bitis_gunu)

@@ -131,14 +131,14 @@ class SqlLite_Service:
             schema = prophet_tahmin_schema
         elif _type == 'mum':
             query = f"""SELECT * FROM {f'{coin}_{pencere}'}
-                    WHERE open_ts_int < {int(bitis.timestamp())*1000}
+                    WHERE open_ts_int <= {int(bitis.timestamp())*1000}
                     and open_ts_int > {int(baslangic.timestamp())*1000}"""
             schema = mum_schema
         elif _type == 'islem':
             query = f"""SELECT * FROM islemler_{coin}_{pencere}"""
             schema = islem_schema
         elif _type == 'trader':
-            query = f"""SELECT * FROM trader_{coin}_{pencere}"""
+            query = f"""SELECT * FROM trader_{coin}_{pencere} order by process_ts_int desc limit 1"""
             schema = trader_schema
         curr = self.get_conn().cursor().execute(query)
         data = curr.fetchall()

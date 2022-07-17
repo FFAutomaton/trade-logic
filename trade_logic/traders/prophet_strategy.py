@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 import time
 from trade_logic.utils import tahmin_onceden_hesaplanmis_mi, pd, train_kirp_yeniden_adlandir, \
@@ -22,7 +23,7 @@ class ProphetStrategy:
     def tahmin_hesapla(self, baslangic, bitis):
         start = time.time()
         tahmin = {"ds": datetime.strftime(bitis, '%Y-%m-%d %H:%M:%S')}
-        tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic, bitis)
+        tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic.replace(tzinfo=None), bitis.replace(tzinfo=None))
         self.high = tahmin.get("high")
         self.low = tahmin.get("low")
         print(f'egitim bitti sure: {time.time() - start}')
@@ -38,7 +39,7 @@ class ProphetStrategy:
     def tahmin_islemlerini_hallet(self, tahmin, baslangic, bitis):
         tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
         if not tahmin_onceden_hesaplanmis_mi(bitis, self.config, tahminler_cache):
-            print(f'prophet calisiyor......{bitis}')
+            if os.getenv("PYTHON_ENV") == "TEST": print(f'prophet calisiyor......{bitis}')
             high_tahmin, _close = self.tahmin_getir(baslangic, bitis, self.config.get("high"))
             low_tahmin, _close = self.tahmin_getir(baslangic, bitis, self.config.get("low"))
             tahmin["high"] = high_tahmin["yhat_upper"].values[0]
@@ -46,7 +47,7 @@ class ProphetStrategy:
             tahmin["open"] = _close
             self.sqlite_service.veri_yaz(tahmin, "tahmin")
         else:
-            print('prophet onceden calismis devam ediyorum')
+            if os.getenv("PYTHON_ENV") == "TEST": print('prophet onceden calismis devam ediyorum')
             _row = tahminler_cache[tahminler_cache["ds_str"] == pd.Timestamp(bitis)]
             tahmin["high"] = _row["high"].values[0]
             tahmin["low"] = _row["low"].values[0]
@@ -64,9 +65,9 @@ class ProphetStrategy:
 
         forecast = model_egit_tahmin_et(train, self.config.get("pencere").upper())
         try:
-            _close = train[train['ds'] == bitis - timedelta(hours=arttir)].get("close").values[0]
+            _close = train[train['ds'] == bitis.replace(tzinfo=None) - timedelta(hours=arttir)].get("close").values[0]
         except:
-            _close = train[train['ds'] == bitis - timedelta(hours=arttir)].get("y").values[0]
+            _close = train[train['ds'] == bitis.replace(tzinfo=None) - timedelta(hours=arttir)].get("y").values[0]
         return forecast, _close
 
     def kesme_durumundan_karar_hesapla(self):

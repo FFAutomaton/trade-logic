@@ -1,9 +1,8 @@
 import json
 import math
 from config import *
-from datetime import timedelta
 import matplotlib.pyplot as plt
-
+from datetime import timedelta
 from trade_logic.traders.prophet_strategy import ProphetStrategy
 from trade_logic.traders.swing_strategy import SwingStrategy
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
@@ -29,12 +28,14 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 3,
+            "atr_window": 10, "supertrend_mult": 1.5,
             "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
+        self.wallet = None
         self.tahmin = None
         self.suanki_fiyat = 0
+        self.running_price = 0
         self.suanki_ts = None
         self.karar = Karar.notr
         self.onceki_karar = Karar.notr
@@ -68,16 +69,14 @@ class Trader:
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
-    def borsada_islemleri_hallet(self):
-        pass
+    def init_prod(self):
+        self.wallet = self.binance_service.futures_hesap_bakiyesi()
+        self.wallet_isle()
+        self.durumu_geri_yukle()  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
 
     def pozisyon_al(self):
         tahmin = self.tahmin
-        # if tahmin["ds"] == '2022-04-11 16:00:00':
-        #     print("here")
         self.suanki_ts = tahmin["ds"]
-        # if tahmin["ds"] == "2022-01-20 00:00:00":
-        #     print('here')
         tahmin["alis"] = float("nan")
         tahmin["satis"] = float("nan")
         tahmin["cikis"] = float("nan")
@@ -90,7 +89,7 @@ class Trader:
             if self.pozisyon.value in [0, -1]:
                 if self.islem_miktari:
                     self.dolar = self.dolar + (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_miktari = self.miktar_hesapla()
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["alis"] = self.islem_fiyati
                 self.islem_ts = tahmin['ds']
@@ -100,7 +99,7 @@ class Trader:
             if self.pozisyon.value in [0, 1]:
                 if self.islem_miktari:
                     self.dolar = self.dolar - (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
-                self.islem_miktari = self.dolar / self.suanki_fiyat
+                self.islem_miktari = self.miktar_hesapla()
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["satis"] = self.islem_fiyati
                 self.islem_ts = tahmin['ds']
@@ -215,42 +214,45 @@ class Trader:
                 _trader[key] = getattr(self, key)
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
         self.sqlite_service.veri_yaz(data, "trader")
+        print(data)
 
-    def calis(self):
-        # self.trader_geri_yukle()
-        # self.trader.wallet = self.binance_service.futures_hesap_bakiyesi()
-        # self.trader.wallet_isle()
+    def miktar_hesapla(self):
+        # TODO:: burda su anki fiyati baska bir endpoint'den cekip ona gore miktar hesapla
+        miktar = self.dolar / self.suanki_fiyat
+        return math.floor(miktar * 100) / 100
 
-        # self.trader_kaydet()
-        islem = None
+    def borsada_islemleri_hallet(self):
+        islem = self.tahmin
         yon = None
-        # TODO:: miktar hesapla
-
+        islem["cikis"] = 1  # DEBUG DELETE WHEN YOU ARE DONE
+        islem["satis"] = 0
+        islem["alis"] = 0
         if islem["alis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
-            miktar = self.trader.dolar / self.trader.suanki_fiyat
-            miktar = math.floor(miktar * 100)/100
             self.prophet_service.tg_binance_service.\
-                futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=miktar, kaldirac=1)
+                futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=self.miktar_hesapla(), kaldirac=1)
             print(f"Alış gerçekleştirdi  up!")
         elif islem["satis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
-            miktar = self.wallet.get(self.config.get("symbol"))
             self.prophet_service.tg_binance_service.\
-                futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=miktar, kaldirac=1)
+                futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=self.miktar_hesapla(), kaldirac=1)
             print(f"Satış gerçekleştirdi  down!")
         elif islem["cikis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
             print(f"Kaçışşşşş  go go go!!")
-        bam_bama_sinyal_gonder(islem, yon)
-        print(f"işlem detaylar: {json.dumps(islem)}")
-        print(f"############^^^^^###########")
-        print(f"trader detaylar: {json.dumps(self.trader.__dict__)}")
+        # bam_bama_sinyal_gonder(islem, yon)
+        print(f"işlem detaylar: {self.print_islem_detay(islem)}")
+        # print(f"işlem detaylar: {self.print_islem_detay(islem)}")
+        # print(f"trader detaylar: {json.dumps(self.__dict__)}")
         # TODO:: normal islemleri ayri bir tabloya kaydet
-        # TODO:: makineye baglanip repoyu cek, calistir
+
+    def print_islem_detay(self, islem):
+        print(f"islem detaylar ==> ds: {islem.get('ds')} ")
+        print(f"\t\t\t\t ==> alis: {islem.get('alis')} satis: {islem.get('satis')} cikis: {islem.get('cikis')}")
+        print(f"\t\t\t\t ==> USDT: {islem.get('USDT')} ETH: {islem.get('ETH')}")
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

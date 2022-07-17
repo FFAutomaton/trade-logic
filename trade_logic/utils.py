@@ -1,13 +1,13 @@
 import pandas as pd
 from signal_prophet.ml.model_classes.prophet_model import ProphetModel
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 
 
 def bitis_gunu_truncate(arttir):
     bitis_gunu = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
     _h = bitis_gunu.hour - (bitis_gunu.hour % arttir)
     bitis_gunu = bitis_gunu.replace(hour=_h)
-    return bitis_gunu
+    return bitis_gunu.replace(tzinfo=timezone.utc)
 
 
 def okunur_date_yap(unix_ts):
