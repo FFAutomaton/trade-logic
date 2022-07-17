@@ -112,7 +112,6 @@ class SqlLite_Service:
         try:
             self.get_conn().cursor().executemany(_query, [data])
             self.get_conn().commit()
-            print(f'------->    {_type} yazildi {coin}_{tip} ')
         except:
             traceback.print_exc()
 

@@ -224,30 +224,21 @@ class Trader:
     def borsada_islemleri_hallet(self):
         islem = self.tahmin
         yon = None
-        islem["cikis"] = 1  # DEBUG DELETE WHEN YOU ARE DONE
-        islem["satis"] = 0
-        islem["alis"] = 0
         if islem["alis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
             self.prophet_service.tg_binance_service.\
                 futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=self.miktar_hesapla(), kaldirac=1)
-            print(f"Alış gerçekleştirdi  up!")
         elif islem["satis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service. \
                 futures_market_exit(self.config.get("coin"))
             self.prophet_service.tg_binance_service.\
                 futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=self.miktar_hesapla(), kaldirac=1)
-            print(f"Satış gerçekleştirdi  down!")
         elif islem["cikis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
-            print(f"Kaçışşşşş  go go go!!")
-        # bam_bama_sinyal_gonder(islem, yon)
-        print(f"işlem detaylar: {self.print_islem_detay(islem)}")
-        # print(f"işlem detaylar: {self.print_islem_detay(islem)}")
-        # print(f"trader detaylar: {json.dumps(self.__dict__)}")
-        # TODO:: normal islemleri ayri bir tabloya kaydet
+        self.print_islem_detay(islem)
+        bam_bama_sinyal_gonder(islem, yon)
 
     def print_islem_detay(self, islem):
         print(f"islem detaylar ==> ds: {islem.get('ds')} ")

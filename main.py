@@ -39,10 +39,7 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
-    # self.backtest_cuzdana_isle(tahmin)
-
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
     # TODO:: swing traderda noise temizlemek icin acilis ve kapanisin ortalamasini alip swing traderi ona gore hesapla
-
-    # self.al_sat_hesapla(tahmin)
+    # TODO:: normal islemleri ayri bir tabloya kaydet
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder
