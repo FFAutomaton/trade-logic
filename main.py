@@ -9,7 +9,7 @@ def backtest_calis(trader):
     _son = bitis_gunu_truncate(trader.config.get("arttir"))
     # _son = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 
-    while trader.bitis_gunu <= _son:
+    while trader.bitis_gunu <= _son.replace(tzinfo=None):
         print(f'#################### {trader.bitis_gunu} icin basladi! ###################')
         trader_calis(trader)
         islem = trader.tahmin
