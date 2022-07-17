@@ -7,10 +7,13 @@ Binance'e baglanmak icin `API_KEY` = "xxxx" `API_SECRET` = "xxxxxx" degiskenleri
 koyarak debug yapabilirsiniz.
 
 ### ENV 
-PYTHON_ENV = "TEST"
+PYTHON_ENV = "TEST". Bunu degiskenlerinize local denemelerinizde ekleyin. Botu calistirirken bu degiskeni TEST harici birsey yapabilirsiniz.
 
 ## Localde calistirma
-`docker build --rm -t prophet-trader .`
+```commandline
+docker build --rm -t prophet-trader .
+```
+
 ```commandline
 docker run -t -i -d --rm \
     --name prophet-trader -v /home/sevki/Documents/repos/trade-logic/trade-bot-logs:/output \
@@ -49,12 +52,7 @@ Ayrintilar icin: https://github.com/mloning/minimal-python-app-using-docker-cron
 ```
 docker build --rm -t prophet-trader .
 ```
-```commandline
-docker run -t -i -d --rm \
-    --name prophet-trader -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
-     -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
-     prophet-trader
-```
+
 - Sonra bu `docker goruntusunu` gene bu klasore kaydedelim
 `docker save prophet-trader > prophet-trader.tar`
 - Bu olusumu aktarabilmek icin once s3 bucket'ina yuklemek gerekiyor, gerekli ayarlar icin:
@@ -69,7 +67,7 @@ arttiralim. Eger makineyi kaldirirken disk buyuk secildiyse bu adim atlanabilir
 - tar dosyasini acip docker'a yukleyelim
 `docker load < prophet-trader.tar`
 - En son islemlerden sonra olay calistirmaya geldi
-```
+```commandline
 docker run -t -i -d --rm \
     --name prophet-trader -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
      -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
@@ -79,8 +77,6 @@ docker run -t -i -d --rm \
 `docker ps`
 ```commandline
 docker container exec -it <container_id> /bin/bash
-docker container exec -it f0d1be977295 /bin/bash
-
 ```
 - 
 
