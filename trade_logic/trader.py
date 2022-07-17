@@ -22,7 +22,7 @@ from schemas.enums.karar import Karar
 class Trader:
     def __init__(self, bitis_gunu):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
-        self._kaydedilecek = ["islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        self._kaydedilecek = ["suanki_ts", "islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
