@@ -39,6 +39,9 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: manuel olarak islem durdugunda trader onceki durumdan faydalanamaz hale geliyor, veritanindan okudugu
+    #        durumu wallet uzerinden kontrol edip ezmek lazim.
+    # TODO:: README update et, bolumleri duzenle
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
     # TODO:: swing traderda noise temizlemek icin acilis ve kapanisin ortalamasini alip swing traderi ona gore hesapla
     # TODO:: normal islemleri ayri bir tabloya kaydet

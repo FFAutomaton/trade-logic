@@ -11,6 +11,12 @@ PYTHON_ENV = "TEST"
 
 ## Localde calistirma
 `docker build --rm -t prophet-trader .`
+```commandline
+docker run -t -i -d --rm \
+    --name prophet-trader -v /home/sevki/Documents/repos/trade-logic/trade-bot-logs:/output \
+     -v /home/sevki/Documents/repos/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
+     prophet-trader
+```
 
 # AWS EC2 instance'a baglanma
 EC2 instance olustur, default degerler ile ilerle, sadece disk size arttirabilirsin,
