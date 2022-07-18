@@ -39,6 +39,9 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: ==> USDT: 239.66497894 ETH: 0 burda eth niye gelmiyor
+    # TODO:: ==> super trend verilerini de loga ekle
+
     # TODO:: manuel olarak islem durdugunda trader onceki durumdan faydalanamaz hale geliyor, veritanindan okudugu
     #        durumu wallet uzerinden kontrol edip ezmek lazim.
     # TODO:: README update et, bolumleri duzenle
