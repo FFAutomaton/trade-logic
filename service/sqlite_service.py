@@ -1,11 +1,14 @@
 import os
 import traceback
-
+import json
+from datetime import datetime
 import pandas as pd
 import sqlite3
 from trade_logic.utils import okunur_date_yap
 from schemas import *
 from trade_logic.utils import integer_date_yap
+from schemas.enums.pozisyon import Pozisyon
+from schemas.enums.karar import Karar
 
 
 class SqlLite_Service:
@@ -147,3 +150,31 @@ class SqlLite_Service:
 
         # print(f'{_type} datasi yuklendi! {baslangic}   {bitis}')
         return main_dataframe
+
+    def trader_durumu_kaydet(self, trader):
+        _trader = {}
+        _kaydedilecek = ["suanki_ts", "islem_miktari", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+
+        for key in _kaydedilecek:
+            if hasattr(getattr(trader, key), "value"):
+                _trader[key] = getattr(trader, key).value
+            else:
+                _trader[key] = getattr(trader, key)
+        _trader["tp"] = trader.super_trend_strategy.tp
+        _trader["onceki_tp"] = trader.super_trend_strategy.onceki_tp
+
+        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
+        self.veri_yaz(data, "trader")
+        print(data)
+
+    def trader_durumu_geri_yukle(self, trader):
+        _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere"), "trader")
+        _oncekiler = ["karar", "pozisyon"]
+        if not _trader.empty:
+            conf_ = json.loads(_trader.config[0])
+            for key in _oncekiler:
+                if key == "karar":
+                    trader.onceki_karar = Karar(conf_[key])
+                elif key == "pozisyon":
+                    trader.pozisyon = Pozisyon(conf_[key])
+            trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")

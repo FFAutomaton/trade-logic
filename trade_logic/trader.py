@@ -1,4 +1,3 @@
-import json
 import math
 from config import *
 import matplotlib.pyplot as plt
@@ -14,7 +13,6 @@ from signal_prophet.prophet_service import TurkishGekkoProphetService
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
 
-from trade_logic.utils import *
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 
@@ -22,7 +20,7 @@ from schemas.enums.karar import Karar
 class Trader:
     def __init__(self, bitis_gunu):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
-        self._kaydedilecek = ["suanki_ts", "islem_miktari", "islem_ts", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
@@ -72,7 +70,8 @@ class Trader:
     def init_prod(self):
         self.wallet = self.binance_service.futures_hesap_bakiyesi()
         self.wallet_isle()
-        self.durumu_geri_yukle()  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
+        self.sqlite_service.trader_durumu_geri_yukle(
+            self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
 
     def pozisyon_al(self):
         tahmin = self.tahmin
@@ -192,29 +191,6 @@ class Trader:
             self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
-
-    def durumu_geri_yukle(self):
-        _trader = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), "trader")
-        _oncekiler = ["karar", "pozisyon"]
-        if not _trader.empty:
-            conf_ = json.loads(_trader.config[0])
-            for key in _oncekiler:
-                if key == "karar":
-                    self.onceki_karar = Karar(conf_[key])
-                elif key == "pozisyon":
-                    self.pozisyon = Pozisyon(conf_[key])
-
-    def durumu_kaydet(self):
-        _trader = {}
-
-        for key in self._kaydedilecek:
-            if hasattr(getattr(self, key), "value"):
-                _trader[key] = getattr(self, key).value
-            else:
-                _trader[key] = getattr(self, key)
-        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
-        self.sqlite_service.veri_yaz(data, "trader")
-        print(data)
 
     def miktar_hesapla(self):
         # TODO:: burda su anki fiyati baska bir endpoint'den cekip ona gore miktar hesapla

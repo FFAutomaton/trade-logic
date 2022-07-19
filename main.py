@@ -34,7 +34,7 @@ def app_calis():
     trader.init_prod()
     trader_calis(trader)
     trader.borsada_islemleri_hallet()
-    trader.durumu_kaydet()
+    trader.sqlite_service.trader_durumu_kaydet(trader)
 
 
 if __name__ == '__main__':
