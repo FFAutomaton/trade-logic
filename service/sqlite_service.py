@@ -160,7 +160,6 @@ class SqlLite_Service:
                 _trader[key] = getattr(trader, key).value
             else:
                 _trader[key] = getattr(trader, key)
-        _trader["tp"] = trader.super_trend_strategy.tp
         _trader["onceki_tp"] = trader.super_trend_strategy.onceki_tp
 
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
