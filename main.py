@@ -40,7 +40,10 @@ def app_calis():
 if __name__ == '__main__':
     app_calis()
     # TODO:: ==> USDT: 239.66497894 ETH: 0 burda eth niye gelmiyor
-    # TODO:: ==> super trend verilerini de loga ekle
+    # TODO:: binance servis exception alirsa uygulamayi bastan baslat
+    # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
+    #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
+    #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
 
     # TODO:: manuel olarak islem durdugunda trader onceki durumdan faydalanamaz hale geliyor, veritanindan okudugu
     #        durumu wallet uzerinden kontrol edip ezmek lazim.
