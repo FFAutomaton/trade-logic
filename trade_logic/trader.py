@@ -216,7 +216,7 @@ class Trader:
             _exit_, yon = self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
         self.print_islem_detay(islem)
-        if not os.get("PYTHON_ENV") == "TEST":
+        if not os.getenv("PYTHON_ENV") == "TEST":
             bam_bama_sinyal_gonder(islem, yon)
 
     def print_islem_detay(self, islem):
