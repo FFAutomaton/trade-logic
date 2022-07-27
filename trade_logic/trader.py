@@ -28,7 +28,7 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 1.5,
+            "atr_window": 10, "supertrend_mult": 0.5,
             "cooldown": 4, "doldur": True
         }
         self.secrets.update(self.config)
@@ -68,6 +68,13 @@ class Trader:
         self.swing_strategy.suanki_fiyat = self.suanki_fiyat
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
+
+        series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
+            # self.bitis_gunu - timedelta(hours=self.config.get("super_trend_window")), self.bitis_gunu
+            self.bitis_gunu - timedelta(hours=60), self.bitis_gunu
+        )
+        self.super_trend_strategy.atr_hesapla(series)
 
     def init_prod(self):
         self.wallet = self.binance_service.futures_hesap_bakiyesi()
@@ -150,14 +157,6 @@ class Trader:
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
-    def super_trend_takip(self):
-        series = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
-            self.prophet_baslangic_gunu, self.bitis_gunu
-        )
-        self.super_trend_strategy.atr_hesapla(series)
-        self.super_trend_cikis_kontrol()
-
     def super_trend_cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()
@@ -165,6 +164,7 @@ class Trader:
 
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
 
+        # pozisyon 0 iken bu fonksiyon aslinda calismiyor
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
 

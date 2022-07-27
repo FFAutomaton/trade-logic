@@ -14,8 +14,8 @@ RUN apt install -y g++
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 COPY . .
-RUN chmod +x $WORKDIR/main.py $WORKDIR/run.sh $WORKDIR/entrypoint.sh
+RUN chmod +x $WORKDIR/main.py $WORKDIR/bash_scripts/run.sh $WORKDIR/bash_scripts/entrypoint.sh
 
 CMD ["bash"]
-ENTRYPOINT $WORKDIR/entrypoint.sh
+ENTRYPOINT $WORKDIR/bash_scripts/entrypoint.sh
 

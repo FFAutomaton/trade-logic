@@ -21,8 +21,10 @@ def trader_calis(trader):
     trader.init()
     trader.swing_trader_karar_hesapla()
     trader.prophet_karar_hesapla()
+
     trader.karar_calis()
-    trader.super_trend_takip()
+
+    trader.super_trend_cikis_kontrol()
     trader.pozisyon_al()
 
 
@@ -40,7 +42,12 @@ def app_calis():
 if __name__ == '__main__':
     app_calis()
     # TODO:: ==> USDT: 239.66497894 ETH: 0 burda eth niye gelmiyor
+    # TODO:: 0.5 e degistir super trend multiplier'i
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
+    # TODO:: build.sh scripti yaz deployment restart icin ???
+    # TODO:: ATR ile isleme giris filtresi ekle atr>60 ise girsin gibi
+    # TODO:: takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
+    # TODO:: islem_fiyati ekle trader duruma
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
     #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
@@ -50,5 +57,4 @@ if __name__ == '__main__':
     # TODO:: README update et, bolumleri duzenle
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
     # TODO:: swing traderda noise temizlemek icin acilis ve kapanisin ortalamasini alip swing traderi ona gore hesapla
-    # TODO:: normal islemleri ayri bir tabloya kaydet
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder
