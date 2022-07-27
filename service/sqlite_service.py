@@ -153,7 +153,7 @@ class SqlLite_Service:
 
     def trader_durumu_kaydet(self, trader):
         _trader = {}
-        _kaydedilecek = ["suanki_ts", "islem_miktari", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        _kaydedilecek = ["suanki_ts", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):
@@ -164,7 +164,6 @@ class SqlLite_Service:
 
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
         self.veri_yaz(data, "trader")
-        print(data)
 
     def trader_durumu_geri_yukle(self, trader):
         _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere"), "trader")

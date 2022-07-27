@@ -10,15 +10,18 @@ koyarak debug yapabilirsiniz.
 PYTHON_ENV = "TEST". Bunu degiskenlerinize local denemelerinizde ekleyin. Botu calistirirken bu degiskeni TEST harici birsey yapabilirsiniz.
 
 ## Localde calistirma
-```commandline
-docker build --rm -t prophet-trader .
-```
+`Dockerfile` ve `bash_scripts` kalsoru altindaki scriptlerdeki path giti degiskenlerin dogrulugundan emin olun.
 
+`rebuild.sh` dosyasini executable hale getirin, sonrasinda `./bash_scripts/rebuild.sh` komutu ile docker container icinde 
+botu calistirabilirsiniz.
+
+`docker ps` komutu ile `prophet_trader` container id'yi cekin ve container'a baglanin. `app` klasoru icinde `main.py` 
+dosyasini calistirarak calistigindan emin olun.
+
+Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
+`docker ps`
 ```commandline
-docker run -t -i -d --rm \
-    --name prophet-trader -v /home/sevki/Documents/repos/trade-logic/trade-bot-logs:/output \
-     -v /home/sevki/Documents/repos/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
-     prophet-trader
+docker container exec -it <container_id> /bin/bash
 ```
 
 # AWS EC2 instance'a baglanma
@@ -73,13 +76,6 @@ docker run -t -i -d --rm \
      -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
      prophet-trader
 ```
-- Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
-`docker ps`
-```commandline
-docker container exec -it <container_id> /bin/bash
-```
-- 
-
 
 Ek linkler:
 https://stackoverflow.com/questions/41782038/how-to-move-docker-containers-to-aws

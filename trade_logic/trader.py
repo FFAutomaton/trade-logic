@@ -28,8 +28,7 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 0.5,
-            "cooldown": 4, "doldur": True
+            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
         }
         self.secrets.update(self.config)
         self.wallet = None
@@ -197,6 +196,8 @@ class Trader:
     def miktar_hesapla(self):
         # TODO:: burda su anki fiyati baska bir endpoint'den cekip ona gore miktar hesapla
         miktar = self.dolar / self.suanki_fiyat
+        self.islem_miktari = miktar
+        self.islem_fiyati = self.suanki_fiyat
         return math.floor(miktar * 100) / 100
 
     def borsada_islemleri_hallet(self):
