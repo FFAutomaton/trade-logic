@@ -51,7 +51,7 @@ def print_islem_detay(trader):
         print(f"\t\t\t\t ==> satis: {islem.get('satis')}")
     if islem.get('cikis') > 0:
         print(f"\t\t\t\t ==> cikis: {islem.get('cikis')}")
-    print(f"\t\t\t\t ==> islem_miktari: {trader.get('islem_miktari')} islem_fiyati: {trader.get('islem_fiyati')}")
+    print(f"\t\t\t\t ==> islem_miktari: {trader.islem_miktari} islem_fiyati: {trader.islem_fiyati}")
 
 
 if __name__ == '__main__':
