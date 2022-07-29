@@ -1,7 +1,7 @@
+import os
 from datetime import timedelta
 from trade_logic.trader import Trader
 from trade_logic.utils import *
-
 
 
 def backtest_calis(trader):
@@ -35,23 +35,22 @@ def app_calis():
         trader.mum_verilerini_guncelle()
     trader.init_prod()
     trader_calis(trader)
-    trader.borsada_islemleri_hallet()
+    if os.getenv("PYTHON_ENV") != "TEST":
+        trader.borsada_islemleri_hallet()
+    print_islem_detay(trader)
     trader.sqlite_service.trader_durumu_kaydet(trader)
 
 
 if __name__ == '__main__':
     app_calis()
-    # TODO:: islem_fiyati ekle trader duruma
-    # TODO:: ==> USDT: 239.66497894 ETH: 0 burda eth niye gelmiyor
+    # TODO:: islem varken wallet'dan ne geliyor?
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
-    # TODO:: takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
     #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
 
     # TODO:: manuel olarak islem durdugunda trader onceki durumdan faydalanamaz hale geliyor, veritanindan okudugu
     #        durumu wallet uzerinden kontrol edip ezmek lazim.
-    # TODO:: README update et, bolumleri duzenle
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
-    # TODO:: swing traderda noise temizlemek icin acilis ve kapanisin ortalamasini alip swing traderi ona gore hesapla
+    #        takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder

@@ -30,6 +30,7 @@ class Trader:
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
             "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
         }
+        self.binance_wallet = None
         self.secrets.update(self.config)
         self.wallet = None
         self.tahmin = None
@@ -40,6 +41,7 @@ class Trader:
         self.onceki_karar = Karar.notr
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
         self.dolar = 1000
+        self.coin = 0
         self.islem_ts = 0
         self.islem_miktari = 0
         self.islem_fiyati = 0
@@ -76,10 +78,16 @@ class Trader:
         self.super_trend_strategy.atr_hesapla(series)
 
     def init_prod(self):
-        self.wallet = self.binance_service.futures_hesap_bakiyesi()
+        self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
         self.wallet_isle()
         self.sqlite_service.trader_durumu_geri_yukle(
             self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
+
+    def wallet_isle(self):
+        for symbol in self.binance_wallet:
+            self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
+        self.dolar = float(self.config["wallet"].get('USDT'))
+        self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
     def pozisyon_al(self):
         tahmin = self.tahmin
@@ -187,12 +195,6 @@ class Trader:
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()
 
-    def wallet_isle(self):
-        for symbol in self.wallet:
-            self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
-        self.dolar = float(self.config["wallet"].get('USDT'))
-        self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
-
     def miktar_hesapla(self):
         # TODO:: burda su anki fiyati baska bir endpoint'den cekip ona gore miktar hesapla
         miktar = self.dolar / self.suanki_fiyat
@@ -216,14 +218,10 @@ class Trader:
         elif islem["cikis"] > 0:
             _exit_, yon = self.prophet_service.tg_binance_service.\
                 futures_market_exit(self.config.get("coin"))
-        self.print_islem_detay(islem)
+            self.islem_fiyati = 0
+            self.islem_miktari = 0
         if not os.getenv("PYTHON_ENV") == "TEST":
             bam_bama_sinyal_gonder(islem, yon)
-
-    def print_islem_detay(self, islem):
-        print(f"islem detaylar ==> ds: {islem.get('ds')} ")
-        print(f"\t\t\t\t ==> alis: {islem.get('alis')} satis: {islem.get('satis')} cikis: {islem.get('cikis')}")
-        print(f"\t\t\t\t ==> USDT: {islem.get('USDT')} ETH: {islem.get('ETH')}")
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

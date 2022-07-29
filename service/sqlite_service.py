@@ -153,7 +153,7 @@ class SqlLite_Service:
 
     def trader_durumu_kaydet(self, trader):
         _trader = {}
-        _kaydedilecek = ["suanki_ts", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        _kaydedilecek = ["suanki_ts", "islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):
@@ -176,3 +176,5 @@ class SqlLite_Service:
                 elif key == "pozisyon":
                     trader.pozisyon = Pozisyon(conf_[key])
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
+            trader.islem_fiyati = conf_.get("islem_fiyati")
+            trader.islem_miktari = conf_.get("islem_miktari")

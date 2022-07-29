@@ -42,5 +42,17 @@ def tahmin_onceden_hesaplanmis_mi(baslangic_gunu, _config, tahminler_cache):
     return False
 
 
+def print_islem_detay(trader):
+    islem = trader.tahmin
+    print(f"islem detaylar ==> ds: {islem.get('ds')} ")
+    if islem.get('alis') > 0:
+        print(f"\t\t\t\t ==> alis: {islem.get('alis')}")
+    if islem.get('satis') > 0:
+        print(f"\t\t\t\t ==> satis: {islem.get('satis')}")
+    if islem.get('cikis') > 0:
+        print(f"\t\t\t\t ==> cikis: {islem.get('cikis')}")
+    print(f"\t\t\t\t ==> islem_miktari: {trader.get('islem_miktari')} islem_fiyati: {trader.get('islem_fiyati')}")
+
+
 if __name__ == '__main__':
     bugun = '2021-12-06'
