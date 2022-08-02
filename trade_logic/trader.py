@@ -165,6 +165,11 @@ class Trader:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
     def super_trend_cikis_kontrol(self):
+        if self.super_trend_strategy.atr_value < 55:
+            self.super_trend_strategy.config["supertrend_mult"] = 1.5
+        else:
+            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()
             return

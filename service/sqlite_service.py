@@ -159,7 +159,9 @@ class SqlLite_Service:
             if hasattr(getattr(trader, key), "value"):
                 _trader[key] = getattr(trader, key).value
             else:
-                _trader[key] = getattr(trader, key)
+                _val = getattr(trader, key)
+                _val = round(_val, 2) if isinstance(_val, float) else _val
+                _trader[key] = _val
         _trader["onceki_tp"] = trader.super_trend_strategy.onceki_tp
 
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}

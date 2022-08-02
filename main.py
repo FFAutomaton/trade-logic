@@ -48,7 +48,7 @@ if __name__ == '__main__':
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
     #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
-
+    # TODO:: ATR 55'den kucukse katsayi 1.5, else 0.5
     # TODO:: manuel olarak islem durdugunda trader onceki durumdan faydalanamaz hale geliyor, veritanindan okudugu
     #        durumu wallet uzerinden kontrol edip ezmek lazim.
     # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin

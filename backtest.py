@@ -14,7 +14,7 @@ if __name__ == '__main__':
         trader.mum_verilerini_guncelle()
 
     # st_mult = [0.2, 0.3, 0.4, 0.5]
-    st_mult = [0.75, 1.5, 3, 5]
+    st_mult = [0.5, 0.75, 1]
     # 2022-01-01'den itibaren'
     # 0.1 icin 292 %
     # 0.3 icin 201 %
