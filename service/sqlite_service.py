@@ -162,7 +162,7 @@ class SqlLite_Service:
                 _val = getattr(trader, key)
                 _val = round(_val, 2) if isinstance(_val, float) else _val
                 _trader[key] = _val
-        _trader["onceki_tp"] = trader.super_trend_strategy.onceki_tp
+        _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
 
         data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
         self.veri_yaz(data, "trader")
