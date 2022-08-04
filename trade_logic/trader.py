@@ -236,6 +236,9 @@ class Trader:
         self.sqlite_service.mum_datasi_yukle(
             self.config.get("swing_pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
         )
+        self.sqlite_service.mum_datasi_yukle(
+            "5m", self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
+        )
 
     def sonuc_getir(self):
         sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'islem')

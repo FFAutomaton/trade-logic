@@ -18,10 +18,17 @@ def backtest_calis(trader):
 
 
 def trader_calis(trader):
+    # 5m'lik mumlari guncelle
+    # 5m'lik stratejileri calistir
     trader.init()
+
+    # 4h donusunu hesapla
+    # 4h'lik mumu guncelle
+    # 4h'lik stratejileri calistir
     trader.swing_trader_karar_hesapla()
     trader.prophet_karar_hesapla()
 
+    # 5m'lik stratejinin karar parametresini ekle (RSI < 20 ise isleme gir
     trader.karar_calis()
 
     trader.super_trend_cikis_kontrol()

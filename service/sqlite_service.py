@@ -24,6 +24,8 @@ class SqlLite_Service:
             return self.conn
         if os.getenv("PYTHON_ENV") == "TEST":
             self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
+        elif os.getenv("PYTHON_ENV") == "BACKFILL":
+            self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
         else:
             self.conn = sqlite3.connect(f'/app/coindata/{self.db}.db')
         return self.conn
@@ -36,22 +38,18 @@ class SqlLite_Service:
         return ', '.join(_query)
 
     def _tablo_yoksa_olustur(self):
-        tip = self._config.get('pencere')
-        swing_tip = self._config.get('swing_pencere')
+        _4h = self._config.get('pencere')
+        candle_tables = [_4h, self._config.get('swing_pencere'), "5m"]
         coin = self._config.get('coin')
+        islemler = f'islemler_{coin}_{_4h}'
+        prophet_tahminler = f'prophet_{coin}_{_4h}'
+        trader = f'trader_{coin}_{_4h}'
 
-        candles = f'{coin}_{tip}'
-        swing_candles = f'{coin}_{swing_tip}'
-        islemler = f'islemler_{coin}_{tip}'
-        prophet_tahminler = f'prophet_{coin}_{tip}'
-        trader = f'trader_{coin}_{tip}'
+        for table in candle_tables:
+            self.get_conn().cursor().execute(
+                f'CREATE TABLE IF NOT EXISTS {coin}_{table}({self.schemayi_query_texte_cevir(mum_schema)});'
+            )
 
-        self.get_conn().cursor().execute(
-            f'CREATE TABLE IF NOT EXISTS {candles}({self.schemayi_query_texte_cevir(mum_schema)});'
-        )
-        self.get_conn().cursor().execute(
-            f'CREATE TABLE IF NOT EXISTS {swing_candles}({self.schemayi_query_texte_cevir(mum_schema)});'
-        )
         self.get_conn().cursor().execute(
             f'CREATE TABLE IF NOT EXISTS {islemler}({self.schemayi_query_texte_cevir(islem_schema)});'
         )
