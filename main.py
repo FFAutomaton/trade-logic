@@ -43,8 +43,11 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: 5 dakikalik cron'u da yaz hemen aktive et fiyat kontrolu yapamadigi icin zarar yaziyor su anda,
+    #        kara gectikten sonra cikis yapacak sekilde ayar cek backtest yap
+    # TODO:: mumlari 5dakikalikta kaydedip 4h'likte aggrege et, buna class yazicaz sonra... kullanilma yerinden basla 5
+    #        dakikalik stratejinin uzerine
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
-    # TODO:: kara gectikten sonra cikis yapacak sekilde ayar cek backtest yap
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,

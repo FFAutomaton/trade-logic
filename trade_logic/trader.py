@@ -180,9 +180,10 @@ class Trader:
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
 
-        if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
-            self.karar = Karar.cikis
-            self.super_trend_strategy.reset_super_trend()
+        if self.pozisyon.value != self.karar.value:  # hala ayni kararda ise islemden cikma
+            if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
 
     def prophet_karar_hesapla(self):
         self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu - timedelta(hours=4))
