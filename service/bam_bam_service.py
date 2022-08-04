@@ -18,7 +18,7 @@ def bam_bama_sinyal_gonder(islem, yon):
                 resp = requests.post(bambam_url, json=long_buy_close, headers=header)
             elif yon < 0:
                 resp = requests.post(bambam_url, json=short_buy_close, headers=header)
-
+        print(f'bambam response: {str(resp)}')
         return resp
     except Exception as e:
         traceback.print_exc()
