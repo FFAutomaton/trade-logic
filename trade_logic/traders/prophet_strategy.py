@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import timedelta
 import time
 from trade_logic.utils import tahmin_onceden_hesaplanmis_mi, pd, train_kirp_yeniden_adlandir, \
     model_egit_tahmin_et
@@ -15,17 +15,17 @@ class ProphetStrategy:
         self.kesme_durumu = None
         self.onceki_kesme_durumu = None
         self.suanki_fiyat = 0
-        self.suanki_ts = None
         self.islem_fiyati = 0
         self.high = 0
         self.low = 0
 
-    def tahmin_hesapla(self, baslangic, bitis):
+    def tahmin_hesapla(self, tahmin, baslangic, bitis):
         start = time.time()
-        tahmin = {"ds": datetime.strftime(bitis, '%Y-%m-%d %H:%M:%S')}
+
         tahmin = self.tahmin_islemlerini_hallet(tahmin, baslangic.replace(tzinfo=None), bitis.replace(tzinfo=None))
         self.high = tahmin.get("high")
         self.low = tahmin.get("low")
+        self.open = tahmin.get("open")
         print(f'egitim bitti sure: {time.time() - start}')
         return tahmin
 

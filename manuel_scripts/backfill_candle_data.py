@@ -3,7 +3,7 @@ from datetime import timedelta
 from signal_prophet.prophet_service import TurkishGekkoProphetService
 from service.sqlite_service import SqlLite_Service
 from config import *
-from trade_logic.utils import *
+from trade_logic.utils import bitis_gunu_truncate_min_precision, datetime,timezone
 
 
 _secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
@@ -22,7 +22,7 @@ prophet_service = TurkishGekkoProphetService(_secrets)
 window_end = datetime.strptime('2021-07-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 window_end = window_end.replace(tzinfo=timezone.utc)
 
-_son = bitis_gunu_truncate(_config.get("arttir"))
+_son = bitis_gunu_truncate_min_precision(_config.get("arttir"))
 
 while window_end < _son:
 

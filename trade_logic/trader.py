@@ -1,12 +1,14 @@
 import math
 import os
+import random
 
 from config import *
 import matplotlib.pyplot as plt
-from datetime import timedelta
+from datetime import timedelta, datetime
 from trade_logic.traders.prophet_strategy import ProphetStrategy
 from trade_logic.traders.swing_strategy import SwingStrategy
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
+from trade_logic.traders.rsi_5m_long_strategy import RSI5mStrategy
 
 from swing_trader.swing_trader_class import SwingTrader
 
@@ -14,6 +16,8 @@ from service.sqlite_service import SqlLite_Service
 from signal_prophet.prophet_service import TurkishGekkoProphetService
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
+from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
+    tahmin_doldur, dongu_kontrol_decorator
 
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
@@ -24,10 +28,10 @@ class Trader:
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
 
         self.config = {
-            "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
+            "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4, "arttir_5m": 5,
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-            "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
+            "prophet_window": 2400, "swing_window": 200, "backfill_window": 5, "super_trend_window": 200,
             "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
         }
         self.binance_wallet = None
@@ -36,7 +40,6 @@ class Trader:
         self.tahmin = None
         self.suanki_fiyat = 0
         self.running_price = 0
-        self.suanki_ts = None
         self.karar = Karar.notr
         self.onceki_karar = Karar.notr
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
@@ -48,10 +51,8 @@ class Trader:
 
         self.bitis_gunu = bitis_gunu
 
-        self.backfill_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("backfill_window"))
-        self.swing_baslangic_gunu = self.bitis_gunu - timedelta(days=self.config.get("swing_window"))
-        self.prophet_baslangic_gunu = self.bitis_gunu - timedelta(hours=self.config.get("prophet_window"))
-        self.super_trend_baslangic_gunu = self.bitis_gunu - timedelta(hours=self.config.get("super_trend_window"))
+        self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(days=self.config.get("backfill_window"))
+        self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(5)
 
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
@@ -59,29 +60,52 @@ class Trader:
         self.swing_strategy = SwingStrategy(self.config)
         self.prophet_strategy = ProphetStrategy(self.config, self.sqlite_service)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
+        self.rsi_5m_long_strategy = RSI5mStrategy(self.config)
 
     def init(self):
+        self.fiyat_guncelle()
+        self.tarihleri_guncelle()
+
+        # TODO:: bunu supertrend stratejinin icine al hatta complexity saklama seklinde ornek verilebilir object oriented design icin
         series = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("prophet_pencere"), "mum",
-            self.bitis_gunu - timedelta(days=1), self.bitis_gunu
+            self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
+            self.bitis_gunu - timedelta(hours=60), self.bitis_gunu
         )
-        self.suanki_fiyat = series.iloc[0]["close"]
+        self.super_trend_strategy.atr_hesapla(series)
+
+        self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S')}
+
+    def fiyat_guncelle(self):
+        data = self.sqlite_service.veri_getir(
+            self.config.get("coin"), "5m", "mum",
+            self.bitis_gunu - timedelta(minutes=5), self.bitis_gunu
+        )
+        self.suanki_fiyat = data.get("close")[0]
         self.swing_strategy.suanki_fiyat = self.suanki_fiyat
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
-        series = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
-            # self.bitis_gunu - timedelta(hours=self.config.get("super_trend_window")), self.bitis_gunu
-            self.bitis_gunu - timedelta(hours=60), self.bitis_gunu
-        )
-        self.super_trend_strategy.atr_hesapla(series)
+    def tarihleri_guncelle(self):
+        self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 4)
+        self.dondu_4h = True if self._b == self.bitis_gunu else False
+        self.swing_baslangic_gunu = self._b - timedelta(days=self.config.get("swing_window"))
+        self.prophet_baslangic_gunu = self._b - timedelta(hours=self.config.get("prophet_window"))
+        self.super_trend_baslangic_gunu = self._b - timedelta(hours=self.config.get("super_trend_window"))
 
     def init_prod(self):
         self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
         self.wallet_isle()
         self.sqlite_service.trader_durumu_geri_yukle(
             self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
+
+    def run_5m_strategies(self):
+        self.rsi_5m_long_karar_hesapla()
+
+    def run_4h_strategies(self):
+        if not self.dondu_4h:
+            return
+        self.swing_trader_karar_hesapla()
+        self.prophet_karar_hesapla()
 
     def wallet_isle(self):
         for symbol in self.binance_wallet:
@@ -90,15 +114,8 @@ class Trader:
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
     def pozisyon_al(self):
-        tahmin = self.tahmin
-        self.suanki_ts = tahmin["ds"]
-        tahmin["alis"] = float("nan")
-        tahmin["satis"] = float("nan")
-        tahmin["cikis"] = float("nan")
-
         wallet = self.config.get("wallet")
-        tahmin["ETH"] = wallet["ETH"]
-        tahmin["USDT"] = wallet["USDT"]
+        tahmin = tahmin_doldur(self.tahmin, wallet, self.prophet_strategy)
 
         if self.karar == Karar.alis:
             if self.pozisyon.value in [0, -1]:
@@ -107,7 +124,7 @@ class Trader:
                 self.islem_miktari = self.miktar_hesapla()
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["alis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
+                self.islem_ts = tahmin['ds_str']
                 self.pozisyon = Pozisyon(1)
                 self.super_trend_strategy.reset_super_trend()
         elif self.karar == Karar.satis:
@@ -117,7 +134,7 @@ class Trader:
                 self.islem_miktari = self.miktar_hesapla()
                 self.islem_fiyati = self.suanki_fiyat
                 tahmin["satis"] = self.islem_fiyati
-                self.islem_ts = tahmin['ds']
+                self.islem_ts = tahmin['ds_str']
                 self.pozisyon = Pozisyon(-1)
                 self.super_trend_strategy.reset_super_trend()
 
@@ -135,13 +152,13 @@ class Trader:
 
         self.config["wallet"] = wallet
         self.onceki_karar = self.karar
-        tahmin["ETH"] = wallet["ETH"]
-        tahmin["USDT"] = wallet["USDT"]
+        tahmin["eth"] = wallet["ETH"]
+        tahmin["usdt"] = wallet["USDT"]
         self.tahmin = tahmin
 
     def karar_calis(self):
-        swing_karar = self.swing_strategy.karar.value
-        prophet_karar = self.prophet_strategy.karar.value
+        swing_karar = self.swing_strategy.karar.value if self.swing_strategy.karar else 0
+        prophet_karar = self.prophet_strategy.karar.value if self.prophet_strategy.karar else 0
 
         if swing_karar * prophet_karar > 0:
             if swing_karar > 0:
@@ -164,11 +181,12 @@ class Trader:
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
+    @dongu_kontrol_decorator
     def super_trend_cikis_kontrol(self):
-        if self.super_trend_strategy.atr_value < 55:
-            self.super_trend_strategy.config["supertrend_mult"] = 1.5
-        else:
-            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+        # if self.super_trend_strategy.atr_value < 55:
+        #     self.super_trend_strategy.config["supertrend_mult"] = 1.5
+        # else:
+        #     self.super_trend_strategy.config["supertrend_mult"] = 0.5
 
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()
@@ -185,14 +203,21 @@ class Trader:
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
 
+    # @dongu_kontrol_decorator
+    def rsi_5m_long_karar_hesapla(self):
+        print("5 dakikalik strateji calisti...." + random.randint(1, 20) * '.')
+        pass
+
+    @dongu_kontrol_decorator
     def prophet_karar_hesapla(self):
-        self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu - timedelta(hours=4))
+        self.prophet_strategy.tahmin_hesapla(self.tahmin, self.prophet_baslangic_gunu, self._b - timedelta(hours=4))
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.update_trader_onceki_durumlar()
-        self.tahmin = self.prophet_strategy.tahmin_hesapla(self.prophet_baslangic_gunu, self.bitis_gunu)
+        self.tahmin = self.prophet_strategy.tahmin_hesapla(self.tahmin, self.prophet_baslangic_gunu, self._b)
         self.prophet_strategy.kesme_durumu_hesapla()
         self.prophet_strategy.kesme_durumundan_karar_hesapla()
 
+    @dongu_kontrol_decorator
     def swing_trader_karar_hesapla(self):
         series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
@@ -231,13 +256,13 @@ class Trader:
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
+            self.config.get("pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("swing_pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
+            self.config.get("swing_pencere"), self.prophet_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
         self.sqlite_service.mum_datasi_yukle(
-            "5m", self.prophet_service, self.backfill_baslangic_gunu, self.bitis_gunu
+            "5m", self.prophet_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
 
     def sonuc_getir(self):

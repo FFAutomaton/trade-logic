@@ -1,17 +1,12 @@
 from signal_atr.atr import ATR
 
-from schemas.enums.karar import Karar
-
 
 class SuperTrendStrategy:
     def __init__(self, conf):
         self.config = conf
         self.atr = None
         self.atr_value = None
-        self.karar = 0
-        self.onceki_karar = 0
         self.suanki_fiyat = 0
-        self.suanki_ts = None
         self.tp = 0
         self.onceki_tp = 0
 

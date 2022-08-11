@@ -3,11 +3,45 @@ from signal_prophet.ml.model_classes.prophet_model import ProphetModel
 from datetime import datetime, timezone
 
 
-def bitis_gunu_truncate(arttir):
-    bitis_gunu = datetime.utcnow().replace(minute=0, second=0, microsecond=0)
+def dongu_kontrol_decorator(func):
+    def inner1(*args, **kwargs):
+        if not args[0].dondu_4h:
+            return
+        returned_value = func(*args, **kwargs)
+
+        return returned_value
+
+    return inner1
+
+
+def bitis_gunu_truncate_hour_precision(_now, arttir):
+    bitis_gunu = _now.replace(minute=0, second=0, microsecond=0)
     _h = bitis_gunu.hour - (bitis_gunu.hour % arttir)
     bitis_gunu = bitis_gunu.replace(hour=_h)
+    return bitis_gunu.replace(tzinfo=None)
+
+
+# TODO:: bu iki fonksiyonu birlestir video bile cekilir
+def bitis_gunu_truncate_min_precision(arttir):
+    bitis_gunu = datetime.utcnow().replace(second=0, microsecond=0)
+    _m = bitis_gunu.minute - (bitis_gunu.minute % arttir)
+    bitis_gunu = bitis_gunu.replace(minute=_m)
     return bitis_gunu.replace(tzinfo=timezone.utc)
+
+
+def tahmin_doldur(tahmin, wallet, prophet):
+    tahmin["alis"] = float("nan")
+    tahmin["satis"] = float("nan")
+    tahmin["cikis"] = float("nan")
+
+    tahmin["high"] = prophet.high
+    tahmin["low"] = prophet.low
+    tahmin["open"] = prophet.open
+
+    tahmin["eth"] = wallet["ETH"]
+    tahmin["usdt"] = wallet["USDT"]
+
+    return tahmin
 
 
 def okunur_date_yap(unix_ts):

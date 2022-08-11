@@ -74,6 +74,7 @@ class SqlLite_Service:
         self.get_conn().cursor().executemany(_query, data)
         self.get_conn().commit()
         print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
+        return data
 
     @staticmethod
     def veri_listesi_olustur(tempdata):
@@ -99,22 +100,38 @@ class SqlLite_Service:
     def veri_yaz(self, data, _type):
         coin = self._config.get('coin')
         tip = self._config.get('pencere')
-        data = [str(integer_date_yap(data['ds']))] + [str(el) for el in data.values()]
+        schema = None
+
         if _type == "tahmin":
             _query = f"""INSERT INTO {f'prophet_{coin}_{tip}'} {self.values_ifadesi_olustur(prophet_tahmin_schema)}
                 ON CONFLICT({prophet_tahmin_schema[0]["name"]}) {self.update_ifadesi_olustur(prophet_tahmin_schema)};"""
+            schema = prophet_tahmin_schema
         elif _type == "islem":
             _query = f"""INSERT INTO islemler_{coin}_{tip} {self.values_ifadesi_olustur(islem_schema)}
                             ON CONFLICT({islem_schema[0]["name"]}) {self.update_ifadesi_olustur(islem_schema)};"""
+            schema = islem_schema
         elif _type == "trader":
             _query = f"""INSERT INTO trader_{coin}_{tip} {self.values_ifadesi_olustur(trader_schema)}
                             ON CONFLICT({trader_schema[0]["name"]}) {self.update_ifadesi_olustur(trader_schema)};"""
+            schema = trader_schema
 
+        data = self.schemadan_data_olustur(data, schema)
         try:
             self.get_conn().cursor().executemany(_query, [data])
             self.get_conn().commit()
         except:
             traceback.print_exc()
+
+    def schemadan_data_olustur(self, data, schema):
+        res = []
+        [str(el) for el in data.values()]
+        for i, el in enumerate(schema):
+            if i == 0:
+                res.append(str(integer_date_yap(data['ds_str'])))
+            else:
+                res.append(data.get(el.get("name")))
+
+        return res
 
     def islemleri_temizle(self):
         coin = self._config.get('coin')
@@ -151,7 +168,7 @@ class SqlLite_Service:
 
     def trader_durumu_kaydet(self, trader):
         _trader = {}
-        _kaydedilecek = ["suanki_ts", "islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        _kaydedilecek = ["bitis_gunu", "islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):

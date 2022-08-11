@@ -1,42 +1,27 @@
 import os
-from datetime import timedelta
 from trade_logic.trader import Trader
-from trade_logic.utils import *
-
-
-def backtest_calis(trader):
-    trader.sqlite_service.islemleri_temizle()
-    _son = bitis_gunu_truncate(trader.config.get("arttir"))
-    # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-
-    while trader.bitis_gunu <= _son.replace(tzinfo=None):
-        print(f'#################### {trader.bitis_gunu} icin basladi! ###################')
-        trader_calis(trader)
-        islem = trader.tahmin
-        trader.sqlite_service.veri_yaz(islem, "islem")
-        trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
+from trade_logic.utils import bitis_gunu_truncate_min_precision, print_islem_detay
 
 
 def trader_calis(trader):
-    # 5m'lik mumlari guncelle
-    # 5m'lik stratejileri calistir
     trader.init()
-
+    trader.rsi_5m_long_karar_hesapla()
+    trader.swing_trader_karar_hesapla()
+    trader.prophet_karar_hesapla()
+    # trader.run_5m_strategies()
+    # trader.run_4h_strategies()
+    # 4h lik stratejiler 5 dakiklaik mumlarda nasil calisiyor bir gozlemle
     # 4h donusunu hesapla
     # 4h'lik mumu guncelle
     # 4h'lik stratejileri calistir
-    trader.swing_trader_karar_hesapla()
-    trader.prophet_karar_hesapla()
-
     # 5m'lik stratejinin karar parametresini ekle (RSI < 20 ise isleme gir
     trader.karar_calis()
-
     trader.super_trend_cikis_kontrol()
     trader.pozisyon_al()
 
 
 def app_calis():
-    bitis_gunu = bitis_gunu_truncate(4)
+    bitis_gunu = bitis_gunu_truncate_min_precision(5)
     trader = Trader(bitis_gunu)
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
@@ -50,10 +35,12 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
-    # TODO:: 5 dakikalik cron'u da yaz hemen aktive et fiyat kontrolu yapamadigi icin zarar yaziyor su anda,
-    #        kara gectikten sonra cikis yapacak sekilde ayar cek backtest yap
-    # TODO:: mumlari 5dakikalikta kaydedip 4h'likte aggrege et, buna class yazicaz sonra... kullanilma yerinden basla 5
-    #        dakikalik stratejinin uzerine
+    # TODO:: futures ve spot piyasa candle verileri bir kac dolar farkedebiliyor,
+    #        candle datasini futures apidan cekmek mantikli mi olur?
+    # TODO:: aylik kar ciktisi hesapla backtest icin
+    # TODO:: cikis kontrolu 4'saatte bir yap decorator ile yapabilir misin?
+    #        5 dakikalik surede cikis yapinca swing ve prophet kararlarini resetlemek de ise yarayabilir
+    # TODO:: 5 dakikalik islemleri yaz, burda rsi al verirse islemi kitlemeyi dusunebiliriz atiyorum 15*5 dakika gibi
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
