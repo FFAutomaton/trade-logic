@@ -7,6 +7,7 @@ def dongu_kontrol_decorator(func):
     def inner1(*args, **kwargs):
         if not args[0].dondu_4h:
             return
+        print(f'#################### {args[0].bitis_gunu} icin basladi! ###################')
         returned_value = func(*args, **kwargs)
 
         return returned_value

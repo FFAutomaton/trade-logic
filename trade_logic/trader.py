@@ -1,6 +1,5 @@
 import math
 import os
-import random
 
 from config import *
 import matplotlib.pyplot as plt
@@ -54,6 +53,7 @@ class Trader:
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(days=self.config.get("backfill_window"))
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(5)
 
+        self.gunluk_mumlar = None
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
@@ -99,6 +99,9 @@ class Trader:
             self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
 
     def run_5m_strategies(self):
+        # eger pozisyon zaten acik degilse isleme girer
+        # su anki pozisyon ile celisirse cikmaz test edilmeli
+        # sadece rsi stratejisi
         self.rsi_5m_long_karar_hesapla()
 
     def run_4h_strategies(self):
@@ -181,12 +184,17 @@ class Trader:
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
+    def dinamik_atr_carpan(self):
+        # TODO:: eger degisirse tp'yi guncellemek gerekir normalde geriye almiyoruz,
+        #        0.5'den 1.5'a gecerse geri almak lazim
+        if self.super_trend_strategy.atr_value < 55:
+            self.super_trend_strategy.config["supertrend_mult"] = 1.5
+        else:
+            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+
     @dongu_kontrol_decorator
     def super_trend_cikis_kontrol(self):
-        # if self.super_trend_strategy.atr_value < 55:
-        #     self.super_trend_strategy.config["supertrend_mult"] = 1.5
-        # else:
-        #     self.super_trend_strategy.config["supertrend_mult"] = 0.5
+        self.dinamik_atr_carpan()
 
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()
@@ -205,7 +213,7 @@ class Trader:
 
     # @dongu_kontrol_decorator
     def rsi_5m_long_karar_hesapla(self):
-        print("5 dakikalik strateji calisti...." + random.randint(1, 20) * '.')
+        # print("5 dakikalik strateji calisti...." + random.randint(1, 20) * '.')
         pass
 
     @dongu_kontrol_decorator
@@ -223,6 +231,7 @@ class Trader:
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
             self.swing_baslangic_gunu, self.bitis_gunu
         )
+        self.gunluk_mumlar = series
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()
 

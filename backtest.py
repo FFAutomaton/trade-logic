@@ -11,7 +11,6 @@ def backtest_calis(trader):
     # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 
     while trader.bitis_gunu <= _son.replace(tzinfo=None):
-        print(f'#################### {trader.bitis_gunu} icin basladi! ###################')
         trader_calis(trader)
         # islem ds eziyor 5 dakilaiktan ds'yi granularity arttir
         trader.sqlite_service.veri_yaz(trader.tahmin, "islem")
@@ -27,7 +26,7 @@ if __name__ == '__main__':
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
 
-    st_mult = [3]
+    st_mult = [0.5]
     rapor = {}
     for mult in st_mult:
         trader.config["supertrend_mult"] = mult
