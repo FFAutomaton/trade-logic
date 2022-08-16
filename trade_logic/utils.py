@@ -3,13 +3,42 @@ from signal_prophet.ml.model_classes.prophet_model import ProphetModel
 from datetime import datetime, timezone
 
 
+def heikinashi_mum_analiz(last_row):
+    karar = 0
+
+    if last_row["HA_Open"] == last_row["HA_Low"]:
+        karar = 1
+    elif last_row["HA_Open"] == last_row["HA_High"]:
+        karar = -1
+    return karar
+
+
+def heikinashiye_cevir(df):
+    df = df.iloc[::-1]
+    pd.options.mode.chained_assignment = None
+    df['HA_Close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
+    idx = df.index.name
+    df.reset_index(inplace=True)
+
+    for i in range(0, len(df)):
+        if i == 0:
+            df.at[i, 'HA_Open'] = (df.at[i, 'open'] + df.at[i, 'close']) / 2
+        else:
+            df.at[i, 'HA_Open'] = (df.at[i - 1, 'HA_Open'] + df.at[i - 1, 'HA_Close']) / 2
+
+    if idx:
+        df.set_index(idx, inplace=True)
+
+    df['HA_High'] = df[['HA_Open', 'HA_Close', 'high']].apply(max, axis=1)
+    df['HA_Low'] = df[['HA_Open', 'HA_Close', 'low']].apply(min, axis=1)
+    return df
+
+
 def dongu_kontrol_decorator(func):
     def inner1(*args, **kwargs):
         if not args[0].dondu_4h:
             return
-        print(f'#################### {args[0].bitis_gunu} icin basladi! ###################')
         returned_value = func(*args, **kwargs)
-
         return returned_value
 
     return inner1

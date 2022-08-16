@@ -8,13 +8,7 @@ def trader_calis(trader):
     trader.rsi_5m_long_karar_hesapla()
     trader.swing_trader_karar_hesapla()
     trader.prophet_karar_hesapla()
-    # trader.run_5m_strategies()
-    # trader.run_4h_strategies()
-    # 4h lik stratejiler 5 dakiklaik mumlarda nasil calisiyor bir gozlemle
-    # 4h donusunu hesapla
-    # 4h'lik mumu guncelle
-    # 4h'lik stratejileri calistir
-    # 5m'lik stratejinin karar parametresini ekle (RSI < 20 ise isleme gir
+    trader.heikinashi_kontrol()
     trader.karar_calis()
     trader.super_trend_cikis_kontrol()
     trader.pozisyon_al()
@@ -35,9 +29,13 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: range gidip gitmedigini anlamak icin:
+    #        gunluk mumlarda heikin ashi bakilabilir cift spike varsa girme gibi
+    #        yeni strateji yaz, gunlukde heikin ashi mumu tek spike li ise sadece islem aktif olabilir
     # TODO:: futures ve spot piyasa candle verileri bir kac dolar farkedebiliyor,
     #        candle datasini futures apidan cekmek mantikli mi olur?
-    # TODO:: aylik kar ciktisi hesapla backtest icin
+    # TODO:: aylik kar ciktisi hesapla backtest icin, bunu multithread'de yapabilirsin
+    # TODO:: decorator videosu yap
     # TODO:: cikis kontrolu 4'saatte bir yap decorator ile yapabilir misin?
     #        5 dakikalik surede cikis yapinca swing ve prophet kararlarini resetlemek de ise yarayabilir
     # TODO:: 5 dakikalik islemleri yaz, burda rsi al verirse islemi kitlemeyi dusunebiliriz atiyorum 15*5 dakika gibi

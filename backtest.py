@@ -13,6 +13,8 @@ def backtest_calis(trader):
     while trader.bitis_gunu <= _son.replace(tzinfo=None):
         trader_calis(trader)
         # islem ds eziyor 5 dakilaiktan ds'yi granularity arttir
+        if trader.dondu_4h:
+            print(f'#################### {trader.bitis_gunu} icin bitti! ###################')
         trader.sqlite_service.veri_yaz(trader.tahmin, "islem")
         trader.bitis_gunu = trader.bitis_gunu + timedelta(minutes=trader.config.get('arttir_5m'))
 

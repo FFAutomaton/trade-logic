@@ -16,7 +16,7 @@ from signal_prophet.prophet_service import TurkishGekkoProphetService
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
-    tahmin_doldur, dongu_kontrol_decorator
+    tahmin_doldur, dongu_kontrol_decorator, heikinashiye_cevir, heikinashi_mum_analiz
 
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
@@ -110,6 +110,13 @@ class Trader:
         self.swing_trader_karar_hesapla()
         self.prophet_karar_hesapla()
 
+    @dongu_kontrol_decorator
+    def heikinashi_kontrol(self):
+        heikinashi_series = heikinashiye_cevir(self.gunluk_mumlar)
+
+        last_row = heikinashi_series.iloc[-1]
+        self.heikinashi_karar = heikinashi_mum_analiz(last_row)
+
     def wallet_isle(self):
         for symbol in self.binance_wallet:
             self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
@@ -130,6 +137,8 @@ class Trader:
                 self.islem_ts = tahmin['ds_str']
                 self.pozisyon = Pozisyon(1)
                 self.super_trend_strategy.reset_super_trend()
+                self.onceki_karar = self.karar
+
         elif self.karar == Karar.satis:
             if self.pozisyon.value in [0, 1]:
                 if self.islem_miktari:
@@ -140,21 +149,21 @@ class Trader:
                 self.islem_ts = tahmin['ds_str']
                 self.pozisyon = Pozisyon(-1)
                 self.super_trend_strategy.reset_super_trend()
+                self.onceki_karar = self.karar
 
         elif self.karar == Karar.cikis:
             self.dolar = self.dolar - self.pozisyon.value * (self.islem_fiyati - self.suanki_fiyat) * self.islem_miktari
             tahmin["cikis"] = self.suanki_fiyat
             self.islem_miktari = 0
             self.islem_fiyati = 0
-            self.pozisyon = Pozisyon(0)
-            self.karar = Karar(0)
+            self.onceki_karar = self.karar
             self.super_trend_strategy.reset_super_trend()
+            self.reset_trader()
 
         wallet["ETH"] = self.islem_miktari
         wallet["USDT"] = self.dolar
 
         self.config["wallet"] = wallet
-        self.onceki_karar = self.karar
         tahmin["eth"] = wallet["ETH"]
         tahmin["usdt"] = wallet["USDT"]
         self.tahmin = tahmin
@@ -162,6 +171,7 @@ class Trader:
     def karar_calis(self):
         swing_karar = self.swing_strategy.karar.value if self.swing_strategy.karar else 0
         prophet_karar = self.prophet_strategy.karar.value if self.prophet_strategy.karar else 0
+        heikinashi = self.heikinashi_karar
 
         if swing_karar * prophet_karar > 0:
             if swing_karar > 0:
@@ -183,6 +193,14 @@ class Trader:
                     self.karar = Karar.satis
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
+
+        if self.karar.value * heikinashi < 0:
+            self.karar = Karar.notr
+        elif self.karar.value == 0:
+            if heikinashi == 1:
+                self.karar = Karar.alis
+            elif heikinashi == -1:
+                self.karar = Karar.satis
 
     def dinamik_atr_carpan(self):
         # TODO:: eger degisirse tp'yi guncellemek gerekir normalde geriye almiyoruz,
@@ -206,13 +224,25 @@ class Trader:
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
 
-        # if self.pozisyon.value != self.karar.value:  # hala ayni kararda ise islemden cikma
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
 
+        if self.pozisyon.value != 0:
+            if self.heikinashi_karar == 0:
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
+
+    def reset_trader(self):
+        self.swing_strategy.karar = Karar.notr
+        self.prophet_strategy.karar = Karar.notr
+        self.pozisyon = Pozisyon(0)
+        self.karar = Karar(0)
+
     # @dongu_kontrol_decorator
     def rsi_5m_long_karar_hesapla(self):
+        # 5m'lik stratejinin karar parametresini ekle (RSI < 20 ise isleme gir
+
         # print("5 dakikalik strateji calisti...." + random.randint(1, 20) * '.')
         pass
 
