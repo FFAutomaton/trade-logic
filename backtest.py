@@ -21,7 +21,7 @@ def backtest_calis(trader):
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
-    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-07-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     bitis_gunu = bitis_gunu.replace(tzinfo=None)
     trader = Trader(bitis_gunu)
     # trader.config["doldur"] = False

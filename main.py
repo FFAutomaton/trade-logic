@@ -8,7 +8,9 @@ def trader_calis(trader):
     trader.rsi_5m_long_karar_hesapla()
     trader.swing_trader_karar_hesapla()
     trader.prophet_karar_hesapla()
+
     trader.heikinashi_kontrol()
+
     trader.karar_calis()
     trader.super_trend_cikis_kontrol()
     trader.pozisyon_al()

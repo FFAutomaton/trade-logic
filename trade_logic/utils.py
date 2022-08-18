@@ -4,13 +4,18 @@ from datetime import datetime, timezone
 
 
 def heikinashi_mum_analiz(last_row):
-    karar = 0
+    karar, yon = 0, 0
+    # TODO:: calculate next open and compare with current price??
+    if last_row["HA_Close"] > last_row["HA_Open"]:
+        yon = 1
+        if last_row["HA_Open"] == last_row["HA_Low"]:
+            karar = 1
 
-    if last_row["HA_Open"] == last_row["HA_Low"]:
-        karar = 1
-    elif last_row["HA_Open"] == last_row["HA_High"]:
-        karar = -1
-    return karar
+    if last_row["HA_Close"] < last_row["HA_Open"]:
+        yon = -1
+        if last_row["HA_Open"] == last_row["HA_High"]:
+            karar = -1
+    return yon, karar
 
 
 def heikinashiye_cevir(df):

@@ -113,9 +113,8 @@ class Trader:
     @dongu_kontrol_decorator
     def heikinashi_kontrol(self):
         heikinashi_series = heikinashiye_cevir(self.gunluk_mumlar)
-
         last_row = heikinashi_series.iloc[-1]
-        self.heikinashi_karar = heikinashi_mum_analiz(last_row)
+        self.heikinashi_yon, self.heikinashi_karar = heikinashi_mum_analiz(last_row)
 
     def wallet_isle(self):
         for symbol in self.binance_wallet:
@@ -171,7 +170,6 @@ class Trader:
     def karar_calis(self):
         swing_karar = self.swing_strategy.karar.value if self.swing_strategy.karar else 0
         prophet_karar = self.prophet_strategy.karar.value if self.prophet_strategy.karar else 0
-        heikinashi = self.heikinashi_karar
 
         if swing_karar * prophet_karar > 0:
             if swing_karar > 0:
@@ -194,12 +192,13 @@ class Trader:
         else:
             raise NotImplementedError("karar fonksiyonu beklenmedik durum")
 
-        if self.karar.value * heikinashi < 0:
+        if self.karar.value * self.heikinashi_karar < 0 or self.karar.value * self.heikinashi_yon < 0:
             self.karar = Karar.notr
-        elif self.karar.value == 0:
-            if heikinashi == 1:
+
+        if self.karar.value == 0:
+            if self.heikinashi_karar == 1 or self.heikinashi_yon == 1:
                 self.karar = Karar.alis
-            elif heikinashi == -1:
+            elif self.heikinashi_karar == -1 or self.heikinashi_yon == -1:
                 self.karar = Karar.satis
 
     def dinamik_atr_carpan(self):
@@ -227,11 +226,6 @@ class Trader:
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
-
-        if self.pozisyon.value != 0:
-            if self.heikinashi_karar == 0:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
 
     def reset_trader(self):
         self.swing_strategy.karar = Karar.notr
