@@ -73,7 +73,7 @@ class SqlLite_Service:
 
         self.get_conn().cursor().executemany(_query, data)
         self.get_conn().commit()
-        print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
+        # print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
         return data
 
     @staticmethod
