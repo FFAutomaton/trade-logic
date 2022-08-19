@@ -18,7 +18,9 @@ def trader_calis(trader):
 
 def app_calis():
     bitis_gunu = bitis_gunu_truncate_min_precision(5)
+
     trader = Trader(bitis_gunu)
+    trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
     trader.init_prod()
@@ -26,12 +28,15 @@ def app_calis():
     if os.getenv("PYTHON_ENV") != "TEST":
         trader.borsada_islemleri_hallet()
     print_islem_detay(trader)
+    if trader.karar.value == 3:
+        trader.reset_trader()
     trader.sqlite_service.trader_durumu_kaydet(trader)
 
 
 if __name__ == '__main__':
     app_calis()
     # TODO:: backtest giris cikis rakamlari tutmuyor, onu bir debug et
+    # TODO:: eski trader kayitlarini temizle baslangicta
 
     # TODO:: range gidip gitmedigini anlamak icin:
     #        gunluk mumlarda heikin ashi bakilabilir cift spike varsa girme gibi

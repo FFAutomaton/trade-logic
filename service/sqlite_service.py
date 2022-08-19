@@ -1,7 +1,7 @@
 import os
 import traceback
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import sqlite3
 from trade_logic.utils import okunur_date_yap
@@ -155,7 +155,7 @@ class SqlLite_Service:
             query = f"""SELECT * FROM islemler_{coin}_{pencere}"""
             schema = islem_schema
         elif _type == 'trader':
-            query = f"""SELECT * FROM trader_{coin}_{pencere} order by process_ts_int desc limit 1"""
+            query = f"""SELECT * FROM trader_{coin}_{pencere} order by ds_int desc limit 1"""
             schema = trader_schema
         curr = self.get_conn().cursor().execute(query)
         data = curr.fetchall()
@@ -168,7 +168,7 @@ class SqlLite_Service:
 
     def trader_durumu_kaydet(self, trader):
         _trader = {}
-        _kaydedilecek = ["bitis_gunu", "islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        _kaydedilecek = ["islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):
@@ -178,8 +178,9 @@ class SqlLite_Service:
                 _val = round(_val, 2) if isinstance(_val, float) else _val
                 _trader[key] = _val
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
+        _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
 
-        data = {"ds": okunur_date_yap(datetime.utcnow().timestamp()*1000), "trader": json.dumps(_trader)}
+        data = {"ds_str": okunur_date_yap(datetime.utcnow().timestamp()*1000), "config": json.dumps(_trader)}
         self.veri_yaz(data, "trader")
 
     def trader_durumu_geri_yukle(self, trader):
@@ -195,3 +196,12 @@ class SqlLite_Service:
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")
+
+    def trader_eski_verileri_temizle(self, bitis_gunu):
+        _limit = bitis_gunu - timedelta(days=10)
+        coin = self._config.get('coin')
+        tip = self._config.get('pencere')
+        _query = f'DELETE FROM trader_{coin}_{tip} ' \
+                 f'WHERE date(ds_str) < "{datetime.strftime(_limit, "%Y-%m-%d")}";'
+        self.get_conn().cursor().execute(_query)
+        self.get_conn().commit()

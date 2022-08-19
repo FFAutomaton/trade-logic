@@ -16,11 +16,14 @@ def backtest_calis(trader):
         if trader.dondu_4h:
             print(f'#################### {trader.bitis_gunu} icin bitti! ###################')
         trader.sqlite_service.veri_yaz(trader.tahmin, "islem")
+        if trader.karar.value == 3:
+            trader.reset_trader()
         trader.bitis_gunu = trader.bitis_gunu + timedelta(minutes=trader.config.get('arttir_5m'))
 
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
+    # os.environ["MODE"] = "BACKTEST"
     bitis_gunu = datetime.strptime('2022-07-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     bitis_gunu = bitis_gunu.replace(tzinfo=None)
     trader = Trader(bitis_gunu)

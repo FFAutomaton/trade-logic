@@ -37,8 +37,8 @@ class Trader:
         self.secrets.update(self.config)
         self.wallet = None
         self.tahmin = None
-        self.suanki_fiyat = 0
-        self.running_price = 0
+        self.heikinashi_yon, self.heikinashi_karar = 0, 0
+        self.suanki_fiyat, self.running_price = 0, 0
         self.karar = Karar.notr
         self.onceki_karar = Karar.notr
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
@@ -53,7 +53,6 @@ class Trader:
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(days=self.config.get("backfill_window"))
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(5)
 
-        self.gunluk_mumlar = None
         self.prophet_service = TurkishGekkoProphetService(self.secrets)
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
@@ -87,7 +86,7 @@ class Trader:
 
     def tarihleri_guncelle(self):
         self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 4)
-        self.dondu_4h = True if self._b == self.bitis_gunu else False
+        self.dondu_4h = True if self._b == self.bitis_gunu.replace(tzinfo=None) else False
         self.swing_baslangic_gunu = self._b - timedelta(days=self.config.get("swing_window"))
         self.prophet_baslangic_gunu = self._b - timedelta(hours=self.config.get("prophet_window"))
         self.super_trend_baslangic_gunu = self._b - timedelta(hours=self.config.get("super_trend_window"))
@@ -110,9 +109,13 @@ class Trader:
         self.swing_trader_karar_hesapla()
         self.prophet_karar_hesapla()
 
-    @dongu_kontrol_decorator
+    # @dongu_kontrol_decorator
     def heikinashi_kontrol(self):
-        heikinashi_series = heikinashiye_cevir(self.gunluk_mumlar)
+        series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("swing_pencere"), "mum",
+            self.swing_baslangic_gunu, self.bitis_gunu
+        )
+        heikinashi_series = heikinashiye_cevir(series)
         last_row = heikinashi_series.iloc[-1]
         self.heikinashi_yon, self.heikinashi_karar = heikinashi_mum_analiz(last_row)
 
@@ -157,7 +160,6 @@ class Trader:
             self.islem_fiyati = 0
             self.onceki_karar = self.karar
             self.super_trend_strategy.reset_super_trend()
-            self.reset_trader()
 
         wallet["ETH"] = self.islem_miktari
         wallet["USDT"] = self.dolar
@@ -232,6 +234,7 @@ class Trader:
         self.prophet_strategy.karar = Karar.notr
         self.pozisyon = Pozisyon(0)
         self.karar = Karar(0)
+        self.onceki_karar = Karar(3)
 
     # @dongu_kontrol_decorator
     def rsi_5m_long_karar_hesapla(self):
@@ -255,7 +258,6 @@ class Trader:
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
             self.swing_baslangic_gunu, self.bitis_gunu
         )
-        self.gunluk_mumlar = series
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()
 

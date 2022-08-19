@@ -69,9 +69,9 @@ def tahmin_doldur(tahmin, wallet, prophet):
     tahmin["satis"] = float("nan")
     tahmin["cikis"] = float("nan")
 
-    tahmin["high"] = prophet.high
-    tahmin["low"] = prophet.low
-    tahmin["open"] = prophet.open
+    tahmin["high"] = prophet.high if hasattr(prophet, "high") else float("nan")
+    tahmin["low"] = prophet.low if hasattr(prophet, "low") else float("nan")
+    tahmin["open"] = prophet.open if hasattr(prophet, "open") else float("nan")
 
     tahmin["eth"] = wallet["ETH"]
     tahmin["usdt"] = wallet["USDT"]
