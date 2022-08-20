@@ -19,7 +19,8 @@ def bam_bama_sinyal_gonder(islem, yon):
             elif yon < 0:
                 resp = requests.post(bambam_url, json=short_buy_close, headers=header)
 
-        resp.raise_for_status()
+        if resp:
+            resp.raise_for_status()
         return resp
     except requests.exceptions.HTTPError as err:
         print(err)
