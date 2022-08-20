@@ -53,7 +53,7 @@ def bitis_gunu_truncate_hour_precision(_now, arttir):
     bitis_gunu = _now.replace(minute=0, second=0, microsecond=0)
     _h = bitis_gunu.hour - (bitis_gunu.hour % arttir)
     bitis_gunu = bitis_gunu.replace(hour=_h)
-    return bitis_gunu.replace(tzinfo=None)
+    return bitis_gunu.replace(tzinfo=timezone.utc)
 
 
 # TODO:: bu iki fonksiyonu birlestir video bile cekilir

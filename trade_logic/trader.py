@@ -62,16 +62,15 @@ class Trader:
         self.rsi_5m_long_strategy = RSI5mStrategy(self.config)
 
     def init(self):
-        self.fiyat_guncelle()
         self.tarihleri_guncelle()
+        self.fiyat_guncelle()
 
         # TODO:: bunu supertrend stratejinin icine al hatta complexity saklama seklinde ornek verilebilir object oriented design icin
         series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("super_trend_pencere"), "mum",
-            self.bitis_gunu - timedelta(hours=60), self.bitis_gunu
+            self.bitis_gunu - timedelta(hours=60), self.bitis_gunu - timedelta(hours=4)
         )
         self.super_trend_strategy.atr_hesapla(series)
-
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S')}
 
     def fiyat_guncelle(self):
@@ -79,14 +78,15 @@ class Trader:
             self.config.get("coin"), "5m", "mum",
             self.bitis_gunu - timedelta(minutes=5), self.bitis_gunu
         )
-        self.suanki_fiyat = data.get("close")[0]
+        self.suanki_fiyat = data.get("open")[0]
+
         self.swing_strategy.suanki_fiyat = self.suanki_fiyat
         self.prophet_strategy.suanki_fiyat = self.suanki_fiyat
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
         self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 4)
-        self.dondu_4h = True if self._b == self.bitis_gunu.replace(tzinfo=None) else False
+        self.dondu_4h = True if self._b == self.bitis_gunu else False
         self.swing_baslangic_gunu = self._b - timedelta(days=self.config.get("swing_window"))
         self.prophet_baslangic_gunu = self._b - timedelta(hours=self.config.get("prophet_window"))
         self.super_trend_baslangic_gunu = self._b - timedelta(hours=self.config.get("super_trend_window"))
@@ -256,7 +256,7 @@ class Trader:
     def swing_trader_karar_hesapla(self):
         series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
-            self.swing_baslangic_gunu, self.bitis_gunu
+            self.swing_baslangic_gunu, self.bitis_gunu - timedelta(days=1)
         )
         self.swing_strategy.swing_data = SwingTrader(series)
         return self.swing_strategy.swing_data_trend_hesapla()

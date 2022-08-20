@@ -10,7 +10,7 @@ def backtest_calis(trader):
     _son = bitis_gunu_truncate_min_precision(trader.config.get("arttir_5m"))
     # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 
-    while trader.bitis_gunu <= _son.replace(tzinfo=None):
+    while trader.bitis_gunu <= _son:
         trader_calis(trader)
         # islem ds eziyor 5 dakilaiktan ds'yi granularity arttir
         if trader.dondu_4h:
@@ -24,8 +24,8 @@ def backtest_calis(trader):
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["MODE"] = "BACKTEST"
-    bitis_gunu = datetime.strptime('2022-07-01 00:00:00', '%Y-%m-%d %H:%M:%S')
-    bitis_gunu = bitis_gunu.replace(tzinfo=None)
+    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
     # trader.config["doldur"] = False
     if trader.config["doldur"]:

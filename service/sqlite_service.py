@@ -198,7 +198,7 @@ class SqlLite_Service:
             trader.islem_miktari = conf_.get("islem_miktari")
 
     def trader_eski_verileri_temizle(self, bitis_gunu):
-        _limit = bitis_gunu - timedelta(days=10)
+        _limit = bitis_gunu - timedelta(days=1)
         coin = self._config.get('coin')
         tip = self._config.get('pencere')
         _query = f'DELETE FROM trader_{coin}_{tip} ' \

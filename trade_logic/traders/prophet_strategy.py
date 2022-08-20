@@ -1,5 +1,5 @@
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 import time
 from trade_logic.utils import tahmin_onceden_hesaplanmis_mi, pd, train_kirp_yeniden_adlandir, \
     model_egit_tahmin_et
@@ -38,13 +38,14 @@ class ProphetStrategy:
 
     def tahmin_islemlerini_hallet(self, tahmin, baslangic, bitis):
         tahminler_cache = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere"), 'prophet')
+        tahmin["ds_str"] = datetime.strftime(bitis, '%Y-%m-%d %H:%M:%S')
         if not tahmin_onceden_hesaplanmis_mi(bitis, self.config, tahminler_cache):
             if os.getenv("PYTHON_ENV") == "TEST": print(f'prophet calisiyor......{bitis}')
-            high_tahmin, _close = self.tahmin_getir(baslangic, bitis, self.config.get("high"))
-            low_tahmin, _close = self.tahmin_getir(baslangic, bitis, self.config.get("low"))
+            high_tahmin, _open = self.tahmin_getir(baslangic, bitis, self.config.get("high"))
+            low_tahmin, _open = self.tahmin_getir(baslangic, bitis, self.config.get("low"))
             tahmin["high"] = high_tahmin["yhat_upper"].values[0]
             tahmin["low"] = low_tahmin["yhat_lower"].values[0]
-            tahmin["open"] = _close
+            tahmin["open"] = _open
             self.sqlite_service.veri_yaz(tahmin, "tahmin")
         else:
             if os.getenv("PYTHON_ENV") == "TEST": print('prophet onceden calismis devam ediyorum')
