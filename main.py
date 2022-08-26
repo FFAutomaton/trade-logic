@@ -1,7 +1,8 @@
 import os
 from trade_logic.trader import Trader
 from trade_logic.utils import bitis_gunu_truncate_min_precision, print_islem_detay
-from datetime import datetime, timezone
+# from datetime import datetime, timezone
+
 
 def trader_calis(trader):
     trader.init()

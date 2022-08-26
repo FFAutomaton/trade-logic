@@ -211,7 +211,7 @@ class Trader:
         else:
             self.super_trend_strategy.config["supertrend_mult"] = 0.5
 
-    @dongu_kontrol_decorator
+    # @dongu_kontrol_decorator
     def super_trend_cikis_kontrol(self):
         self.dinamik_atr_carpan()
 
