@@ -39,20 +39,13 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
-    # TODO:: takipte sünen tp/sl islem surelerini kisaltip
-    #        takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
-    # TODO:: heikinashi kontrolu gunde bir kere yapsa yeter
-
-    # TODO:: range gidip gitmedigini anlamak icin:
-    #        gunluk mumlarda heikin ashi bakilabilir cift spike varsa girme gibi
-    #        yeni strateji yaz, gunlukde heikin ashi mumu tek spike li ise sadece islem aktif olabilir
+    # TODO:: cooldown?
+    # TODO:: heikin ashi fine tune edilebilir, bugunku mum hesaplanabilir
 
     # TODO:: aylik kar ciktisi hesapla backtest icin, bunu multithread'de yapabilirsin
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
 
     # TODO:: decorator videosu yap
-
-    # TODO:: 5 dakikalik islemleri yaz, burda rsi al verirse islemi kitlemeyi dusunebiliriz atiyorum 15*5 dakika gibi
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz

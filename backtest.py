@@ -24,14 +24,14 @@ def backtest_calis(trader):
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["MODE"] = "BACKTEST"
-    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+    bitis_gunu = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
     bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
     # trader.config["doldur"] = False
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
 
-    st_mult = [0.1]
+    st_mult = [0.01]
     rapor = {}
     for mult in st_mult:
         trader.config["tp_datalt_katsayi"] = mult

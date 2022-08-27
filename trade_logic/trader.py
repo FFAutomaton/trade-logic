@@ -31,7 +31,7 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 5, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True, "tp_datalt_katsayi": 0.1
+            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True, "tp_datalt_katsayi": 0.01
         }
         self.binance_wallet = None
         self.secrets.update(self.config)
