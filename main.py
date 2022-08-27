@@ -39,6 +39,8 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: takipte sünen tp/sl islem surelerini kisaltip
+    #        takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
     # TODO:: heikinashi kontrolu gunde bir kere yapsa yeter
 
     # TODO:: range gidip gitmedigini anlamak icin:
@@ -49,7 +51,6 @@ if __name__ == '__main__':
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
 
     # TODO:: decorator videosu yap
-    # TODO:: cikis kontrolu 4'saatte bir yap decorator ile yapabilir misin?
 
     # TODO:: 5 dakikalik islemleri yaz, burda rsi al verirse islemi kitlemeyi dusunebiliriz atiyorum 15*5 dakika gibi
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
@@ -57,6 +58,5 @@ if __name__ == '__main__':
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
     #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
-    # TODO:: takipte sünen tp/sl islem surelerini kisaltip diger sinyallere yer acmak icin
-    #        takip eden stopu default %5 kisalim her turda ???? bunu bi backtest etmek lazim
+
     # TODO:: uygulama patlarsa hatayi e-posta ile gonder

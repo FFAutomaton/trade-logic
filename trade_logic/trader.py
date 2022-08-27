@@ -31,7 +31,7 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 5, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
+            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True, "tp_datalt_katsayi": 0.1
         }
         self.binance_wallet = None
         self.secrets.update(self.config)
@@ -220,6 +220,7 @@ class Trader:
             return
 
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
+        self.super_trend_tp_daralt()
 
         # pozisyon 0 iken bu fonksiyon aslinda calismiyor
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
@@ -228,6 +229,11 @@ class Trader:
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
+
+    def super_trend_tp_daralt(self):
+        kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
+        if kar > 0 and kar / self.islem_fiyati > 0.03:
+            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * self.config.get("tp_datalt_katsayi"))
 
     def reset_trader(self):
         self.swing_strategy.karar = Karar.notr

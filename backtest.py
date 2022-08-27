@@ -31,10 +31,10 @@ if __name__ == '__main__':
     if trader.config["doldur"]:
         trader.mum_verilerini_guncelle()
 
-    st_mult = [0.5]
+    st_mult = [0.1]
     rapor = {}
     for mult in st_mult:
-        trader.config["supertrend_mult"] = mult
+        trader.config["tp_datalt_katsayi"] = mult
         backtest_calis(trader)
 
         sonuc = trader.sonuc_getir()
