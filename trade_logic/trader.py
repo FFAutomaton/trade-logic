@@ -31,7 +31,7 @@ class Trader:
             "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "prophet_window": 2400, "swing_window": 200, "backfill_window": 5, "super_trend_window": 200,
-            "atr_window": 10, "supertrend_mult": 0.5, "doldur": True, "tp_datalt_katsayi": 0.01
+            "atr_window": 10, "supertrend_mult": 3, "doldur": True, "tp_datalt_katsayi": 0.01
         }
         self.binance_wallet = None
         self.secrets.update(self.config)
@@ -206,14 +206,14 @@ class Trader:
     def dinamik_atr_carpan(self):
         # TODO:: eger degisirse tp'yi guncellemek gerekir normalde geriye almiyoruz,
         #        0.5'den 1.5'a gecerse geri almak lazim
-        if self.super_trend_strategy.atr_value < 55:
-            self.super_trend_strategy.config["supertrend_mult"] = 1.5
+        if self.super_trend_strategy.atr_value > 55:
+            self.super_trend_strategy.config["supertrend_mult"] = 3
         else:
-            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+            self.super_trend_strategy.config["supertrend_mult"] = 1.5
 
     # @dongu_kontrol_decorator
     def super_trend_cikis_kontrol(self):
-        self.dinamik_atr_carpan()
+        # self.dinamik_atr_carpan()
 
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()

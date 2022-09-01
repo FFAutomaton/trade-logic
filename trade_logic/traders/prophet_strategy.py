@@ -26,7 +26,7 @@ class ProphetStrategy:
         self.high = tahmin.get("high")
         self.low = tahmin.get("low")
         self.open = tahmin.get("open")
-        print(f'egitim bitti sure: {time.time() - start}')
+        # print(f'egitim bitti sure: {time.time() - start}')
         return tahmin
 
     def update_trader_onceki_durumlar(self):
@@ -48,7 +48,8 @@ class ProphetStrategy:
             tahmin["open"] = _open
             self.sqlite_service.veri_yaz(tahmin, "tahmin")
         else:
-            if os.getenv("PYTHON_ENV") == "TEST": print('prophet onceden calismis devam ediyorum')
+            # if os.getenv("PYTHON_ENV") == "TEST":
+            #     print('prophet onceden calismis devam ediyorum')
             _row = tahminler_cache[tahminler_cache["ds_str"] == pd.Timestamp(bitis)]
             tahmin["high"] = _row["high"].values[0]
             tahmin["low"] = _row["low"].values[0]

@@ -46,6 +46,7 @@ if __name__ == '__main__':
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
 
     # TODO:: decorator videosu yap
+    # TODO:: thread videosu yap
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
     # TODO:: binance servis exception alirsa uygulamayi bastan baslat
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz

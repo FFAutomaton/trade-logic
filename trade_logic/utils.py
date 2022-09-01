@@ -49,6 +49,11 @@ def dongu_kontrol_decorator(func):
     return inner1
 
 
+def bitis_gunu_truncate_month_precision(_now):
+    bitis_gunu = _now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    return bitis_gunu.replace(tzinfo=timezone.utc)
+
+
 def bitis_gunu_truncate_hour_precision(_now, arttir):
     bitis_gunu = _now.replace(minute=0, second=0, microsecond=0)
     _h = bitis_gunu.hour - (bitis_gunu.hour % arttir)
