@@ -20,8 +20,8 @@ def backtest_thread_func(start_date, end_date):
         if trader.karar.value == 3:
             trader.reset_trader()
         trader.bitis_gunu = trader.bitis_gunu + timedelta(minutes=trader.config.get('arttir_5m'))
-    kar = "{0:.0%}".format((islem_sonuc.get("usdt") - 1000) / 1000)
-    print(f"{start_date} - {end_date}: {kar}")
+    kar = "{0:.0}".format((islem_sonuc.get("usdt") - 1000) / 1000)
+    print(f"{start_date} - {end_date}:\t{kar}")
 
 
 def backtest_calis_thread(start_date, end_date):
@@ -46,17 +46,20 @@ def backtest_calis_thread(start_date, end_date):
 
 def backtest_calis_multi(start_date, end_date):
     _start = bitis_gunu_truncate_month_precision(start_date)
-    # _start = datetime.strptime('2022-08-29 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    if os.getenv("DEBUG") == "1":
+        _start = datetime.strptime('2022-08-29 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     multi = []
     while _start < end_date:
         __end = _start + timedelta(days=31)
         __end = bitis_gunu_truncate_month_precision(__end)
         _end = __end if __end < end_date else end_date
-        # backtest_thread_func(_start, _end)
-        x = Process(target=backtest_thread_func, args=(_start, _end,))
-        multi.append(x)
-        x.start()
+        if os.getenv("DEBUG") == "1":
+            backtest_thread_func(_start, _end)
+        else:
+            x = Process(target=backtest_thread_func, args=(_start, _end,))
+            multi.append(x)
+            x.start()
 
         _start = _end
 
@@ -68,6 +71,7 @@ if __name__ == '__main__':
     print(f"backtest basladi!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
+    # os.environ["DEBUG"] = "1"
 
     bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)

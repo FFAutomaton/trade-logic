@@ -40,9 +40,7 @@ def app_calis():
 if __name__ == '__main__':
     app_calis()
     # TODO:: cooldown?
-    # TODO:: heikin ashi fine tune edilebilir, bugunku mum hesaplanabilir
-
-    # TODO:: aylik kar ciktisi hesapla backtest icin, bunu multithread'de yapabilirsin
+    # TODO:: veri tabani islemlerini backtesti hizlandirmak icin en aza indir
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
 
     # TODO:: decorator videosu yap

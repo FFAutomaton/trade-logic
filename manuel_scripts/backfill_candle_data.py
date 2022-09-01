@@ -19,7 +19,7 @@ _config = {
 sqlite_service = SqlLite_Service(_config)
 prophet_service = TurkishGekkoProphetService(_secrets)
 
-window_end = datetime.strptime('2021-07-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+window_end = datetime.strptime('2021-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 window_end = window_end.replace(tzinfo=timezone.utc)
 
 _son = bitis_gunu_truncate_min_precision(_config.get("arttir"))

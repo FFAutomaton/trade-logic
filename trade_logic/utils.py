@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 def heikinashi_mum_analiz(last_row):
     karar, yon = 0, 0
-    # TODO:: calculate next open and compare with current price??
+
     if last_row["HA_Close"] > last_row["HA_Open"]:
         yon = 1
         if last_row["HA_Open"] == last_row["HA_Low"]:
@@ -16,6 +16,22 @@ def heikinashi_mum_analiz(last_row):
         if last_row["HA_Open"] == last_row["HA_High"]:
             karar = -1
     return yon, karar
+
+
+def bugunun_heikinashisi(series_1d, series_5m, suanki_fiyat):
+    last_row = series_1d.iloc[-1]
+    prev_row = series_1d.iloc[-2]
+    m5_high = suanki_fiyat
+    m5_low = suanki_fiyat
+    if not series_5m.empty:
+        m5_high = series_5m["high"].max()
+        m5_low = series_5m["low"].min()
+
+    last_row["HA_Open"] = (prev_row["HA_Open"] + prev_row["HA_Close"]) / 2
+    last_row["HA_Close"] = suanki_fiyat
+    last_row['HA_High'] = max(last_row["HA_Open"], m5_high, suanki_fiyat)
+    last_row['HA_Low'] = min(last_row["HA_Open"], m5_low, suanki_fiyat)
+    return last_row
 
 
 def heikinashiye_cevir(df):

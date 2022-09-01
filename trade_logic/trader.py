@@ -16,7 +16,7 @@ from signal_prophet.prophet_service import TurkishGekkoProphetService
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from service.bam_bam_service import bam_bama_sinyal_gonder
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
-    tahmin_doldur, dongu_kontrol_decorator, heikinashiye_cevir, heikinashi_mum_analiz
+    tahmin_doldur, dongu_kontrol_decorator, heikinashiye_cevir, heikinashi_mum_analiz, bugunun_heikinashisi
 
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
@@ -111,12 +111,20 @@ class Trader:
 
     # @dongu_kontrol_decorator
     def heikinashi_kontrol(self):
-        series = self.sqlite_service.veri_getir(
+        series_1d = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("swing_pencere"), "mum",
             self.swing_baslangic_gunu, self.bitis_gunu
         )
-        heikinashi_series = heikinashiye_cevir(series)
-        last_row = heikinashi_series.iloc[-1]
+        series_1d = heikinashiye_cevir(series_1d)
+
+        m5_baslanagic = self.bitis_gunu
+        m5_baslanagic = m5_baslanagic.replace(hour=0, minute=0,) - timedelta(minutes=5)
+
+        series_5m = self.sqlite_service.veri_getir(
+            self.config.get("coin"), "5m", "mum",
+            m5_baslanagic, self.bitis_gunu
+        )
+        last_row = bugunun_heikinashisi(series_1d, series_5m, self.suanki_fiyat)
         self.heikinashi_yon, self.heikinashi_karar = heikinashi_mum_analiz(last_row)
 
     def wallet_isle(self):
