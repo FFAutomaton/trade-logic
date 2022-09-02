@@ -240,7 +240,7 @@ class Trader:
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
-        if kar > 0 and kar / self.islem_fiyati > 0.03:
+        if kar > 0 and kar / self.islem_fiyati > 0.02:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * self.config.get("tp_datalt_katsayi"))
 
     def reset_trader(self):
