@@ -8,32 +8,46 @@ from trade_logic.utils import *
 from main import trader_calis
 
 
+islemler_rapor = {}
+
+
 def backtest_thread_func(start_date, end_date):
-    trader = Trader(start_date)
-    islem_sonuc = None
-    while trader.bitis_gunu < end_date:
-        trader_calis(trader)
-        # if trader.dondu_4h:
-            # print(f'#################### {trader.bitis_gunu} icin bitti! ###################')
-        # trader.sqlite_service.veri_yaz(trader.tahmin, "islem")
-        islem_sonuc = trader.tahmin
-        if trader.karar.value == 3:
-            trader.reset_trader()
-        trader.bitis_gunu = trader.bitis_gunu + timedelta(minutes=trader.config.get('arttir_5m'))
-    kar = "{0:.0}".format((islem_sonuc.get("usdt") - 1000) / 1000)
-    print(f"{start_date} - {end_date}:\t{kar}")
+    st_mult = [1.5]
+    rsi_1d_window = [35]
+    ema_1d_window = [21]
+
+    for mult in st_mult:
+        for rsi in rsi_1d_window:
+            for ema in ema_1d_window:
+                trader = Trader(start_date)
+                trader.config["supertrend_mult"] = mult
+                trader.super_trend_strategy.config["supertrend_mult"] = mult
+                trader.config["rsi_1d_window"] = rsi
+                trader.config["ema_1d_window"] = ema
+
+                islem_sonuc = None
+                while trader.bitis_gunu < end_date:
+                    trader_calis(trader)
+                    if trader.dondu_4h and os.getenv("DEBUG") == "1":
+                        print(f'#################### {trader.bitis_gunu} icin bitti! ###################')
+                    trader.sqlite_service.veri_yaz(trader.tahmin, "islem") if os.getenv("DEBUG") == "1" else None
+                    islem_sonuc = trader.tahmin
+                    if trader.karar.value == 3:
+                        trader.reset_trader()
+                    trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
+                kar = "{0:.0}".format((islem_sonu35c.get("usdt") - 1000) / 1000)
+
+                print(f"{start_date}\t{end_date}\t{mult}:\t{kar}")
 
 
 def backtest_calis_thread(start_date, end_date):
     _start = bitis_gunu_truncate_month_precision(start_date)
-    # _start = datetime.strptime('2022-08-29 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     threads = []
     while _start < end_date:
         __end = _start + timedelta(days=31)
         __end = bitis_gunu_truncate_month_precision(__end)
         _end = __end if __end < end_date else end_date
-        # backtest_thread_func(_start, _end)
         x = threading.Thread(target=backtest_thread_func, args=(_start, _end,))
         threads.append(x)
         x.start()
@@ -46,8 +60,8 @@ def backtest_calis_thread(start_date, end_date):
 
 def backtest_calis_multi(start_date, end_date):
     _start = bitis_gunu_truncate_month_precision(start_date)
-    if os.getenv("DEBUG") == "1":
-        _start = datetime.strptime('2022-08-29 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # if os.getenv("DEBUG") == "1":
+    #     _start = datetime.strptime('2022-0-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     multi = []
     while _start < end_date:
@@ -71,32 +85,16 @@ if __name__ == '__main__':
     print(f"backtest basladi!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
-    # os.environ["DEBUG"] = "1"
+    os.environ["DEBUG"] = "1"
 
-    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-04-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
-    _son = bitis_gunu_truncate_min_precision(trader.config.get("arttir_5m"))
+    # _son = bitis_gunu_truncate_min_precision(trader.config.get("arttir_5m"))
+    _son = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()
-    # trader.config["doldur"] = False
-    if trader.config["doldur"]:
-        trader.mum_verilerini_guncelle()
-
     backtest_calis_multi(bitis_gunu, _son)
     # backtest_calis_thread(bitis_gunu, _son)
-
-    # trader.ciz()
+    if os.getenv("DEBUG") == "1":
+        trader.ciz()
     print(f"it took {(time.time() - _s)/60} minutes")
-
-
-def optimization():
-    st_mult = [0.01]
-    rapor = {}
-    for mult in st_mult:
-        trader.config["tp_datalt_katsayi"] = mult
-
-        sonuc = trader.sonuc_getir()
-        rapor[mult] = (sonuc.get("usdt") - 1000) / 1000
-
-    for res in rapor:
-        print(f"{res} icin ", "{0:.0%}".format(rapor[res]))

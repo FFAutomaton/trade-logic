@@ -1,5 +1,4 @@
 import pandas as pd
-from signal_prophet.ml.model_classes.prophet_model import ProphetModel
 from datetime import datetime, timezone
 
 
@@ -70,6 +69,11 @@ def bitis_gunu_truncate_month_precision(_now):
     return bitis_gunu.replace(tzinfo=timezone.utc)
 
 
+def bitis_gunu_truncate_day_precision(_now):
+    bitis_gunu = _now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return bitis_gunu.replace(tzinfo=timezone.utc)
+
+
 def bitis_gunu_truncate_hour_precision(_now, arttir):
     bitis_gunu = _now.replace(minute=0, second=0, microsecond=0)
     _h = bitis_gunu.hour - (bitis_gunu.hour % arttir)
@@ -85,19 +89,19 @@ def bitis_gunu_truncate_min_precision(arttir):
     return bitis_gunu.replace(tzinfo=timezone.utc)
 
 
-def tahmin_doldur(tahmin, wallet, prophet):
-    tahmin["alis"] = float("nan")
-    tahmin["satis"] = float("nan")
-    tahmin["cikis"] = float("nan")
+def islem_doldur(islem, wallet):
+    islem["alis"] = float("nan")
+    islem["satis"] = float("nan")
+    islem["cikis"] = float("nan")
 
-    tahmin["high"] = prophet.high if hasattr(prophet, "high") else float("nan")
-    tahmin["low"] = prophet.low if hasattr(prophet, "low") else float("nan")
-    tahmin["open"] = prophet.open if hasattr(prophet, "open") else float("nan")
+    islem["high"] = float("nan")
+    islem["low"] = float("nan")
+    islem["open"] = islem.get("open")
 
-    tahmin["eth"] = wallet["ETH"]
-    tahmin["usdt"] = wallet["USDT"]
+    islem["eth"] = wallet["ETH"]
+    islem["usdt"] = wallet["USDT"]
 
-    return tahmin
+    return islem
 
 
 def okunur_date_yap(unix_ts):
@@ -106,30 +110,6 @@ def okunur_date_yap(unix_ts):
 
 def integer_date_yap(date_str):
     return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=None).timestamp())
-
-
-def model_egit_tahmin_et(train, pencere):
-    model = ProphetModel(
-        train=train,
-        horizon=1,
-        freq=pencere
-
-    )
-    model.fit()
-    return model.predict()
-
-
-def train_kirp_yeniden_adlandir(df, cesit):
-    # df = df.iloc[:, :2]
-    train = df.rename(columns={"open_ts_str": "ds"})
-    train = train.rename(columns={cesit: "y"})
-    return train
-
-
-def tahmin_onceden_hesaplanmis_mi(baslangic_gunu, _config, tahminler_cache):
-    if pd.Timestamp(baslangic_gunu) in tahminler_cache['ds_str'].values:
-        return True
-    return False
 
 
 def print_islem_detay(trader):

@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from signal_prophet.prophet_service import TurkishGekkoProphetService
 from service.sqlite_service import SqlLite_Service
 from config import *
 from trade_logic.utils import bitis_gunu_truncate_min_precision, datetime,timezone
@@ -9,10 +8,11 @@ from trade_logic.utils import bitis_gunu_truncate_min_precision, datetime,timezo
 _secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
 
 _config = {
-    "symbol": "ETH", "coin": 'ETHUSDT', "pencere": "4h", "arttir": 4,
-    "swing_pencere": "1d", "swing_arttir": 24, "prophet_pencere": "4h", "super_trend_pencere": "4h",
+    "symbol": "ETH", "coin": 'ETHUSDT', "arttir": 4,
+    "pencere_1d": "1d", "pencere_4h": "4h", "pencere_5m": "5m",
+    "swing_arttir": 24,
     "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
-    "prophet_window": 2400, "swing_window": 200, "backfill_window": 20, "super_trend_window": 200,
+    "backfill_window": 20, "super_trend_window": 200,
     "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
 }
 

@@ -38,11 +38,10 @@ class SqlLite_Service:
         return ', '.join(_query)
 
     def _tablo_yoksa_olustur(self):
-        _4h = self._config.get('pencere')
-        candle_tables = [_4h, self._config.get('swing_pencere'), "5m"]
+        _4h = self._config.get('pencere_4h')
+        candle_tables = [_4h, self._config.get('pencere_1d'), "5m"]
         coin = self._config.get('coin')
         islemler = f'islemler_{coin}_{_4h}'
-        prophet_tahminler = f'prophet_{coin}_{_4h}'
         trader = f'trader_{coin}_{_4h}'
 
         for table in candle_tables:
@@ -54,16 +53,13 @@ class SqlLite_Service:
             f'CREATE TABLE IF NOT EXISTS {islemler}({self.schemayi_query_texte_cevir(islem_schema)});'
         )
         self.get_conn().cursor().execute(
-            f'CREATE TABLE IF NOT EXISTS {prophet_tahminler}({self.schemayi_query_texte_cevir(prophet_tahmin_schema)});'
-        )
-        self.get_conn().cursor().execute(
             f'CREATE TABLE IF NOT EXISTS {trader}({self.schemayi_query_texte_cevir(trader_schema)});'
         )
         self.get_conn().commit()
 
-    def mum_datasi_yukle(self, tip, prophet_service, baslangic_gunu, bitis_gunu):
+    def mum_datasi_yukle(self, tip, binance_service, baslangic_gunu, bitis_gunu):
         coin = self._config.get('coin')
-        data = prophet_service.tg_binance_service.get_client().get_historical_klines(
+        data = binance_service.get_client().get_historical_klines(
             symbol=coin, interval=tip,
             start_str=str(baslangic_gunu), end_str=str(bitis_gunu), limit=500
         )
@@ -99,14 +95,10 @@ class SqlLite_Service:
 
     def veri_yaz(self, data, _type):
         coin = self._config.get('coin')
-        tip = self._config.get('pencere')
+        tip = self._config.get('pencere_4h')
         schema = None
 
-        if _type == "tahmin":
-            _query = f"""INSERT INTO {f'prophet_{coin}_{tip}'} {self.values_ifadesi_olustur(prophet_tahmin_schema)}
-                ON CONFLICT({prophet_tahmin_schema[0]["name"]}) {self.update_ifadesi_olustur(prophet_tahmin_schema)};"""
-            schema = prophet_tahmin_schema
-        elif _type == "islem":
+        if _type == "islem":
             _query = f"""INSERT INTO islemler_{coin}_{tip} {self.values_ifadesi_olustur(islem_schema)}
                             ON CONFLICT({islem_schema[0]["name"]}) {self.update_ifadesi_olustur(islem_schema)};"""
             schema = islem_schema
@@ -135,7 +127,7 @@ class SqlLite_Service:
 
     def islemleri_temizle(self):
         coin = self._config.get('coin')
-        tip = self._config.get('pencere')
+        tip = self._config.get('pencere_4h')
         _query = f"DELETE FROM islemler_{coin}_{tip};"
         self.get_conn().cursor().execute(_query)
         self.get_conn().commit()
@@ -143,10 +135,7 @@ class SqlLite_Service:
     def veri_getir(self, coin, pencere, _type, baslangic=None, bitis=None):
         # zaman serisi ---> (baslangic=2022-01-01, ......, bitis=2022-05-25)
         schema = None
-        if _type == 'prophet':
-            query = f'SELECT * FROM prophet_{coin}_{pencere}'
-            schema = prophet_tahmin_schema
-        elif _type == 'mum':
+        if _type == 'mum':
             query = f"""SELECT * FROM {f'{coin}_{pencere}'}
                     WHERE open_ts_int <= {int(bitis.timestamp())*1000}
                     and open_ts_int > {int(baslangic.timestamp())*1000}"""
@@ -184,7 +173,7 @@ class SqlLite_Service:
         self.veri_yaz(data, "trader")
 
     def trader_durumu_geri_yukle(self, trader):
-        _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere"), "trader")
+        _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere_4h"), "trader")
         _oncekiler = ["karar", "pozisyon"]
         if not _trader.empty:
             conf_ = json.loads(_trader.config[0])
@@ -200,7 +189,7 @@ class SqlLite_Service:
     def trader_eski_verileri_temizle(self, bitis_gunu):
         _limit = bitis_gunu - timedelta(days=1)
         coin = self._config.get('coin')
-        tip = self._config.get('pencere')
+        tip = self._config.get('pencere_4h')
         _query = f'DELETE FROM trader_{coin}_{tip} ' \
                  f'WHERE date(ds_str) < "{datetime.strftime(_limit, "%Y-%m-%d")}";'
         self.get_conn().cursor().execute(_query)
