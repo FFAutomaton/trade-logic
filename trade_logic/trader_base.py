@@ -26,7 +26,7 @@ class TraderBase:
             "swing_arttir": 24, "arttir": 4,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "backfill_window": 5, "super_trend_window": 200,
-            "doldur": True, "supertrend_mult": 1.5,
+            "doldur": True, "supertrend_mult": 1.5, "rsi_limit": 25,
             "rsi_1d_window": 35, "ema_1d_window": 21
         }
         self.binance_wallet = None

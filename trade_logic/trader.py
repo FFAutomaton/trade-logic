@@ -11,11 +11,11 @@ class Trader(TraderBase):
     def karar_calis(self):
         if self.rsi_strategy.ema_value_1d < self.suanki_fiyat:
             if self.heikinashi_karar == Karar.alis:
-                if self.rsi_strategy.rsi_ema_trend > 0 and self.rsi_strategy.rsi_value_1d < 75:
+                if self.rsi_strategy.rsi_ema_trend > 0 and self.rsi_strategy.rsi_value_1d < 100-self.config.get("rsi_limit"):
                     self.karar = Karar.alis
         else:
             if self.heikinashi_karar == Karar.satis:
-                if self.rsi_strategy.karar < 0 and self.rsi_strategy.rsi_value_1d > 25:
+                if self.rsi_strategy.rsi_ema_trend < 0 and self.rsi_strategy.rsi_value_1d > 0+self.config.get("rsi_limit"):
                     self.karar = Karar.satis
 
     # @dongu_kontrol_decorator
@@ -41,11 +41,11 @@ class Trader(TraderBase):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
             if self.pozisyon.value > 0:
-                if self.rsi_strategy.rsi_value_1d > 75:
+                if self.rsi_strategy.rsi_value_1d > 100-self.config.get("rsi_limit"):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
             elif self.pozisyon.value < 0:
-                if self.rsi_strategy.rsi_value_1d < 25:
+                if self.rsi_strategy.rsi_value_1d < 0+self.config.get("rsi_limit"):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
 

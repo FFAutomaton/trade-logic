@@ -7,9 +7,9 @@ WORKDIR ${WORKDIR}
 
 RUN apt-get update && apt-get upgrade -y && apt-get install -y git && apt-get install -y cron
 
-RUN apt-get install -y python3-dev
-RUN apt install -y gcc
-RUN apt install -y g++
+#RUN apt-get install -y python3-dev
+#RUN apt install -y gcc
+#RUN apt install -y g++
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
