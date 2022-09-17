@@ -42,12 +42,12 @@ def heikinashiye_cevir(df):
 def sonuc_yazdir(start_date, end_date, mult, trader, islem_sonuc):
     if trader.pozisyon.value > 0:
         usdt = islem_sonuc.get("eth") * trader.suanki_fiyat
-        kar = "{0:.0}".format(round((usdt) / 1000, 2))
+        kar = f"{round((usdt - 1000) / 1000, 2)}"
     elif trader.pozisyon.value < 0:
         usdt = islem_sonuc.get("eth") * (trader.islem_fiyati - trader.suanki_fiyat)
-        kar = "{0:.00}".format(round(((islem_sonuc.get("usdt") + usdt)) / 1000, 2))
+        kar = f"{round((islem_sonuc.get('usdt') + usdt - 1000) / 1000, 2)}"
     else:
-        kar = "{0:.00}".format(round((islem_sonuc.get("usdt")) / 1000, 2))
+        kar = f"{round((islem_sonuc.get('usdt') - 1000) / 1000, 2)}"
 
     print(f"{start_date}\t{end_date}\t{mult}:\t{kar}")
 

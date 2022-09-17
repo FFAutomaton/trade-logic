@@ -13,7 +13,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y git && apt-get in
 
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
-COPY . .
+
+COPY --chown=1001 . .
 RUN chmod +x $WORKDIR/main.py $WORKDIR/bash_scripts/run.sh $WORKDIR/bash_scripts/entrypoint.sh
 
 CMD ["bash"]
