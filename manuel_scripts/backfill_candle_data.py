@@ -2,7 +2,8 @@ from datetime import timedelta
 
 from service.sqlite_service import SqlLite_Service
 from config import *
-from trade_logic.utils import bitis_gunu_truncate_min_precision, datetime,timezone
+from trade_logic.utils import bitis_gunu_truncate_day_precision, datetime,timezone
+from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 
 _secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
@@ -17,17 +18,17 @@ _config = {
 }
 
 sqlite_service = SqlLite_Service(_config)
-prophet_service = TurkishGekkoProphetService(_secrets)
+binance_serve = TurkishGekkoBinanceService(_secrets)
 
-window_end = datetime.strptime('2021-08-01 00:00:00', '%Y-%m-%d %H:%M:%S')
+window_end = datetime.strptime('2021-01-01 00:00:00', '%Y-%m-%d %H:%M:%S')
 window_end = window_end.replace(tzinfo=timezone.utc)
 
-_son = bitis_gunu_truncate_min_precision(_config.get("arttir"))
+_son = bitis_gunu_truncate_day_precision(datetime.utcnow())
 
 while window_end < _son:
 
     sqlite_service.mum_datasi_yukle(
-        "5m", prophet_service, window_end - timedelta(days=20), window_end
+        "1d", binance_serve, window_end - timedelta(days=20), window_end
     )
     print(f" one turn finished for {window_end}")
     window_end += timedelta(days=19)

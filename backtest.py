@@ -35,9 +35,7 @@ def backtest_thread_func(start_date, end_date):
                     if trader.karar.value == 3:
                         trader.reset_trader()
                     trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
-                kar = "{0:.0}".format((islem_sonu35c.get("usdt") - 1000) / 1000)
-
-                print(f"{start_date}\t{end_date}\t{mult}:\t{kar}")
+                sonuc_yazdir(start_date, end_date, mult, trader, islem_sonuc)
 
 
 def backtest_calis_thread(start_date, end_date):
@@ -59,23 +57,22 @@ def backtest_calis_thread(start_date, end_date):
 
 
 def backtest_calis_multi(start_date, end_date):
-    _start = bitis_gunu_truncate_month_precision(start_date)
-    # if os.getenv("DEBUG") == "1":
-    #     _start = datetime.strptime('2022-0-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-
     multi = []
-    while _start < end_date:
-        __end = _start + timedelta(days=31)
-        __end = bitis_gunu_truncate_month_precision(__end)
-        _end = __end if __end < end_date else end_date
+    while start_date < end_date:
         if os.getenv("DEBUG") == "1":
-            backtest_thread_func(_start, _end)
+            _end = end_date
+            backtest_thread_func(start_date, _end)
         else:
-            x = Process(target=backtest_thread_func, args=(_start, _end,))
+            start_date = bitis_gunu_truncate_month_precision(start_date)
+            __end = start_date + timedelta(days=31)
+            __end = bitis_gunu_truncate_month_precision(__end)
+            _end = __end if __end < end_date else end_date
+            _end = end_date
+            x = Process(target=backtest_thread_func, args=(start_date, _end,))
             multi.append(x)
             x.start()
 
-        _start = _end
+        start_date = _end
 
     for index, thread in enumerate(multi):
         thread.join()
@@ -87,10 +84,10 @@ if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
     os.environ["DEBUG"] = "1"
 
-    bitis_gunu = datetime.strptime('2022-04-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2021-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
-    # _son = bitis_gunu_truncate_min_precision(trader.config.get("arttir_5m"))
-    _son = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # _son = datetime.strptime('2022-07-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()
     backtest_calis_multi(bitis_gunu, _son)
