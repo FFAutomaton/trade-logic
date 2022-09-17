@@ -1,12 +1,15 @@
 import os
+import pandas as pd
+import copy
 import matplotlib.pyplot as plt
 from datetime import timedelta, datetime
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
-from trade_logic.traders.rsi_1d_long_strategy import RSI5mStrategy
+from trade_logic.traders.rsi_1d_long_strategy import RsiEmaStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
-from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
+from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision,\
+    bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
 
 from schemas.enums.pozisyon import Pozisyon
@@ -35,8 +38,8 @@ class TraderBase:
         self.suanki_fiyat, self.running_price = 0, 0
         self.karar = Karar.notr
         self.heikinashi_karar = Karar.notr
-        self.rsi_ema_1d_karar = Karar.notr
         self.onceki_karar = Karar.notr
+        self.return_karar = 0
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
         self.dolar = 1000
         self.coin = 0
@@ -46,6 +49,10 @@ class TraderBase:
         self.rsi_value_1d = 0
         self.ema_value_1d = 0
         self.bitis_gunu = bitis_gunu
+        self.bitis_gunu_str =  datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
+        self.series_1d = None
+        self.series_4h = None
+        self.bugunun_mumu = None
 
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(
             days=self.config.get("backfill_window"))
@@ -54,25 +61,59 @@ class TraderBase:
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
-        self.rsi_1d_strategy = RSI5mStrategy()
+        self.rsi_strategy = RsiEmaStrategy()
 
         # trader.config["doldur"] = False
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
 
     def init(self):
+        # calisma siralari onemli
+        self.mumlari_guncelle()
         self.tarihleri_guncelle()
         self.fiyat_guncelle()
         self.super_trend_strategy.atr_hesapla(self)
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
 
-    def fiyat_guncelle(self):
-        data = self.sqlite_service.veri_getir(
-            self.config.get("coin"), "5m", "mum",
-            self.bitis_gunu - timedelta(minutes=5), self.bitis_gunu
+    def mumlari_guncelle(self):
+        self.series_1d = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("pencere_1d"), "mum",
+            self.bitis_gunu - timedelta(days=250), self.bitis_gunu
         )
-        self.suanki_fiyat = data.get("open")[0]
+        self.series_4h = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("pencere_4h"), "mum",
+            self.bitis_gunu - timedelta(days=20), self.bitis_gunu
+        )
+        self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
+        self.son_mumu_guncelle()
 
+    def son_mumu_guncelle(self):
+        _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
+        if self.series_1d[self.series_1d["open_ts_str"] == datetime.strftime(_bas, '%Y-%m-%d %H:%M:%S')].empty:
+            self.series_1d = pd.concat([self.bugunun_mumu, self.series_1d], ignore_index=True)
+        else:
+            self.series_1d[0:1] = self.bugunun_mumu
+
+    def bugunun_4hlik_mumlarini_topla(self):
+        _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
+        _son = self.bitis_gunu
+        df = copy.deepcopy(self.series_4h[0:6])
+
+        bugun_mum = copy.deepcopy(self.series_4h[0:1])
+
+        bugun_mum.at[0, "open_ts_int"] = int(_bas.timestamp()) * 1000
+        bugun_mum.at[0, "open_ts_str"] = datetime.strftime(_bas, '%Y-%m-%d %H:%M:%S')
+        bugun_mum.at[0, "open"] = df.iloc[-1]["open"]
+        bugun_mum.at[0, "close"] = df.iloc[0]["close"]
+        bugun_mum.at[0, 'high'] = df["high"].max()
+        bugun_mum.at[0, 'low'] = df["low"].min()
+        bugun_mum.at[0, "volume"] = df["volume"].sum()
+
+        return bugun_mum
+
+    def fiyat_guncelle(self):
+        data = self.series_4h
+        self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
@@ -120,9 +161,9 @@ class TraderBase:
         self.sqlite_service.mum_datasi_yukle(
             self.config.get("pencere_1d"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
-        self.sqlite_service.mum_datasi_yukle(
-            "5m", self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
-        )
+        # self.sqlite_service.mum_datasi_yukle(
+        #     "5m", self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
+        # )
 
     def sonuc_getir(self):
         sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_4h"), 'islem')

@@ -5,53 +5,51 @@ from datetime import datetime, timezone
 def heikinashi_mum_analiz(last_row):
     karar, yon = 0, 0
 
-    if last_row["HA_Close"] > last_row["HA_Open"]:
+    if last_row["HA_Close"][0] > last_row["HA_Open"][0]:
         yon = 1
-        if last_row["HA_Open"] == last_row["HA_Low"]:
+        if last_row["HA_Open"][0] == last_row["HA_Low"][0]:
             karar = 1
 
-    if last_row["HA_Close"] < last_row["HA_Open"]:
+    if last_row["HA_Close"][0] < last_row["HA_Open"][0]:
         yon = -1
-        if last_row["HA_Open"] == last_row["HA_High"]:
+        if last_row["HA_Open"][0] == last_row["HA_High"][0]:
             karar = -1
     return yon, karar
 
 
-def bugunun_heikinashisi(series_1d, series_5m, suanki_fiyat):
-    last_row = series_1d.iloc[-1]
-    prev_row = series_1d.iloc[-2]
-    m5_high = suanki_fiyat
-    m5_low = suanki_fiyat
-    if not series_5m.empty:
-        m5_high = series_5m["high"].max()
-        m5_low = series_5m["low"].min()
-
-    last_row["HA_Open"] = (prev_row["HA_Open"] + prev_row["HA_Close"]) / 2
-    last_row["HA_Close"] = suanki_fiyat
-    last_row['HA_High'] = max(last_row["HA_Open"], m5_high, suanki_fiyat)
-    last_row['HA_Low'] = min(last_row["HA_Open"], m5_low, suanki_fiyat)
-    return last_row
-
-
 def heikinashiye_cevir(df):
-    df = df.iloc[::-1]
+    # df = df.iloc[::-1]
     pd.options.mode.chained_assignment = None
+    # idx = df.index.name
+    # df.reset_index(inplace=True)
     df['HA_Close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
-    idx = df.index.name
-    df.reset_index(inplace=True)
-
-    for i in range(0, len(df)):
-        if i == 0:
+    i = len(df) - 1
+    l = len(df) - 1
+    while i >= 0:
+        if i == l:
             df.at[i, 'HA_Open'] = (df.at[i, 'open'] + df.at[i, 'close']) / 2
         else:
-            df.at[i, 'HA_Open'] = (df.at[i - 1, 'HA_Open'] + df.at[i - 1, 'HA_Close']) / 2
-
-    if idx:
-        df.set_index(idx, inplace=True)
+            df.at[i, 'HA_Open'] = (df.at[i + 1, 'HA_Open'] + df.at[i + 1, 'HA_Close']) / 2
+        i -= 1
+    # if idx:
+    #     df.set_index(idx, inplace=True)
 
     df['HA_High'] = df[['HA_Open', 'HA_Close', 'high']].apply(max, axis=1)
     df['HA_Low'] = df[['HA_Open', 'HA_Close', 'low']].apply(min, axis=1)
     return df
+
+
+def sonuc_yazdir(start_date, end_date, mult, trader, islem_sonuc):
+    if trader.pozisyon.value > 0:
+        usdt = islem_sonuc.get("eth") * trader.suanki_fiyat
+        kar = "{0:.0}".format(round((usdt - 1000) / 1000, 2))
+    elif trader.pozisyon.value < 0:
+        usdt = islem_sonuc.get("eth") * (trader.islem_fiyati - trader.suanki_fiyat)
+        kar = "{0:.00}".format(round(usdt / 1000, 2))
+    else:
+        kar = "{0:.00}".format(round((islem_sonuc.get("usdt") - 1000) / 1000, 2))
+
+    print(f"{start_date}\t{end_date}\t{mult}:\t{kar}")
 
 
 def dongu_kontrol_decorator(func):
