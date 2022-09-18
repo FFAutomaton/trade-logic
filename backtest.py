@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
     bitis_gunu = datetime.strptime('2022-09-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
-    _son = datetime.strptime('2022-09-18 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2022-09-19 20:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # _son = datetime.strptime('2022-07-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()

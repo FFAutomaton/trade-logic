@@ -37,7 +37,7 @@ Public DNS icin instance'a girdikten sonra baglan(connect) tusundan ssh secenegi
 `ssh -i "<anahtar dosya path'i>" <kullanici_adi>@<Public DNS>`
 
 `scp -i "<anahtar dosya path'i>" <config.py_dosyasina_path> <kullanici_adi>@<Public DNS>:<trade_logic_repo_path>`
-
+`scp -i "trade-bot.pem" /Users/sevki/Documents/repos/turkish-gekko-organization/trade-logic/config.py ubuntu@ec2-54-173-54-47.compute-1.amazonaws.com:/home/ubuntu/trade-logic`
 ## EC2'ye docker yukleme
 Sirasiyla su komutlari calistirin
 `curl -fsSL https://get.docker.com -o get-docker.sh`
