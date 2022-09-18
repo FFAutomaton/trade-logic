@@ -53,11 +53,11 @@ Ayrintilar icin: https://github.com/mloning/minimal-python-app-using-docker-cron
 
 - Once docker `build` alalim, uygulamanin ana klasorunde
 ```
-docker build --rm -t prophet-trader .
+docker build --rm -t trade-bot .
 ```
 
 - Sonra bu `docker goruntusunu` gene bu klasore kaydedelim
-`docker save prophet-trader > prophet-trader.tar`
+`docker save trade-bot > prophet-trader.tar`
 - Bu olusumu aktarabilmek icin once s3 bucket'ina yuklemek gerekiyor, gerekli ayarlar icin:
 `https://aws.amazon.com/tr/premiumsupport/knowledge-center/ec2-instance-access-s3-bucket/`
 - Paralel yükleme yapmak içim aks cli'nin gerekli değişkenlerini ayarlıyoruz, detayları şu linkte bulabilirsiniz:
@@ -72,7 +72,7 @@ arttiralim. Eger makineyi kaldirirken disk buyuk secildiyse bu adim atlanabilir
 - En son islemlerden sonra olay calistirmaya geldi
 ```commandline
 docker run -t -i -d --rm \
-    --name prophet-trader -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
+    --name trade-bot -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/trade-bot-logs:/output \
      -v /home/sevki/Documents/repos/turkish-gekko/trade-logic/coindata/ETHUSDT.db:/app/coindata/ETHUSDT.db \
      prophet-trader
 ```
