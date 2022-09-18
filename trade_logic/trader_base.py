@@ -1,7 +1,6 @@
 import os
 import pandas as pd
 import copy
-import matplotlib.pyplot as plt
 from datetime import timedelta, datetime
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
 from trade_logic.traders.rsi_1d_long_strategy import RsiEmaStrategy
@@ -170,6 +169,7 @@ class TraderBase:
         return sonuclar.iloc[0]
 
     def ciz(self):
+        import matplotlib.pyplot as plt
         sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_4h"), "islem")
         # sonuclar = sonuclar.iloc[-200:]
         # plt.style.use('dark_background')

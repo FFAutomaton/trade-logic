@@ -22,6 +22,7 @@ Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglana
 `docker ps`
 ```commandline
 docker container exec -it <container_id> /bin/bash
+docker container exec -it 9d81461c9338 /bin/bash
 ```
 
 # AWS EC2 instance'a baglanma
