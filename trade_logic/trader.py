@@ -30,24 +30,32 @@ class Trader(TraderBase):
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
             self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
 
-        # if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
-        #     self.karar = Karar.cikis
-            # self.super_trend_strategy.reset_super_trend()
+        if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
+            self.karar = Karar.cikis
+            self.super_trend_strategy.reset_super_trend()
 
         if self.pozisyon != Pozisyon.notr:
             if self.rsi_strategy.rsi_ema_trend != 0:
                 if self.rsi_strategy.rsi_ema_trend != self.pozisyon.value:
                     # if self.heikinashi_karar.value != self.pozisyon.value:
+                    # self.karar = Karar.cikis
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
             if self.pozisyon.value > 0:
                 if self.rsi_strategy.rsi_value_1d > 100-self.config.get("rsi_limit"):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
+                elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * 1.005:
+                    self.karar = Karar.satis
+
             elif self.pozisyon.value < 0:
                 if self.rsi_strategy.rsi_value_1d < 0+self.config.get("rsi_limit"):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
+                elif self.rsi_strategy.ema_value_1d < self.suanki_fiyat * 0.995:
+                    self.karar = Karar.alis
+
+
 
     def rsi_ema_karar_hesapla(self):
         self.rsi_strategy.bitis_gunu = self.bitis_gunu

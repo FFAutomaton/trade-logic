@@ -34,6 +34,8 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: check rsi kesisme arrayin son verilerini alip en son veri yukari kesmis mi gibi bir kontrol, uzun suren
+    #  asiri satis ve alislarda karini arttirmasi icin
     # TODO:: cooldown?
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
     # TODO:: decorator videosu yap
