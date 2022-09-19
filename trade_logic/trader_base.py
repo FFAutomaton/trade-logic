@@ -136,18 +136,13 @@ class TraderBase:
         islem = self.tahmin
         yon = None
         if islem["alis"] > 0:
-            _exit_, yon = self.prophet_service.tg_binance_service. \
-                futures_market_exit(self.config.get("coin"))
-            self.prophet_service.tg_binance_service.\
-                futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=self.miktar_hesapla(), kaldirac=1)
+            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
+            self.binance_service.futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=self.miktar_hesapla(), kaldirac=1)
         elif islem["satis"] > 0:
-            _exit_, yon = self.prophet_service.tg_binance_service. \
-                futures_market_exit(self.config.get("coin"))
-            self.prophet_service.tg_binance_service.\
-                futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=self.miktar_hesapla(), kaldirac=1)
+            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
+            self.binance_service.futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=self.miktar_hesapla(), kaldirac=1)
         elif islem["cikis"] > 0:
-            _exit_, yon = self.prophet_service.tg_binance_service.\
-                futures_market_exit(self.config.get("coin"))
+            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
             self.islem_fiyati = 0
             self.islem_miktari = 0
         if not os.getenv("PYTHON_ENV") == "TEST":

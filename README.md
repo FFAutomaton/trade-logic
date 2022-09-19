@@ -15,7 +15,7 @@ PYTHON_ENV = "TEST". Bunu degiskenlerinize local denemelerinizde ekleyin. Botu c
 `rebuild.sh` dosyasini executable hale getirin, sonrasinda `./bash_scripts/rebuild.sh` komutu ile docker container icinde 
 botu calistirabilirsiniz.
 
-`docker ps` komutu ile `prophet_trader` container id'yi cekin ve container'a baglanin. `app` klasoru icinde `main.py` 
+`docker ps` komutu ile `trader-bot` container id'yi cekin ve container'a baglanin. `app` klasoru icinde `main.py` 
 dosyasini calistirarak calistigindan emin olun.
 
 Calisan container'in id'sini alip asagidaki komuta ekleyerek container'a baglanabilirsin.
