@@ -25,7 +25,7 @@ class TraderBase:
             "swing_arttir": 24, "arttir": 4,
             "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
             "backfill_window": 5, "super_trend_window": 200,
-            "doldur": True, "supertrend_mult": 1.5, "rsi_limit": 25
+            "doldur": True, "supertrend_mult": 1.5
         }
         self.binance_wallet = None
         self.tp_daralt = 0
@@ -144,7 +144,7 @@ class TraderBase:
             _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
             self.islem_fiyati = 0
             self.islem_miktari = 0
-        if not os.getenv("PYTHON_ENV") == "TEST":
+        if not os.getenv("PYTHON_ENV") == "TEST" and not os.getenv("PYTHON_ENV") == "ANIL":
             bam_bama_sinyal_gonder(islem, yon)
 
     def mum_verilerini_guncelle(self):
