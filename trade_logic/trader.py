@@ -1,22 +1,34 @@
 import math
-from datetime import timedelta
 from trade_logic.utils import dongu_kontrol_decorator, heikinashiye_cevir, heikinashi_mum_analiz, \
-    bitis_gunu_truncate_day_precision, islem_doldur
+    bitis_gunu_truncate_day_precision, islem_doldur, rsi_limit_kesim_durum_listeden_hesapla
 from schemas.enums.pozisyon import Pozisyon
+from trade_logic.constants import rsi_bounding_limit, ema_bounding_limit
 from schemas.enums.karar import Karar
 from trade_logic.trader_base import TraderBase
+from trade_logic.constants import tp_daralt_katsayi
 
 
 class Trader(TraderBase):
     def karar_calis(self):
-        if self.rsi_strategy.ema_value_1d < self.suanki_fiyat:
+        if self.rsi_strategy.ema_value_1d < self.suanki_fiyat * (1 - ema_bounding_limit):
             if self.heikinashi_karar == Karar.alis:
-                if self.rsi_strategy.rsi_ema_trend > 0 and self.rsi_strategy.rsi_value_1d < 100-self.config.get("rsi_limit"):
+                # if self.rsi_strategy.rsi_ema_trend > 0:
+                if self.rsi_strategy.rsi_ema_trend > 0 and self.rsi_strategy.rsi_value_1d < 100 - rsi_bounding_limit:
                     self.karar = Karar.alis
-        else:
+                elif rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], -1):
+                    self.karar = Karar.alis
+        elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * (1 + ema_bounding_limit):
             if self.heikinashi_karar == Karar.satis:
-                if self.rsi_strategy.rsi_ema_trend < 0 and self.rsi_strategy.rsi_value_1d > 0+self.config.get("rsi_limit"):
+                # if self.rsi_strategy.rsi_ema_trend < 0:
+                if self.rsi_strategy.rsi_ema_trend < 0 and self.rsi_strategy.rsi_value_1d > 0 + rsi_bounding_limit:
                     self.karar = Karar.satis
+                elif rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], 1):
+                    self.karar = Karar.satis
+
+    def super_trend_tp_daralt(self):
+        kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
+        if kar > 0 and kar / self.islem_fiyati > 0.03:
+            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * tp_daralt_katsayi)
 
     # @dongu_kontrol_decorator
     def cikis_kontrol(self):
@@ -25,6 +37,7 @@ class Trader(TraderBase):
             return
 
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
+        # self.super_trend_tp_daralt()
 
         # pozisyon 0 iken bu fonksiyon aslinda calismiyor
         if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
@@ -35,24 +48,25 @@ class Trader(TraderBase):
             self.super_trend_strategy.reset_super_trend()
 
         if self.pozisyon != Pozisyon.notr:
+            # if self.heikinashi_karar.value != self.pozisyon.value:
+            #     self.karar = Karar.cikis
+            #     self.super_trend_strategy.reset_super_trend()
             if self.rsi_strategy.rsi_ema_trend != 0:
                 if self.rsi_strategy.rsi_ema_trend != self.pozisyon.value:
-                    # if self.heikinashi_karar.value != self.pozisyon.value:
-                    # self.karar = Karar.cikis
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
             if self.pozisyon.value > 0:
-                if self.rsi_strategy.rsi_value_1d > 100-self.config.get("rsi_limit"):
+                if rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], self.pozisyon.value):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
-                elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * 1.005:
+                elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * (1 + ema_bounding_limit):
                     self.karar = Karar.satis
 
             elif self.pozisyon.value < 0:
-                if self.rsi_strategy.rsi_value_1d < 0+self.config.get("rsi_limit"):
+                if rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], self.pozisyon.value):
                     self.karar = Karar.cikis
                     self.super_trend_strategy.reset_super_trend()
-                elif self.rsi_strategy.ema_value_1d < self.suanki_fiyat * 0.995:
+                elif self.rsi_strategy.ema_value_1d < self.suanki_fiyat * (1 - ema_bounding_limit):
                     self.karar = Karar.alis
 
 

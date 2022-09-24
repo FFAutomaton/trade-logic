@@ -1,5 +1,18 @@
 import pandas as pd
 from datetime import datetime, timezone
+from trade_logic.constants import rsi_bounding_limit
+
+
+def rsi_limit_kesim_durum_listeden_hesapla(series, pozisyon):
+    rsi_ = series[0]
+    prev_rsi_ = series[1]
+    if pozisyon > 0:
+        if prev_rsi_ > 100 - rsi_bounding_limit > rsi_:
+            return True
+    elif pozisyon < 0:
+        if prev_rsi_ < 0 + rsi_bounding_limit < rsi_:
+            return True
+    return False
 
 
 def heikinashi_mum_analiz(last_row):
@@ -112,7 +125,7 @@ def integer_date_yap(date_str):
 
 def print_islem_detay(trader):
     islem = trader.tahmin
-
+    print(f"bot calisti {str(trader.bitis_gunu)}")
     if islem.get('alis') > 0:
         print(f"islem detaylar ==> ds: {islem.get('ds')}\t\t\t\t ==> alis: {islem.get('alis')}")
     if islem.get('satis') > 0:

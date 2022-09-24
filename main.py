@@ -34,9 +34,10 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: onceki karar ve karar verilerine pozisyonu kapatmayi dene, karar 0 iken pozisyon olsa kapatmayi dusunuebiliriz
     # TODO:: check rsi kesisme arrayin son verilerini alip en son veri yukari kesmis mi gibi bir kontrol, uzun suren
     #  asiri satis ve alislarda karini arttirmasi icin
-    # TODO:: cooldown?
+    # TODO:: pazari 2'ye bol trending ve ranging diye ema veya rsi degerlerinden
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
     # TODO:: decorator videosu yap
     # TODO:: thread videosu yap
