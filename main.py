@@ -33,7 +33,17 @@ def app_calis():
 
 
 if __name__ == '__main__':
-    app_calis()
+    c = 5
+    while c > 0:
+        try:
+            app_calis()
+            c = 0
+        except Exception as e:
+            # TODO:: send_email
+            print(str(e))
+            print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
+            c -= 1
+
     # TODO:: piyasanin durumunu atr'den cikararak rsi ayarlari degistirmek en mantikli yaklasim olabilir
     # TODO:: once alttaki maddeyi ekle sonra stateleri daha duzgun tutup strteji yaz bastan 1-rsi ve emasi, 2-ema_trend, normal ema ile cikis
     # TODO:: daha sik calistirip su anki fiyattan erken cikis dene, basktest icin bunu yari handle etmen lazim

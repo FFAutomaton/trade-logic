@@ -10,7 +10,7 @@ from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision,\
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
-
+from config_users import users
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 
@@ -130,21 +130,47 @@ class TraderBase:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
+    def kullanicilari_don(self, _taraf=None):
+        _exit_, yon = None, None
+        for user in users:
+            user_secrets  = users.get(user)
+            c = 5
+            while c > 0:
+                try:
+                    _service = TurkishGekkoBinanceService(user_secrets)
+                    _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
+                    if _taraf:
+                        _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
+                                                      miktar=self.miktar_hesapla(), kaldirac=1)
+                    c = 0
+                except Exception as e:
+                    print(f"kullanici donerken hata olustu!!!!!!")
+                    print("\n")
+                    print(str(e))
+                    c -= 1
+        return yon
+
     def borsada_islemleri_hallet(self):
         islem = self.tahmin
         yon = None
         if islem["alis"] > 0:
-            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
-            self.binance_service.futures_market_islem(self.config.get("coin"), taraf='BUY', miktar=self.miktar_hesapla(), kaldirac=1)
+            yon = self.kullanicilari_don('BUY')
         elif islem["satis"] > 0:
-            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
-            self.binance_service.futures_market_islem(self.config.get("coin"), taraf='SELL', miktar=self.miktar_hesapla(), kaldirac=1)
+            yon = self.kullanicilari_don('SELL')
         elif islem["cikis"] > 0:
-            _exit_, yon = self.binance_service.futures_market_exit(self.config.get("coin"))
-            self.islem_fiyati = 0
-            self.islem_miktari = 0
-        if not os.getenv("PYTHON_ENV") == "TEST" and not os.getenv("PYTHON_ENV") == "ANIL":
+            yon = self.kullanicilari_don(None)
+            self.reset_trader()
+        if not os.getenv("PYTHON_ENV") == "TEST":
             bam_bama_sinyal_gonder(islem, yon)
+
+    def reset_trader(self):
+        self.heikinashi_karar = Karar.notr
+        self.pozisyon = Pozisyon(0)
+        self.karar = Karar(0)
+        self.rsi_strategy.karar = Karar(0)
+        self.onceki_karar = Karar(3)
+        self.islem_fiyati = 0
+        self.islem_miktari = 0
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

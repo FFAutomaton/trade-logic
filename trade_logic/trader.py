@@ -57,7 +57,6 @@ class Trader(TraderBase):
         self.rsi_strategy.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
         self.rsi_strategy.karar_hesapla(self)
 
-
     # @dongu_kontrol_decorator
     def heikinashi_kontrol_1d(self):
         series_1d = heikinashiye_cevir(self.series_1d)
@@ -68,13 +67,6 @@ class Trader(TraderBase):
         series_4h = heikinashiye_cevir(self.series)
         self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series_4h)
         self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
-
-    def reset_trader(self):
-        self.heikinashi_karar = Karar.notr
-        self.pozisyon = Pozisyon(0)
-        self.karar = Karar(0)
-        self.rsi_strategy.karar = Karar(0)
-        self.onceki_karar = Karar(3)
 
     def miktar_hesapla(self):
         miktar = self.dolar / self.suanki_fiyat
