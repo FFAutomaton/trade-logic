@@ -1,6 +1,7 @@
 from ta.trend import EMAIndicator, SMAIndicator
 from ta.momentum import RSIIndicator
 from schemas.enums.karar import Karar
+from schemas.enums.pozisyon import Pozisyon
 
 
 class RsiEmaStrategy:
@@ -19,7 +20,11 @@ class RsiEmaStrategy:
 
         self.rsi_smasi_trend = Karar(0)
         self.rsi_in_the_zone = False
-        self.rsi_peaked = False
+        self.buy_zone = False
+        self.sell_zone = False
+
+        self.rsi_peaked_short = False
+        self.rsi_peaked_long = False
 
         self.rsi_kesme = 0
         self.ema_kesme = 0
@@ -33,30 +38,41 @@ class RsiEmaStrategy:
         self.rsi_emasi_long_short()
         self.rsi_in_the_zone_calc()
         self.rsi_peaked_calc()
+        self.zone_calc()
 
     def reset(self):
         self.karar = Karar(0)
         self.rsi_emasi_karar = Karar(0)
         self.rsi_smasi_trend = Karar(0)
-        self.rsi_peaked = False
+        self.rsi_peaked_short = False
+        self.rsi_peaked_long = False
         self.rsi_in_the_zone = False
+        self.buy_zone = False
+        self.sell_zone = False
 
     def karar_hesapla(self, trader):
-        if self.rsi_peaked:
-            self.karar = Karar(3)
+        if self.rsi_peaked_long:
+            self.karar = Karar(-1)
+            return
+        elif self.rsi_peaked_short:
+            self.karar = Karar(1)
             return
 
         if self.rsi_in_the_zone:
             if self.ema_value > trader.suanki_fiyat:
                 if self.rsi_smasi_trend == Karar.satis:
                     if self.rsi_emasi_karar == Karar.satis:
-                        self.karar = Karar(-1)
-                        return
+                        # if not self.buy_zone or self.sell_zone:
+                        if self.sell_zone:
+                            self.karar = Karar(-1)
+                            return
             else:
                 if self.rsi_smasi_trend == Karar.alis:
                     if self.rsi_emasi_karar == Karar.alis:
-                        self.karar = Karar(1)
-                        return
+                        # if self.buy_zone or not self.sell_zone:
+                        if self.buy_zone:
+                            self.karar = Karar(1)
+                            return
 
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
@@ -100,20 +116,25 @@ class RsiEmaStrategy:
         else:
             self.rsi_in_the_zone = False
 
-
     def rsi_peaked_calc(self):
         prev_rsi = self.rsi_4h[1]
         _rsi = self.rsi_4h[0]
         if prev_rsi < self.rsi_alt_limit:
             if _rsi > self.rsi_alt_limit:
-                self.rsi_peaked = True
+                self.rsi_peaked_short = True
         elif prev_rsi > self.rsi_ust_limit:
             if _rsi < self.rsi_ust_limit:
-                self.rsi_peaked = True
-        else:
-            self.rsi_peaked = False
+                self.rsi_peaked_long = True
 
-
+    def zone_calc(self):
+        if 60 < self.rsi_value < 70:
+            self.sell_zone = True
+        if 50 < self.rsi_value < 60:
+            self.buy_zone = True
+        if 30 < self.rsi_value < 40:
+            self.buy_zone = True
+        if 40 < self.rsi_value < 50:
+            self.sell_zone = True
 
     def rsi_emasi_long_short(self):
         if self.rsi_emasi_value < self.rsi_value:

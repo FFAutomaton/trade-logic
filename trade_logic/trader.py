@@ -12,11 +12,6 @@ class Trader(TraderBase):
         if self.rsi_strategy.karar == Karar.satis:
             self.karar = Karar.satis
 
-        if self.pozisyon != Pozisyon(0):
-            if self.rsi_strategy.karar == Karar.cikis:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
-
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
         if kar > 0 and kar / self.islem_fiyati > 0.02:
@@ -24,17 +19,18 @@ class Trader(TraderBase):
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy.ema_series[0], self.rsi_strategy.ema_series[1])
-        if True:
-        # if 1.0001 < self.egim or self.egim < 0.999:
-            self.config["supertrend_mult"] = 1.5
-            self.super_trend_strategy.config["supertrend_mult"] = 1.5
-            if self.config.get("ema_ucustaydi") == 1:
-                self.config["ema_ucustaydi"] = 0
-                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
-        else:
+        # if True:
+        if 1.002 < self.egim or self.egim < 0.998:
             self.config["supertrend_mult"] = 1.5
             self.super_trend_strategy.config["supertrend_mult"] = 1.5
             self.config["ema_ucustaydi"] = 1
+
+        else:
+            self.config["supertrend_mult"] = 0.5
+            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+            if self.config.get("ema_ucustaydi") == 1:
+                self.config["ema_ucustaydi"] = 0
+                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
 
     def super_trend_cikis_yap(self):
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
