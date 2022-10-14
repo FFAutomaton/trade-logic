@@ -1,18 +1,11 @@
 import pandas as pd
 from datetime import datetime, timezone
-from trade_logic.constants import rsi_bounding_limit
 
 
-def rsi_limit_kesim_durum_listeden_hesapla(series, pozisyon):
-    rsi_ = series[0]
-    prev_rsi_ = series[1]
-    if pozisyon > 0:
-        if prev_rsi_ > 100 - rsi_bounding_limit > rsi_:
-            return True
-    elif pozisyon < 0:
-        if prev_rsi_ < 0 + rsi_bounding_limit < rsi_:
-            return True
-    return False
+def egim_hesapla(a, b):
+    if a == 0 or b == 0:
+        return 0
+    return round(float(a/b), 6)
 
 
 def heikinashi_mum_analiz(last_row):
@@ -52,7 +45,7 @@ def heikinashiye_cevir(df):
     return df
 
 
-def sonuc_yazdir(start_date, end_date, mult, trader, islem_sonuc):
+def sonuc_yazdir(start_date, end_date, mult, r, e, c, trader, islem_sonuc):
     if trader.pozisyon.value > 0:
         usdt = islem_sonuc.get("eth") * trader.suanki_fiyat
         kar = f"{round((usdt - 1000) / 1000, 2)}"
@@ -62,7 +55,7 @@ def sonuc_yazdir(start_date, end_date, mult, trader, islem_sonuc):
     else:
         kar = f"{round((islem_sonuc.get('usdt') - 1000) / 1000, 2)}"
 
-    print(f"{start_date}\t{end_date}\t{mult}:\t{kar}")
+    print(f"{c}-{start_date}-{end_date}-{mult}-{r}-{e}:\t{kar}")
 
 
 def dongu_kontrol_decorator(func):

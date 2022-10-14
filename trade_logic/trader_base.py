@@ -21,14 +21,16 @@ class TraderBase:
 
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT',
-            "pencere_1d": "1d", "pencere_4h": "4h", "pencere_5m": "5m",
-            "swing_arttir": 24, "arttir": 4,
-            "high": "high", "low": "low", "wallet": {"ETH": 0, "USDT": 1000},
+            "pencere_1d": "1d", "pencere_4h": "4h", "pencere_1h": "1h", "pencere_5m": "5m",
+            "arttir": 1, "wallet": {"ETH": 0, "USDT": 1000},
             "backfill_window": 5, "super_trend_window": 200,
-            "doldur": True, "supertrend_mult": 1.5, "rsi_limit": 25
+            "doldur": True, "supertrend_mult": 1.5, "rsi_bounding_limit": 30,
+            "tp_daralt_katsayi": 0.01,
+            "ema_ucustaydi": 0
         }
         self.binance_wallet = None
         self.tp_daralt = 0
+        self.egim = 0
         self.secrets.update(self.config)
         self.wallet = None
         self.tahmin = None
@@ -48,8 +50,8 @@ class TraderBase:
         self.ema_value_1d = 0
         self.bitis_gunu = bitis_gunu
         self.bitis_gunu_str =  datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
-        self.series_1d = None
-        self.series_4h = None
+        # self.series_1d = None
+        self.series = None
         self.bugunun_mumu = None
 
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(
@@ -74,16 +76,13 @@ class TraderBase:
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
 
     def mumlari_guncelle(self):
-        self.series_1d = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_1d"), "mum",
-            self.bitis_gunu - timedelta(days=250), self.bitis_gunu
+
+        self.series = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("pencere_1h"), "mum",
+            self.bitis_gunu - timedelta(days=200), self.bitis_gunu
         )
-        self.series_4h = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_4h"), "mum",
-            self.bitis_gunu - timedelta(days=20), self.bitis_gunu
-        )
-        self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
-        self.son_mumu_guncelle()
+        # self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
+        # self.son_mumu_guncelle()
 
     def son_mumu_guncelle(self):
         _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
@@ -95,9 +94,9 @@ class TraderBase:
     def bugunun_4hlik_mumlarini_topla(self):
         _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
         _son = self.bitis_gunu
-        df = copy.deepcopy(self.series_4h[0:6])
+        df = copy.deepcopy(self.series[0:6])
 
-        bugun_mum = copy.deepcopy(self.series_4h[0:1])
+        bugun_mum = copy.deepcopy(self.series[0:1])
 
         bugun_mum.at[0, "open_ts_int"] = int(_bas.timestamp()) * 1000
         bugun_mum.at[0, "open_ts_str"] = datetime.strftime(_bas, '%Y-%m-%d %H:%M:%S')
@@ -110,7 +109,7 @@ class TraderBase:
         return bugun_mum
 
     def fiyat_guncelle(self):
-        data = self.series_4h
+        data = self.series
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
 
@@ -147,17 +146,10 @@ class TraderBase:
         if not os.getenv("PYTHON_ENV") == "TEST" and not os.getenv("PYTHON_ENV") == "ANIL":
             bam_bama_sinyal_gonder(islem, yon)
 
-
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere_4h"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
+            self.config.get("pencere_1h"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
-        self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere_1d"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
-        )
-        # self.sqlite_service.mum_datasi_yukle(
-        #     "5m", self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
-        # )
 
     def sonuc_getir(self):
         sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_4h"), 'islem')

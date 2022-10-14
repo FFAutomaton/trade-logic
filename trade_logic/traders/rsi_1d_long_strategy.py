@@ -1,46 +1,122 @@
 from ta.trend import EMAIndicator, SMAIndicator
 from ta.momentum import RSIIndicator
+from schemas.enums.karar import Karar
 
 
 class RsiEmaStrategy:
     def __init__(self):
-        self.rsi_1d = None
-        self.ema_1d = None
+        self.rsi_series = None
+        self.rsi_value = None
+        self.rsi_ust_limit = 70
+        self.rsi_alt_limit = 30
+
+        self.ema_series = None
+        self.ema_value = None
+
+        self.rsi_emasi_series = None
+        self.rsi_emasi_value = None
+        self.rsi_emasi_karar = Karar(0)
+
+        self.rsi_smasi_trend = Karar(0)
+        self.rsi_in_the_zone = False
+        self.rsi_peaked = False
+
         self.rsi_kesme = 0
         self.ema_kesme = 0
-        self.karar = 0
-        self.rsi_ema_trend = 0
+        self.karar = Karar(0)
+
+    def init_strategy(self, series, rsi_w, sma_w , ema_w):
+        self.reset()
+        self.rsi_hesapla(series, rsi_w)
+        self.ema_hesapla(series, ema_w)
+        self.rsi_smasi_trend_hesapla(sma_w)
+        self.rsi_emasi_long_short()
+        self.rsi_in_the_zone_calc()
+        self.rsi_peaked_calc()
+
+    def reset(self):
+        self.karar = Karar(0)
+        self.rsi_emasi_karar = Karar(0)
+        self.rsi_smasi_trend = Karar(0)
+        self.rsi_peaked = False
+        self.rsi_in_the_zone = False
+
+    def karar_hesapla(self, trader):
+        if self.rsi_peaked:
+            self.karar = Karar(3)
+            return
+
+        if self.rsi_in_the_zone:
+            if self.ema_value > trader.suanki_fiyat:
+                if self.rsi_smasi_trend == Karar.satis:
+                    if self.rsi_emasi_karar == Karar.satis:
+                        self.karar = Karar(-1)
+                        return
+            else:
+                if self.rsi_smasi_trend == Karar.alis:
+                    if self.rsi_emasi_karar == Karar.alis:
+                        self.karar = Karar(1)
+                        return
 
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
-        self.rsi_1d = rsi_.rsi()
-        self.rsi_value_1d = self.rsi_1d[0]
+        self.rsi_4h = rsi_.rsi()
+        self.rsi_value = self.rsi_4h[0]
 
     def ema_hesapla(self, series, window):
         ema_ = EMAIndicator(series["close"], window)
-        self.ema_1d = ema_.ema_indicator()
-        self.ema_value_1d = self.ema_1d[0]
+        self.ema_series = ema_.ema_indicator()
+        self.ema_value = self.ema_series[0]
 
-    def rsi_smasi_hesapla(self):
-        rs_ema_ = SMAIndicator(self.rsi_1d, 3)
-        self.rsi_emasi_1d = rs_ema_.sma_indicator()
+    def rsi_smasi_hesapla(self, window):
+        rs_ema_ = SMAIndicator(self.rsi_4h, window)
+        self.rsi_emasi_series = rs_ema_.sma_indicator()
+        self.rsi_emasi_value = self.rsi_emasi_series[0]
 
-    def rsi_ema_trend_hesapla(self):
-        self.rsi_smasi_hesapla()
-        self.rsi_ema_trend = 0
-        rsi_emasi = self.rsi_emasi_1d[0]
-        prev_rsi_emasi = self.rsi_emasi_1d[1]
-        if prev_rsi_emasi < rsi_emasi:
-            diff = rsi_emasi - prev_rsi_emasi
+    def rsi_smasi_trend_hesapla(self, window):
+        ratio_limit = 0.0005
+        self.rsi_smasi_hesapla(window)
+        self.rsi_smasi_trend = Karar(0)
+
+        prev_rsi_emasi = self.rsi_emasi_series[1]
+        if prev_rsi_emasi < self.rsi_emasi_value:
+            diff = self.rsi_emasi_value - prev_rsi_emasi
             if diff == 0:
                 return
-            ratio = diff / rsi_emasi
-            if ratio > 0.01:
-                self.rsi_ema_trend = 1
+            ratio = diff / self.rsi_emasi_value
+            if ratio > ratio_limit:
+                self.rsi_smasi_trend = Karar(1)
         else:
-            diff = prev_rsi_emasi - rsi_emasi
+            diff = prev_rsi_emasi - self.rsi_emasi_value
             if diff == 0:
                 return
             ratio = diff / prev_rsi_emasi
-            if ratio > 0.01:
-                self.rsi_ema_trend = -1
+            if ratio > ratio_limit:
+                self.rsi_smasi_trend = Karar(-1)
+
+    def rsi_in_the_zone_calc(self):
+        if self.rsi_ust_limit > self.rsi_value > self.rsi_alt_limit:
+            self.rsi_in_the_zone = True
+        else:
+            self.rsi_in_the_zone = False
+
+
+    def rsi_peaked_calc(self):
+        prev_rsi = self.rsi_4h[1]
+        _rsi = self.rsi_4h[0]
+        if prev_rsi < self.rsi_alt_limit:
+            if _rsi > self.rsi_alt_limit:
+                self.rsi_peaked = True
+        elif prev_rsi > self.rsi_ust_limit:
+            if _rsi < self.rsi_ust_limit:
+                self.rsi_peaked = True
+        else:
+            self.rsi_peaked = False
+
+
+
+    def rsi_emasi_long_short(self):
+        if self.rsi_emasi_value < self.rsi_value:
+            self.rsi_emasi_karar = Karar.alis
+        else:
+            self.rsi_emasi_karar = Karar.satis

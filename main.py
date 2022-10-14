@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 def trader_calis(trader):
     trader.init()
-    trader.heikinashi_kontrol()
+    trader.heikinashi_kontrol_4h()
     trader.rsi_ema_karar_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()
@@ -34,6 +34,9 @@ def app_calis():
 
 if __name__ == '__main__':
     app_calis()
+    # TODO:: piyasanin durumunu atr'den cikararak rsi ayarlari degistirmek en mantikli yaklasim olabilir
+    # TODO:: once alttaki maddeyi ekle sonra stateleri daha duzgun tutup strteji yaz bastan 1-rsi ve emasi, 2-ema_trend, normal ema ile cikis
+    # TODO:: daha sik calistirip su anki fiyattan erken cikis dene, basktest icin bunu yari handle etmen lazim
     # TODO:: onceki karar ve karar verilerine pozisyonu kapatmayi dene, karar 0 iken pozisyon olsa kapatmayi dusunuebiliriz
     # TODO:: check rsi kesisme arrayin son verilerini alip en son veri yukari kesmis mi gibi bir kontrol, uzun suren
     #  asiri satis ve alislarda karini arttirmasi icin
