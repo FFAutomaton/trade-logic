@@ -11,30 +11,43 @@ islemler_rapor = {}
 
 
 def backtest_multi_func(start_date, end_date):
-    ema_window = [100]
+    ema_window = [200]
     rsi_window = [7]
+    # sma_window = [7, 35, 50]
     sma_window = [50]
+    momentum_egim_hesabi_window = [8]
+    rsi_bounding_limit = [30]
+    ema_bounding_limit = [0.005]
     c = 0
     for em_w in ema_window:
         for r in rsi_window:
             for e in sma_window:
-                trader = Trader(start_date)
-                trader.config["ema_window"] = em_w
-                trader.config["rsi_window"] = r
-                trader.config["sma_window"] = e
+                for mom in momentum_egim_hesabi_window:
+                    for rb in rsi_bounding_limit:
+                        for eb in ema_bounding_limit:
+                            trader = Trader(start_date)
+                            trader.config["ema_window"] = em_w
+                            trader.config["rsi_window"] = r
+                            trader.config["sma_window"] = e
+                            trader.config["momentum_egim_hesabi_window"] = mom
+                            trader.rsi_strategy.momentum_egim_hesabi_window = mom
+                            trader.config["rsi_bounding_limit"] = rb
+                            trader.rsi_strategy.rsi_bounding_limit = rb
+                            trader.config["ema_bounding_limit"] = eb
+                            trader.rsi_strategy.ema_bounding_limit = eb
 
-                islem_sonuc = None
-                while trader.bitis_gunu < end_date:
-                    trader_calis(trader)
-                    if trader.dondu_4h and os.getenv("DEBUG") == "1":
-                        print(f'#LOG# {trader.suanki_fiyat} #### {trader.bitis_gunu} {trader.config["supertrend_mult"]}  {trader.egim} ###################')
-                    trader.sqlite_service.veri_yaz(trader.tahmin, "islem") if os.getenv("DEBUG") == "1" else None
-                    islem_sonuc = trader.tahmin
-                    if trader.karar.value == 3:
-                        trader.reset_trader()
-                    trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
-                sonuc_yazdir(start_date, end_date, em_w, r, e, c, trader, islem_sonuc)
-                c += 1
+                            islem_sonuc = None
+                            while trader.bitis_gunu < end_date:
+                                trader_calis(trader)
+                                if trader.dondu_4h and os.getenv("DEBUG") == "1":
+                                    print(f'#LOG# {trader.suanki_fiyat} #### {trader.bitis_gunu} {trader.config["supertrend_mult"]}  {trader.egim} ###################')
+                                trader.sqlite_service.veri_yaz(trader.tahmin, "islem") if os.getenv("DEBUG") == "1" else None
+                                islem_sonuc = trader.tahmin
+                                if trader.karar.value == 3:
+                                    trader.reset_trader()
+                                trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
+                            sonuc_yazdir(start_date, end_date, em_w, r, e, c, mom, rb, eb, trader, islem_sonuc)
+                            c += 1
 
 
 def backtest_calis_multi(start_date, end_date):
@@ -63,11 +76,11 @@ if __name__ == '__main__':
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["DEBUG"] = "1"
-    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    # bitis_gunu = datetime.strptime('2022-09-19 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # bitis_gunu = datetime.strptime('2022-10-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
-    # _son = datetime.strptime('2022-10-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2022-10-13 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # _son = datetime.strptime('2022-03-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2022-10-23 08:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()
     backtest_calis_multi(bitis_gunu, _son)

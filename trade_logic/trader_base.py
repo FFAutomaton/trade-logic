@@ -7,7 +7,7 @@ from trade_logic.traders.rsi_1d_long_strategy import RsiEmaStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
-from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision,\
+from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
 from config_users import users
@@ -24,9 +24,9 @@ class TraderBase:
             "pencere_1d": "1d", "pencere_4h": "4h", "pencere_1h": "1h", "pencere_5m": "5m",
             "arttir": 1, "wallet": {"ETH": 0, "USDT": 1000},
             "backfill_window": 5, "super_trend_window": 200,
-            "doldur": True, "supertrend_mult": 1.5, "rsi_bounding_limit": 30,
-            "tp_daralt_katsayi": 0.01,
-            "ema_ucustaydi": 0
+            "doldur": True, "supertrend_mult": 1.5,
+            "tp_daralt_katsayi": 0.01, "momentum_egim_hesabi_window": 6,
+            "ema_ucustaydi": 0, "rsi_bounding_limit": 30, "ema_bounding_limit": 0.005
         }
         self.binance_wallet = None
         self.tp_daralt = 0
@@ -46,14 +46,13 @@ class TraderBase:
         self.islem_ts = 0
         self.islem_miktari = 0
         self.islem_fiyati = 0
-        self.rsi_value_1d = 0
-        self.ema_value_1d = 0
         self.bitis_gunu = bitis_gunu
-        self.bitis_gunu_str =  datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
+        self.bitis_gunu_str = datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
         # self.series_1d = None
         self.series = None
         self.bugunun_mumu = None
 
+        self.cooldown = 0
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(
             days=self.config.get("backfill_window"))
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(5)
@@ -61,7 +60,7 @@ class TraderBase:
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
-        self.rsi_strategy = RsiEmaStrategy()
+        self.rsi_strategy = RsiEmaStrategy(self.config)
 
         # trader.config["doldur"] = False
         if self.config["doldur"]:
@@ -74,9 +73,10 @@ class TraderBase:
         self.fiyat_guncelle()
         self.super_trend_strategy.atr_hesapla(self)
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
+        if not self.cooldown == 0:
+            self.cooldown -= 1
 
     def mumlari_guncelle(self):
-
         self.series = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
             self.bitis_gunu - timedelta(days=200), self.bitis_gunu
@@ -133,7 +133,7 @@ class TraderBase:
     def kullanicilari_don(self, _taraf=None):
         _exit_, yon = None, None
         for user in users:
-            user_secrets  = users.get(user)
+            user_secrets = users.get(user)
             c = 5
             while c > 0:
                 try:
@@ -171,6 +171,7 @@ class TraderBase:
         self.onceki_karar = Karar(3)
         self.islem_fiyati = 0
         self.islem_miktari = 0
+        self.cooldown = 0
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

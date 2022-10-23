@@ -45,7 +45,7 @@ def heikinashiye_cevir(df):
     return df
 
 
-def sonuc_yazdir(start_date, end_date, mult, r, e, c, trader, islem_sonuc):
+def sonuc_yazdir(start_date, end_date, em_w, r, e, c, mom, rb, eb, trader, islem_sonuc):
     if trader.pozisyon.value > 0:
         usdt = islem_sonuc.get("eth") * trader.suanki_fiyat
         kar = f"{round((usdt - 1000) / 1000, 2)}"
@@ -55,7 +55,7 @@ def sonuc_yazdir(start_date, end_date, mult, r, e, c, trader, islem_sonuc):
     else:
         kar = f"{round((islem_sonuc.get('usdt') - 1000) / 1000, 2)}"
 
-    print(f"{c}-{start_date}-{end_date}-{mult}-{r}-{e}:\t{kar}")
+    print(f"{c}-{start_date}-{end_date}-{em_w}-{r}-{e}-{mom}-{rb}-{eb}:\t{kar}")
 
 
 def dongu_kontrol_decorator(func):
