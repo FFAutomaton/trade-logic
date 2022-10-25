@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 def trader_calis(trader):
     trader.init()
     trader.heikinashi_kontrol()
-    trader.rsi_ema_karar_hesapla()
+    trader.rsi_ema_1h_karar_hesapla()
+    trader.ema_4h_karar_hesapla()
+    trader.swing_karar_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()
     trader.pozisyon_al()
@@ -45,7 +47,8 @@ if __name__ == '__main__':
             c -= 1
 
     # TODO:: 1 gunluk, 4 saatlik ve 1 saatlik sinyalleri birlestir
-    # TODO:: hacim cok az ise farkli strateji girilebilir, 2022 7. ay ve 10. ay civarlarinda hacim cok dustu mesela
+    # TODO:: hacim cok az ise farkli strateji girilebilir, 2022 7. ay ve 10. ay civarlarinda hacim cok dustu mesela,
+    #        veya net volume indicatorune bak o da etkili olabilir
     # TODO:: destek direnc eklenebilir
     # TODO:: piyasanin durumunu atr'den cikararak rsi ayarlari degistirmek en mantikli yaklasim olabilir
     # TODO:: once alttaki maddeyi ekle sonra stateleri daha duzgun tutup strteji yaz bastan 1-rsi ve emasi, 2-ema_trend, normal ema ile cikis

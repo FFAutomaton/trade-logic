@@ -38,8 +38,9 @@ class SqlLite_Service:
         return ', '.join(_query)
 
     def _tablo_yoksa_olustur(self):
+        _4h = self._config.get('pencere_4h')
         _1h = self._config.get('pencere_1h')
-        candle_tables = [_1h]
+        candle_tables = [_4h, _1h]
         coin = self._config.get('coin')
         islemler = f'islemler_{coin}_{_1h}'
         trader = f'trader_{coin}_{_1h}'

@@ -30,11 +30,11 @@ def backtest_multi_func(start_date, end_date):
                             trader.config["rsi_window"] = r
                             trader.config["sma_window"] = e
                             trader.config["momentum_egim_hesabi_window"] = mom
-                            trader.rsi_strategy.momentum_egim_hesabi_window = mom
+                            trader.rsi_strategy_1h.momentum_egim_hesabi_window = mom
                             trader.config["rsi_bounding_limit"] = rb
-                            trader.rsi_strategy.rsi_bounding_limit = rb
+                            trader.rsi_strategy_1h.rsi_bounding_limit = rb
                             trader.config["ema_bounding_limit"] = eb
-                            trader.rsi_strategy.ema_bounding_limit = eb
+                            trader.rsi_strategy_1h.ema_bounding_limit = eb
 
                             islem_sonuc = None
                             while trader.bitis_gunu < end_date:
@@ -77,10 +77,10 @@ if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["DEBUG"] = "1"
     bitis_gunu = datetime.strptime('2022-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    # bitis_gunu = datetime.strptime('2022-10-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # bitis_gunu = datetime.strptime('2022-10-25 10:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
-    # _son = datetime.strptime('2022-03-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2022-10-23 08:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2022-10-25 20:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()
     backtest_calis_multi(bitis_gunu, _son)

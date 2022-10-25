@@ -11,8 +11,8 @@ class SuperTrendStrategy:
         self.onceki_tp = 0
 
     def atr_hesapla(self, trader):
-        series_4h = trader.series.sort_values(by='open_ts_int', ascending=True)
-        self.atr_4h_15 = ATR(series_4h, 15).average_true_range
+        series_1h = trader.series_1h.sort_values(by='open_ts_int', ascending=True)
+        self.atr_4h_15 = ATR(series_1h, 15).average_true_range
         self.atr_value_4h_15 = float(self.atr_4h_15[0])
 
     def update_tp(self, trader):
