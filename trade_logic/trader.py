@@ -84,6 +84,10 @@ class Trader(TraderBase):
         self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series_1d[0:1])
         self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
 
+    def holy_cross_kontrol(self):
+        series = self.series_1d[1:].reset_index(drop=True).sort_values(by='open_ts_int', ascending=True)
+        self.holy_cross_strategy.calculate_crosses(series)
+
     def reset_trader(self):
         self.heikinashi_karar = Karar.notr
         self.pozisyon = Pozisyon(0)

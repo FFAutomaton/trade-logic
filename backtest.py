@@ -75,12 +75,12 @@ if __name__ == '__main__':
     print(f"backtest basladi!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
-    # os.environ["DEBUG"] = "1"
+    os.environ["DEBUG"] = "1"
 
     bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis_gunu)
     # _son = datetime.strptime('2022-09-01 20:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2022-09-24 12:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2022-10-25 12:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader.sqlite_service.islemleri_temizle()
     backtest_calis_multi(bitis_gunu, _son)

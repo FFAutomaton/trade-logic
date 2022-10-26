@@ -4,6 +4,7 @@ import copy
 from datetime import timedelta, datetime
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
 from trade_logic.traders.rsi_1d_long_strategy import RsiEmaStrategy
+from trade_logic.traders.holy_cross import HolyCrossStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
@@ -60,6 +61,9 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy = RsiEmaStrategy()
+
+        # anil was here #
+        self.holy_cross_strategy = HolyCrossStrategy()
 
         # trader.config["doldur"] = False
         if self.config["doldur"]:
