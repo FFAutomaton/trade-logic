@@ -19,15 +19,15 @@ class SwingStrategy:
 
     def karar_hesapla(self, trader):
         swing_data = self.swing_data
-        # last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
-        last_high = max(swing_data.majorHighs[0].close, swing_data.majorHighs[0].open)
-        # prev_high = max(swing_data.highNodes[1].close, swing_data.highNodes[1].open)
-        prev_high = max(swing_data.majorHighs[1].close, swing_data.majorHighs[1].open)
-        #
-        # last_low = min(swing_data.lowNodes[0].close, swing_data.lowNodes[0].open)
-        last_low = min(swing_data.majorLows[0].close, swing_data.majorLows[0].open)
-        # prev_low = min(swing_data.lowNodes[1].close, swing_data.lowNodes[1].open)
-        prev_low = min(swing_data.majorLows[1].close, swing_data.majorLows[1].open)
+        last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
+        # last_high = max(swing_data.majorHighs[0].close, swing_data.majorHighs[0].open)
+        prev_high = max(swing_data.highNodes[1].close, swing_data.highNodes[1].open)
+        # prev_high = max(swing_data.majorHighs[1].close, swing_data.majorHighs[1].open)
+
+        last_low = min(swing_data.lowNodes[0].close, swing_data.lowNodes[0].open)
+        # last_low = min(swing_data.majorLows[0].close, swing_data.majorLows[0].open)
+        prev_low = min(swing_data.lowNodes[1].close, swing_data.lowNodes[1].open)
+        # prev_low = min(swing_data.majorLows[1].close, swing_data.majorLows[1].open)
 
         self.karar = Karar.notr
 

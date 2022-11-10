@@ -18,6 +18,8 @@ class RsiEmaStrategy:
         self.rsi_bounding_limit = config.get("rsi_bounding_limit")
         self.ema_bounding_limit = config.get("ema_bounding_limit")
         self.momentum_egim_hesabi_window = config.get("momentum_egim_hesabi_window")
+        self.momentum_egim = config.get("momentum_egim")
+        self.trend_ratio = config.get("trend_ratio")
 
         self.rsi_emasi_karar = Karar.notr
         self.rsi_smasi_trend = Karar.notr
@@ -57,21 +59,21 @@ class RsiEmaStrategy:
                 return
 
         if trader.cooldown == 0:
-            if self.ema_value * (1+self.ema_bounding_limit) > trader.suanki_fiyat:
-                if self.momentum_trend_rsi == Karar.satis:
-                    if self.rsi_emasi_karar == Karar.satis:
-                        if self.rsi_smasi_trend == Karar.alis and self.rsi_value < 100 - self.rsi_bounding_limit:
-                        # if self.rsi_value < 100 - self.rsi_bounding_limit:
-                            self.karar = Karar.satis
-                            return
+            # if self.ema_value * (1+self.ema_bounding_limit) > trader.suanki_fiyat:
+            if self.momentum_trend_rsi == Karar.satis:
+                if self.rsi_emasi_karar == Karar.satis:
+                    if self.rsi_smasi_trend == Karar.alis and self.rsi_value < 100 - self.rsi_bounding_limit:
+                    # if self.rsi_value < 100 - self.rsi_bounding_limit:
+                        self.karar = Karar.satis
+                        return
 
-            elif self.ema_value * (1-self.ema_bounding_limit) < trader.suanki_fiyat:
-                if self.momentum_trend_rsi == Karar.alis:
-                    if self.rsi_emasi_karar == Karar.alis:
-                        if self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit:
-                        # if self.rsi_value > self.rsi_bounding_limit:
-                            self.karar = Karar.alis
-                            return
+            # elif self.ema_value * (1-self.ema_bounding_limit) < trader.suanki_fiyat:
+            if self.momentum_trend_rsi == Karar.alis:
+                if self.rsi_emasi_karar == Karar.alis:
+                    if self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit:
+                    # if self.rsi_value > self.rsi_bounding_limit:
+                        self.karar = Karar.alis
+                        return
 
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
@@ -98,15 +100,16 @@ class RsiEmaStrategy:
 
     def momentum_hesapla_rsi(self):
         egim = self.egim_hesapla()
-        if egim > 1:
+        egim_limit = self.momentum_egim
+        if egim > egim_limit:
             self.momentum_trend_rsi = Karar.alis
-        elif egim < -1:
+        elif egim < egim_limit:
             self.momentum_trend_rsi = Karar.satis
         else:
             self.momentum_trend_rsi = Karar.notr
 
     def rsi_smasi_trend_hesapla(self, window):
-        ratio_limit = 0.0005
+        ratio_limit = self.trend_ratio
         self.rsi_smasi_hesapla(window)
         self.rsi_smasi_trend = Karar(0)
         prev_rsi_emasi = self.rsi_emasi_series[1]

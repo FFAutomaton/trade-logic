@@ -21,14 +21,15 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
-        if self.heikinashi_karar == Karar.alis or self.rsi_strategy_1h.karar == Karar.alis:
-            # if self.ema_strategy_4h.karar == Karar.alis and self.swing_strategy.karar == Karar.alis:
-            if self.swing_strategy.karar == Karar.alis:
-                self.karar = Karar.alis
-        if self.heikinashi_karar == Karar.satis or self.rsi_strategy_1h.karar == Karar.satis:
-            # if self.ema_strategy_4h.karar == Karar.satis and self.swing_strategy.karar == Karar.satis:
-            if self.swing_strategy.karar == Karar.satis:
-                self.karar = Karar.satis
+        if self.swing_strategy.karar == Karar.alis and self.ema_strategy_4h.karar == Karar.alis:
+            if self.heikinashi_karar == Karar.alis or self.swing_strategy.karar == Karar.alis:
+                # if self.ema_strategy_4h.karar == Karar.alis and self.swing_strategy.karar == Karar.alis:
+                if self.rsi_strategy_1h.karar == Karar.alis:
+                    self.karar = Karar.alis
+        elif self.swing_strategy.karar == Karar.satis and self.ema_strategy_4h.karar == Karar.satis:
+            if self.heikinashi_karar == Karar.satis or self.rsi_strategy_1h.karar == Karar.satis:
+                if self.rsi_strategy_1h.karar == Karar.satis:
+                    self.karar = Karar.satis
 
     def cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
@@ -37,7 +38,7 @@ class Trader(TraderBase):
 
         self.super_trend_mult_guncelle()
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
-        # self.super_trend_tp_daralt()
+        self.super_trend_tp_daralt()
 
         self.super_trend_strategy.update_tp(self)
         self.super_trend_cikis_yap()

@@ -8,7 +8,7 @@ def trader_calis(trader):
     trader.init()
     trader.heikinashi_kontrol()
     trader.rsi_ema_1h_karar_hesapla()
-    trader.ema_4h_karar_hesapla()
+    # trader.ema_4h_karar_hesapla()
     trader.swing_karar_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()
