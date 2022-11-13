@@ -21,15 +21,15 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
-        if self.swing_strategy.karar == Karar.alis:
-            if self.heikinashi_karar == Karar.alis:
-                if self.rsi_strategy_1h.karar == Karar.alis:
-                    self.karar = Karar.alis
+        # if self.swing_strategy.karar == Karar.alis:
+        if self.heikinashi_karar == Karar.alis:
+            if self.rsi_strategy_1h.karar == Karar.alis:
+                self.karar = Karar.alis
 
-        if self.swing_strategy.karar == Karar.satis:
-            if self.heikinashi_karar == Karar.satis:
-                if self.rsi_strategy_1h.karar == Karar.satis:
-                    self.karar = Karar.satis
+        # if self.swing_strategy.karar == Karar.satis:
+        if self.heikinashi_karar == Karar.satis:
+            if self.rsi_strategy_1h.karar == Karar.satis:
+                self.karar = Karar.satis
 
     def cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
@@ -38,32 +38,25 @@ class Trader(TraderBase):
 
         self.super_trend_cikis_yap()
 
+        self.super_trend_tp_daralt()
         # self.rsi_cikis_veya_donus()
         # self.swing_cikis()
 
-    def swing_cikis(self):
-        if self.pozisyon != Pozisyon.notr:
-            if self.swing_strategy.karar != self.karar:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
-
-    def rsi_cikis_veya_donus(self):
-        if self.pozisyon != Pozisyon.notr:
-            if self.rsi_strategy_1h.karar == Karar.cikis:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
-
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
-        if kar > 0 and kar / self.islem_fiyati > 0.02:
-            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * self.config.get("tp_daralt_katsayi"))
+        katsayi = self.config.get("tp_daralt_katsayi")
+        if kar > 0:
+            kar_orani = kar / self.islem_fiyati
+            if kar_orani > katsayi * self.daralt:
+                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
+                self.daralt += 1
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
         if True:
         # if 1.002 < self.egim or self.egim < 0.998:
-            self.config["supertrend_mult"] = 2
-            self.super_trend_strategy.config["supertrend_mult"] = 2
+            self.config["supertrend_mult"] = 1.5
+            self.super_trend_strategy.config["supertrend_mult"] = 1.5
             self.config["ema_ucustaydi"] = 1
 
         else:
@@ -76,12 +69,24 @@ class Trader(TraderBase):
     def super_trend_cikis_yap(self):
         self.super_trend_mult_guncelle()
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
-        self.super_trend_tp_daralt()
-
         self.super_trend_strategy.update_tp(self)
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
+            # print("super_trend cikis")
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
+
+    def swing_cikis(self):
+        if self.pozisyon != Pozisyon.notr:
+            if self.swing_strategy.karar != self.karar:
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
+
+    def rsi_cikis_veya_donus(self):
+        if self.pozisyon != Pozisyon.notr:
+            if self.rsi_strategy_1h.karar == Karar.cikis:
+                # print("rsi cikis")
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
 
     def swing_karar_hesapla(self):
         self.swing_strategy.bitis_gunu = self.bitis_gunu

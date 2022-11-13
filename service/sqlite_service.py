@@ -158,7 +158,7 @@ class SqlLite_Service:
     def trader_durumu_kaydet(self, trader):
         _trader = {}
         _kaydedilecek = ["islem_miktari", "islem_fiyati", "karar", "onceki_karar",
-                         "pozisyon", "suanki_fiyat", "ema_ucustaydi", "cooldown"]
+                         "pozisyon", "suanki_fiyat", "ema_ucustaydi", "cooldown", "daralt"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):
@@ -188,6 +188,7 @@ class SqlLite_Service:
             trader.islem_miktari = conf_.get("islem_miktari")
             trader.config["ema_ucustaydi"] = conf_.get("ema_ucustaydi")
             trader.config["cooldown"] = conf_.get("cooldown")
+            trader.config["daralt"] = conf_.get("daralt")
 
     def trader_eski_verileri_temizle(self, bitis_gunu):
         _limit = bitis_gunu - timedelta(days=3)

@@ -31,6 +31,7 @@ class TraderBase:
             "tp_daralt_katsayi": 0.01, "momentum_egim_hesabi_window": 6,
             "ema_ucustaydi": 0, "rsi_bounding_limit": 30, "ema_bounding_limit": 0.005
         }
+        self.daralt = 1
         self.binance_wallet = None
         self.tp_daralt = 0
         self.egim = 0
@@ -65,7 +66,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy_1h = RsiEmaStrategy(self.config)
-        self.swing_strategy = SwingStrategy(self.config)
+        # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
         if self.config["doldur"]:
@@ -76,10 +77,10 @@ class TraderBase:
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
             self.bitis_gunu - timedelta(days=200), self.bitis_gunu
         )
-        self.series_4h = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_4h"), "mum",
-            self.bitis_gunu - timedelta(days=200), self.bitis_gunu
-        )
+        # self.series_4h = self.sqlite_service.veri_getir(
+        #     self.config.get("coin"), self.config.get("pencere_4h"), "mum",
+        #     self.bitis_gunu - timedelta(days=200), self.bitis_gunu
+        # )
         # self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
         # self.son_mumu_guncelle()
 
@@ -171,6 +172,7 @@ class TraderBase:
         self.islem_fiyati = 0
         self.islem_miktari = 0
         self.cooldown = 0
+        self.daralt = 1
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

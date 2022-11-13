@@ -50,21 +50,29 @@ class RsiEmaStrategy:
         # self.momentum_trend_rsi = Karar.notr
 
     def karar_hesapla(self, trader):
-        # if trader.pozisyon != Pozisyon.notr:
-        #     if self.tavan_yapti != 0 and self.tavan_yapti != trader.pozisyon.value:
-        #         self.karar = Karar.cikis
-        #         return
+        if trader.pozisyon != Pozisyon.notr:
+            if self.tavan_yapti != 0 and self.tavan_yapti != trader.pozisyon.value:
+                self.karar = Karar.cikis
+                return
+
+        ema_alt_ust = 0
+        if self.ema_value_2 * (1 - self.ema_bounding_limit) > trader.suanki_fiyat:
+            ema_alt_ust = -1
+        elif self.ema_value_2 * (1 + self.ema_bounding_limit) < trader.suanki_fiyat:
+            ema_alt_ust = 1
 
         if trader.cooldown == 0:
-            if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit) or \
-                    self.dipten_dondu:
-                self.karar = Karar.alis
-                return
+            if ema_alt_ust == 1:
+                if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit) or \
+                        self.dipten_dondu:
+                    self.karar = Karar.alis
+                    return
 
-            if (self.rsi_smasi_trend == Karar.alis and self.rsi_value < 100 - self.rsi_bounding_limit) or \
-                    self.tavandan_dondu:
-                self.karar = Karar.satis
-                return
+            if ema_alt_ust == -1:
+                if (self.rsi_smasi_trend == Karar.alis and self.rsi_value < 100 - self.rsi_bounding_limit) or \
+                        self.tavandan_dondu or ema_alt_ust == -1:
+                    self.karar = Karar.satis
+                    return
 
 
     def rsi_hesapla(self, series, window):
@@ -74,8 +82,11 @@ class RsiEmaStrategy:
 
     def ema_hesapla(self, series, window):
         ema_ = EMAIndicator(series["close"], window)
+        ema_2 = EMAIndicator(series["close"], window*2)
         self.ema_series = ema_.ema_indicator()
+        self.ema_series_2 = ema_2.ema_indicator()
         self.ema_value = self.ema_series[0]
+        self.ema_value_2 = self.ema_series_2[0]
 
     def rsi_smasi_hesapla(self, window):
         rs_ema_ = SMAIndicator(self.rsi_series, window)
