@@ -20,6 +20,7 @@ class SwingStrategy:
     def karar_hesapla(self, trader):
         swing_data = self.swing_data
         last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
+        last_high = max(swing_data.highNodes[0].close, swing_data.highNodes[0].open)
         # last_high = max(swing_data.majorHighs[0].close, swing_data.majorHighs[0].open)
         prev_high = max(swing_data.highNodes[1].close, swing_data.highNodes[1].open)
         # prev_high = max(swing_data.majorHighs[1].close, swing_data.majorHighs[1].open)
@@ -32,14 +33,12 @@ class SwingStrategy:
         self.karar = Karar.notr
 
         # if last_high > prev_high and last_low > prev_low:
-        # if trader.ema_strategy_4h.karar == Karar.alis:
-        if last_high > prev_high:
+        if last_high > prev_high or last_low > prev_low:
             self.karar = Karar.alis
             # if self.suanki_fiyat < last_high:
             #     self.karar = Karar.satis
         # elif last_high < prev_high and last_low < prev_low:
-        # elif trader.ema_strategy_4h.karar == Karar.satis:
-        if last_low < prev_low:
+        if last_low < prev_low or last_high < prev_high:
             self.karar = Karar.satis
             # if self.suanki_fiyat > last_high:
             #     self.karar = Karar.alis
