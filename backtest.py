@@ -93,9 +93,9 @@ if __name__ == '__main__':
     print(f"backtest basladi {message}!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
-    # os.environ["DEBUG"] = "1"
-    bitis_gunu = datetime.strptime('2021-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    # bitis_gunu = datetime.strptime('2022-11-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    os.environ["DEBUG"] = "1"
+    # bitis_gunu = datetime.strptime('2021-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-11-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # _son = datetime.strptime('2022-11-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     _son = datetime.strptime('2022-11-19 08:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 

@@ -68,7 +68,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy_1h = RsiEmaStrategy(self.config)
-        self.mlp_strategy = MlpStrategy(self.config)
+        # self.mlp_strategy = MlpStrategy(self.config)
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
