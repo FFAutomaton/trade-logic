@@ -10,7 +10,6 @@ from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 from trade_logic.traders.swing_strategy import SwingStrategy
-from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
