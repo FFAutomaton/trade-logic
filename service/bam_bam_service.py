@@ -1,8 +1,7 @@
 import traceback
 import requests
 import os
-if not os.getenv("PYTHON_ENV") == "TEST" and not os.getenv("PYTHON_ENV") == "ANIL":
-    from config import bambam_url, long_buy, long_buy_close, short_buy, short_buy_close
+from config import bambam_url, long_buy, long_buy_close, short_buy, short_buy_close
 
 
 def bam_bama_sinyal_gonder(islem, yon):

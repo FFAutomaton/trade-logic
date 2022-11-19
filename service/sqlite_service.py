@@ -39,10 +39,11 @@ class SqlLite_Service:
 
     def _tablo_yoksa_olustur(self):
         _4h = self._config.get('pencere_4h')
-        candle_tables = [_4h, self._config.get('pencere_1d'), "5m"]
+        _1h = self._config.get('pencere_1h')
+        candle_tables = [_4h, _1h]
         coin = self._config.get('coin')
-        islemler = f'islemler_{coin}_{_4h}'
-        trader = f'trader_{coin}_{_4h}'
+        islemler = f'islemler_{coin}_{_1h}'
+        trader = f'trader_{coin}_{_1h}'
 
         for table in candle_tables:
             self.get_conn().cursor().execute(
@@ -69,7 +70,6 @@ class SqlLite_Service:
 
         self.get_conn().cursor().executemany(_query, data)
         self.get_conn().commit()
-        # print(f'API-dan yukleme tamamlandi {coin}_{tip} {str(baslangic_gunu)} {str(bitis_gunu)}')
         return data
 
     @staticmethod
@@ -157,7 +157,8 @@ class SqlLite_Service:
 
     def trader_durumu_kaydet(self, trader):
         _trader = {}
-        _kaydedilecek = ["islem_miktari", "islem_fiyati", "karar", "onceki_karar", "pozisyon", "suanki_fiyat"]
+        _kaydedilecek = ["islem_miktari", "islem_fiyati", "karar", "onceki_karar",
+                         "pozisyon", "suanki_fiyat", "ema_ucustaydi", "cooldown", "daralt"]
 
         for key in _kaydedilecek:
             if hasattr(getattr(trader, key), "value"):
@@ -185,6 +186,9 @@ class SqlLite_Service:
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")
+            trader.config["ema_ucustaydi"] = conf_.get("ema_ucustaydi")
+            trader.config["cooldown"] = conf_.get("cooldown")
+            trader.config["daralt"] = conf_.get("daralt")
 
     def trader_eski_verileri_temizle(self, bitis_gunu):
         _limit = bitis_gunu - timedelta(days=3)

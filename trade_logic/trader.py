@@ -1,95 +1,117 @@
 import math
-from trade_logic.utils import dongu_kontrol_decorator, heikinashiye_cevir, heikinashi_mum_analiz, \
-    bitis_gunu_truncate_day_precision, islem_doldur, rsi_limit_kesim_durum_listeden_hesapla
+from datetime import timedelta, datetime
+
+from trade_logic.utils import egim_hesapla, heikinashiye_cevir, heikinashi_mum_analiz, \
+    islem_doldur
 from schemas.enums.pozisyon import Pozisyon
-from trade_logic.constants import rsi_bounding_limit, ema_bounding_limit
 from schemas.enums.karar import Karar
 from trade_logic.trader_base import TraderBase
-from trade_logic.constants import tp_daralt_katsayi
+from swing_trader.swing_trader_class import SwingTrader
 
 
 class Trader(TraderBase):
+    def init(self):
+        # calisma siralari onemli
+        self.mumlari_guncelle()
+        self.tarihleri_guncelle()
+        self.fiyat_guncelle()
+        self.super_trend_strategy.atr_hesapla(self)
+        self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
+        if not self.cooldown == 0:
+            self.cooldown -= 1
+
     def karar_calis(self):
-        if self.rsi_strategy.ema_value_1d < self.suanki_fiyat * (1 - ema_bounding_limit):
-            if self.heikinashi_karar == Karar.alis:
-                # if self.rsi_strategy.rsi_ema_trend > 0:
-                if self.rsi_strategy.rsi_ema_trend > 0 and self.rsi_strategy.rsi_value_1d < 100 - rsi_bounding_limit:
-                    self.karar = Karar.alis
-                elif rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], -1):
-                    self.karar = Karar.alis
-        elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * (1 + ema_bounding_limit):
-            if self.heikinashi_karar == Karar.satis:
-                # if self.rsi_strategy.rsi_ema_trend < 0:
-                if self.rsi_strategy.rsi_ema_trend < 0 and self.rsi_strategy.rsi_value_1d > 0 + rsi_bounding_limit:
-                    self.karar = Karar.satis
-                elif rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], 1):
-                    self.karar = Karar.satis
+        # if self.swing_strategy.karar == Karar.alis:
+        # if self.heikinashi_karar == Karar.alis:
+        if self.rsi_strategy_1h.karar == Karar.alis:
+            self.karar = Karar.alis
 
-    def super_trend_tp_daralt(self):
-        kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
-        if kar > 0 and kar / self.islem_fiyati > 0.03:
-            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * tp_daralt_katsayi)
+        # if self.swing_strategy.karar == Karar.satis:
+        # if self.heikinashi_karar == Karar.satis:
+        if self.rsi_strategy_1h.karar == Karar.satis:
+            self.karar = Karar.satis
 
-    # @dongu_kontrol_decorator
     def cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
             self.super_trend_strategy.reset_super_trend()
             return
 
+        self.super_trend_cikis_yap()
+
+        self.super_trend_tp_daralt()
+        # self.rsi_cikis_veya_donus()
+        # self.swing_cikis()
+
+    def super_trend_tp_daralt(self):
+        kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
+        katsayi = self.config.get("tp_daralt_katsayi")
+        if kar > 0:
+            kar_orani = kar / self.islem_fiyati
+            if kar_orani > katsayi * self.daralt:
+                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
+                self.daralt += 1
+
+    def super_trend_mult_guncelle(self):
+        self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
+        # if True:
+        if 1 + self.config.get("multiplier_egim_limit") < self.egim or self.egim < 1 - self.config.get("multiplier_egim_limit"):
+            self.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
+            self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
+            self.config["ema_ucustaydi"] = 1
+
+        else:
+            self.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
+            self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
+            if self.config.get("ema_ucustaydi") == 1:
+                self.config["ema_ucustaydi"] = 0
+                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
+
+    def super_trend_cikis_yap(self):
+        self.super_trend_mult_guncelle()
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
-        # self.super_trend_tp_daralt()
-
-        # pozisyon 0 iken bu fonksiyon aslinda calismiyor
-        if self.pozisyon.value * self.super_trend_strategy.onceki_tp < self.pozisyon.value * self.super_trend_strategy.tp:
-            self.super_trend_strategy.onceki_tp = self.super_trend_strategy.tp
-
+        self.super_trend_strategy.update_tp(self)
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
+            # print("super_trend cikis")
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
 
+    def swing_cikis(self):
         if self.pozisyon != Pozisyon.notr:
-            # if self.heikinashi_karar.value != self.pozisyon.value:
-            #     self.karar = Karar.cikis
-            #     self.super_trend_strategy.reset_super_trend()
-            if self.rsi_strategy.rsi_ema_trend != 0:
-                if self.rsi_strategy.rsi_ema_trend != self.pozisyon.value:
-                    self.karar = Karar.cikis
-                    self.super_trend_strategy.reset_super_trend()
-            if self.pozisyon.value > 0:
-                if rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], self.pozisyon.value):
-                    self.karar = Karar.cikis
-                    self.super_trend_strategy.reset_super_trend()
-                elif self.rsi_strategy.ema_value_1d > self.suanki_fiyat * (1 + ema_bounding_limit):
-                    self.karar = Karar.satis
+            if self.swing_strategy.karar != self.karar:
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
 
-            elif self.pozisyon.value < 0:
-                if rsi_limit_kesim_durum_listeden_hesapla(self.rsi_strategy.rsi_1d[-2:], self.pozisyon.value):
-                    self.karar = Karar.cikis
-                    self.super_trend_strategy.reset_super_trend()
-                elif self.rsi_strategy.ema_value_1d < self.suanki_fiyat * (1 - ema_bounding_limit):
-                    self.karar = Karar.alis
+    def rsi_cikis_veya_donus(self):
+        if self.pozisyon != Pozisyon.notr:
+            if self.rsi_strategy_1h.karar == Karar.cikis:
+                # print("rsi cikis")
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
 
+    def mlp_karar_hesapla(self):
+        self.mlp_strategy.bitis_gunu = self.bitis_gunu
+        self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
+        series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
+        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
+        self.rsi_strategy_1h.karar_hesapla(self)
 
+    def swing_karar_hesapla(self):
+        self.swing_strategy.bitis_gunu = self.bitis_gunu
+        self.swing_strategy.suanki_fiyat = self.suanki_fiyat
+        self.swing_strategy.swing_data = SwingTrader(self.series_1h)
+        self.swing_strategy.karar_hesapla(self)
 
-    def rsi_ema_karar_hesapla(self):
-        self.rsi_strategy.bitis_gunu = self.bitis_gunu
-        series = self.series_1d[1:].reset_index(drop=True).sort_values(by='open_ts_int', ascending=True)
-        self.rsi_strategy.rsi_hesapla(series, 7)
-        self.rsi_strategy.ema_hesapla(series, 38)
-        self.rsi_strategy.rsi_ema_trend_hesapla()
+    def rsi_ema_1h_karar_hesapla(self):
+        self.rsi_strategy_1h.bitis_gunu = self.bitis_gunu
+        self.rsi_strategy_1h.suanki_fiyat = self.suanki_fiyat
+        series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
+        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
+        self.rsi_strategy_1h.karar_hesapla(self)
 
-    # @dongu_kontrol_decorator
     def heikinashi_kontrol(self):
-        series_1d = heikinashiye_cevir(self.series_1d)
-        self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series_1d[0:1])
+        series = heikinashiye_cevir(self.series_1h)
+        self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series)
         self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
-
-    def reset_trader(self):
-        self.heikinashi_karar = Karar.notr
-        self.pozisyon = Pozisyon(0)
-        self.karar = Karar(0)
-        self.rsi_strategy.karar = Karar(0)
-        self.onceki_karar = Karar(3)
 
     def miktar_hesapla(self):
         miktar = self.dolar / self.suanki_fiyat
