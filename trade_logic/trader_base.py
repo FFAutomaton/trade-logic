@@ -10,6 +10,7 @@ from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 from trade_logic.traders.swing_strategy import SwingStrategy
+from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
@@ -25,11 +26,12 @@ class TraderBase:
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT',
             "pencere_1d": "1d", "pencere_4h": "4h", "pencere_1h": "1h", "pencere_5m": "5m",
-            "arttir": 1, "wallet": {"ETH": 0, "USDT": 1000},
-            "backfill_window": 10, "super_trend_window": 200,
-            "doldur": True, "supertrend_mult": 1.5,
-            "tp_daralt_katsayi": 0.01, "momentum_egim_hesabi_window": 6,
-            "ema_ucustaydi": 0, "rsi_bounding_limit": 30, "ema_bounding_limit": 0.005
+            "arttir": 1, "wallet": {"ETH": 0, "USDT": 1000}, "backfill_window": 10, "super_trend_window": 200,
+            "doldur": True,
+            "supertrend_mult_big": 3, "supertrend_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
+            "ema_window": 200, "rsi_window": 7, "sma_window": 50,
+            "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20, "ema_bounding_limit": 0.001,
+            "ema_ucustaydi": 0, "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02,
         }
         self.daralt = 1
         self.binance_wallet = None
@@ -66,6 +68,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy_1h = RsiEmaStrategy(self.config)
+        self.mlp_strategy = MlpStrategy(self.config)
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False

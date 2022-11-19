@@ -22,14 +22,14 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         # if self.swing_strategy.karar == Karar.alis:
-        if self.heikinashi_karar == Karar.alis:
-            if self.rsi_strategy_1h.karar == Karar.alis:
-                self.karar = Karar.alis
+        # if self.heikinashi_karar == Karar.alis:
+        if self.rsi_strategy_1h.karar == Karar.alis:
+            self.karar = Karar.alis
 
         # if self.swing_strategy.karar == Karar.satis:
-        if self.heikinashi_karar == Karar.satis:
-            if self.rsi_strategy_1h.karar == Karar.satis:
-                self.karar = Karar.satis
+        # if self.heikinashi_karar == Karar.satis:
+        if self.rsi_strategy_1h.karar == Karar.satis:
+            self.karar = Karar.satis
 
     def cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
@@ -53,15 +53,15 @@ class Trader(TraderBase):
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
-        if True:
-        # if 1.002 < self.egim or self.egim < 0.998:
-            self.config["supertrend_mult"] = 1.5
-            self.super_trend_strategy.config["supertrend_mult"] = 1.5
+        # if True:
+        if 1 + self.config.get("multiplier_egim_limit") < self.egim or self.egim < 1 - self.config.get("multiplier_egim_limit"):
+            self.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
+            self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
             self.config["ema_ucustaydi"] = 1
 
         else:
-            self.config["supertrend_mult"] = 0.5
-            self.super_trend_strategy.config["supertrend_mult"] = 0.5
+            self.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
+            self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
             if self.config.get("ema_ucustaydi") == 1:
                 self.config["ema_ucustaydi"] = 0
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
@@ -87,6 +87,13 @@ class Trader(TraderBase):
                 # print("rsi cikis")
                 self.karar = Karar.cikis
                 self.super_trend_strategy.reset_super_trend()
+
+    def mlp_karar_hesapla(self):
+        self.mlp_strategy.bitis_gunu = self.bitis_gunu
+        self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
+        series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
+        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
+        self.rsi_strategy_1h.karar_hesapla(self)
 
     def swing_karar_hesapla(self):
         self.swing_strategy.bitis_gunu = self.bitis_gunu

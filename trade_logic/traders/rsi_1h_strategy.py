@@ -18,7 +18,6 @@ class RsiEmaStrategy:
         self.rsi_bounding_limit = config.get("rsi_bounding_limit")
         self.ema_bounding_limit = config.get("ema_bounding_limit")
         self.momentum_egim_hesabi_window = config.get("momentum_egim_hesabi_window")
-        self.momentum_egim = config.get("momentum_egim")
         self.trend_ratio = config.get("trend_ratio")
 
         self.rsi_smasi_trend = Karar.notr
@@ -38,7 +37,6 @@ class RsiEmaStrategy:
         self.ema_hesapla(series, ema_w)
         self.rsi_smasi_trend_hesapla(sma_w)
         self.tavandan_dondu_mu()
-        # self.momentum_hesapla_rsi()
         self.tavan_yapti_mi()
 
     def reset(self):
@@ -74,7 +72,6 @@ class RsiEmaStrategy:
                     self.karar = Karar.satis
                     return
 
-
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
         self.rsi_series = rsi_.rsi()
@@ -100,16 +97,6 @@ class RsiEmaStrategy:
         if diff != 0 or len(diff) != 0:
             return sum(diff) / len(diff)
         return 0
-
-    def momentum_hesapla_rsi(self):
-        egim = self.egim_hesapla()
-        egim_limit = self.momentum_egim
-        if egim > egim_limit:
-            self.momentum_trend_rsi = Karar.alis
-        elif egim < egim_limit:
-            self.momentum_trend_rsi = Karar.satis
-        else:
-            self.momentum_trend_rsi = Karar.notr
 
     def rsi_smasi_trend_hesapla(self, window):
         ratio_limit = self.trend_ratio
