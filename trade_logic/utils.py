@@ -118,7 +118,7 @@ def integer_date_yap(date_str):
 
 def print_islem_detay(trader):
     islem = trader.tahmin
-    print(f"bot calisti {str(trader.bitis_gunu)}")
+    print(f"bot calisti {str(trader.bitis_gunu)} - {trader.suanki_fiyat}")
     if islem.get('alis') > 0:
         print(f"islem detaylar ==> ds: {islem.get('ds')}\t\t\t\t ==> alis: {islem.get('alis')}")
     if islem.get('satis') > 0:

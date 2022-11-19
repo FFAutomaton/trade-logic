@@ -163,8 +163,8 @@ class TraderBase:
         elif islem["cikis"] > 0:
             yon = self.kullanicilari_don(None)
             self.reset_trader()
-        if not os.getenv("PYTHON_ENV") == "TEST":
-            bam_bama_sinyal_gonder(islem, yon)
+        # if not os.getenv("PYTHON_ENV") == "TEST":
+        #     bam_bama_sinyal_gonder(islem, yon)
 
     def reset_trader(self):
         self.heikinashi_karar = Karar.notr
