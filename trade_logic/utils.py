@@ -113,7 +113,7 @@ def okunur_date_yap(unix_ts):
 
 
 def integer_date_yap(date_str):
-    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=None).timestamp())
+    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").timestamp())
 
 
 def print_islem_detay(trader):

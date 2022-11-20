@@ -25,8 +25,8 @@ def app_calis():
     trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)
     trader.init_prod()
     trader_calis(trader)
-    if os.getenv("PYTHON_ENV") == "TEST":
-        print('HERHERHERH')
+    if os.getenv("PYTHON_ENV") != "TEST":
+    # if os.getenv("PYTHON_ENV") == "TEST":
         trader.borsada_islemleri_hallet()
     print_islem_detay(trader)
     if trader.karar.value == 3:
@@ -35,7 +35,6 @@ def app_calis():
 
 
 if __name__ == '__main__':
-    # os.environ["PYTHON_ENV"] = "TEST"
     c = 5
     while c > 0:
         try:
@@ -47,6 +46,7 @@ if __name__ == '__main__':
             print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
             c -= 1
 
+    # TODO:: ATR'den tp daralt katsayi manipule edilebilir, atr dusuk iken daraltma katsayisi da kucultulebilir
     # TODO:: 1 gunluk, 4 saatlik ve 1 saatlik sinyalleri birlestir
     # TODO:: hacim cok az ise farkli strateji girilebilir, 2022 7. ay ve 10. ay civarlarinda hacim cok dustu mesela,
     #        veya net volume indicatorune bak o da etkili olabilir
