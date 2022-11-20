@@ -1,4 +1,4 @@
-import os
+import math
 import pandas as pd
 import copy
 from datetime import timedelta, datetime
@@ -9,11 +9,11 @@ from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
-from trade_logic.traders.swing_strategy import SwingStrategy
-from trade_logic.traders.mlp_strategy import MlpStrategy
+# from trade_logic.traders.swing_strategy import SwingStrategy
+# from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
-from service.bam_bam_service import bam_bama_sinyal_gonder
+# from service.bam_bam_service import bam_bama_sinyal_gonder
 from config_users import users
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
@@ -69,7 +69,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy_1h = RsiEmaStrategy(self.config)
-        self.mlp_strategy = MlpStrategy(self.config)
+        # self.mlp_strategy = MlpStrategy(self.config)
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
@@ -134,18 +134,31 @@ class TraderBase:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
+    def miktar_hesapla(self):
+        miktar = self.dolar / self.suanki_fiyat
+        self.islem_miktari = miktar
+        self.islem_fiyati = self.suanki_fiyat
+        return math.floor(miktar * 100) / 100
+
+    def kullanici_bakiye_hesapla(self, _service):
+        self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
+        self.wallet_isle()
+
     def kullanicilari_don(self, _taraf=None):
-        _exit_, yon = None, None
+        _exit_, yon, pos, leverage = None, None, None, None
         for user in users:
             user_secrets = users.get(user)
             c = 5
             while c > 0:
                 try:
                     _service = TurkishGekkoBinanceService(user_secrets)
+                    self.kullanici_bakiye_hesapla(_service)
                     _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
                     if _taraf:
-                        _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
-                                                      miktar=self.miktar_hesapla(), kaldirac=1)
+                        pos, leverage = _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
+                                                                      miktar=self.miktar_hesapla(), kaldirac=1)
+                    print(f"###### --->  {user} {_taraf} {yon} {pos} {leverage}")
+                    print(f"{user} {_exit_}")
                     c = 0
                 except Exception as e:
                     print(f"kullanici donerken hata olustu!!!!!!")
@@ -165,7 +178,7 @@ class TraderBase:
             yon = self.kullanicilari_don(None)
             self.reset_trader()
         # if not os.getenv("PYTHON_ENV") == "TEST":
-            # bam_bama_sinyal_gonder(islem, yon)
+        # bam_bama_sinyal_gonder(islem, yon)
 
     def reset_trader(self):
         self.heikinashi_karar = Karar.notr

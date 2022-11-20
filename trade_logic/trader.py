@@ -47,8 +47,10 @@ class Trader(TraderBase):
         if kar > 0:
             kar_orani = kar / self.islem_fiyati
             if kar_orani > katsayi * self.daralt:
+                onceki = self.super_trend_strategy.onceki_tp
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
                 self.daralt += 1
+                print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
