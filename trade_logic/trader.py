@@ -1,4 +1,3 @@
-import math
 from datetime import timedelta, datetime
 
 from trade_logic.utils import egim_hesapla, heikinashiye_cevir, heikinashi_mum_analiz, \
@@ -112,12 +111,6 @@ class Trader(TraderBase):
         series = heikinashiye_cevir(self.series_1h)
         self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series)
         self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
-
-    def miktar_hesapla(self):
-        miktar = self.dolar / self.suanki_fiyat
-        self.islem_miktari = miktar
-        self.islem_fiyati = self.suanki_fiyat
-        return math.floor(miktar * 100) / 100
 
     def pozisyon_al(self):
         wallet = self.config.get("wallet")

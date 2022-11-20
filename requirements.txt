@@ -3,4 +3,4 @@ git+https://github.com/turkish-gekko/signal-atr@master#egg=signal-atr
 git+https://github.com/turkish-gekko/service-binance-rest@main#egg=turkish_gekko_binance_service
 git+https://github.com/turkish-gekko/signal-swing-trader@master#egg=swing-trader
 ta==0.9.0
-scikit-learn==1.1.3
+# scikit-learn==1.1.3
