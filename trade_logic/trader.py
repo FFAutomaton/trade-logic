@@ -56,13 +56,13 @@ class Trader(TraderBase):
         if 1 + self.config.get("multiplier_egim_limit") < self.egim or self.egim < 1 - self.config.get("multiplier_egim_limit"):
             self.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
             self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
-            self.config["ema_ucustaydi"] = 1
+            self.ema_ucustaydi = 1
 
         else:
             self.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
             self.super_trend_strategy.config["supertrend_mult"] = self.config.get("supertrend_mult_small")
-            if self.config.get("ema_ucustaydi") == 1:
-                self.config["ema_ucustaydi"] = 0
+            if self.ema_ucustaydi == 1:
+                self.ema_ucustaydi = 0
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
 
     def super_trend_cikis_yap(self):

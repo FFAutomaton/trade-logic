@@ -170,7 +170,7 @@ class SqlLite_Service:
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
 
-        data = {"ds_str": okunur_date_yap(datetime.utcnow().timestamp()*1000), "config": json.dumps(_trader)}
+        data = {"ds_str": okunur_date_yap(datetime.now().timestamp()*1000), "config": json.dumps(_trader)}
         self.veri_yaz(data, "trader")
 
     def trader_durumu_geri_yukle(self, trader):
@@ -186,9 +186,9 @@ class SqlLite_Service:
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")
-            trader.config["ema_ucustaydi"] = conf_.get("ema_ucustaydi")
-            trader.config["cooldown"] = conf_.get("cooldown")
-            trader.config["daralt"] = conf_.get("daralt")
+            trader.ema_ucustaydi = conf_.get("ema_ucustaydi")
+            trader.cooldown = conf_.get("cooldown")
+            trader.daralt = conf_.get("daralt")
 
     def trader_eski_verileri_temizle(self, bitis_gunu):
         _limit = bitis_gunu - timedelta(days=3)

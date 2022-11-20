@@ -1,4 +1,4 @@
-import math
+import os
 import pandas as pd
 import copy
 from datetime import timedelta, datetime
@@ -8,6 +8,9 @@ from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
+
+from trade_logic.traders.swing_strategy import SwingStrategy
+from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
@@ -28,8 +31,9 @@ class TraderBase:
             "supertrend_mult_big": 3, "supertrend_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window": 200, "rsi_window": 7, "sma_window": 50,
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20, "ema_bounding_limit": 0.001,
-            "ema_ucustaydi": 0, "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02,
+            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02,
         }
+        self.ema_ucustaydi = 0
         self.daralt = 1
         self.binance_wallet = None
         self.tp_daralt = 0
@@ -65,7 +69,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_strategy_1h = RsiEmaStrategy(self.config)
-        # self.mlp_strategy = MlpStrategy(self.config)
+        self.mlp_strategy = MlpStrategy(self.config)
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
@@ -130,16 +134,6 @@ class TraderBase:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
-    def miktar_hesapla(self):
-        miktar = self.dolar / self.suanki_fiyat
-        self.islem_miktari = miktar
-        self.islem_fiyati = self.suanki_fiyat
-        return math.floor(miktar * 100) / 100
-
-    def kullanici_bakiye_hesapla(self, _service):
-        self.binance_wallet = _service.futures_hesap_bakiyesi()
-        self.wallet_isle()
-
     def kullanicilari_don(self, _taraf=None):
         _exit_, yon = None, None
         for user in users:
@@ -148,7 +142,6 @@ class TraderBase:
             while c > 0:
                 try:
                     _service = TurkishGekkoBinanceService(user_secrets)
-                    self.kullanici_bakiye_hesapla(_service)
                     _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
                     if _taraf:
                         _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
@@ -172,7 +165,7 @@ class TraderBase:
             yon = self.kullanicilari_don(None)
             self.reset_trader()
         # if not os.getenv("PYTHON_ENV") == "TEST":
-        #     bam_bama_sinyal_gonder(islem, yon)
+            # bam_bama_sinyal_gonder(islem, yon)
 
     def reset_trader(self):
         self.heikinashi_karar = Karar.notr
@@ -183,7 +176,7 @@ class TraderBase:
         self.islem_fiyati = 0
         self.islem_miktari = 0
         self.cooldown = 0
-        self.daralt = 1
+        self.daralt = 0
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

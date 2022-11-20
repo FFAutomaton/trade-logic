@@ -19,8 +19,7 @@ def app_calis():
     # bitis_gunu = datetime.strptime('2022-04-03 00:00:00', '%Y-%m-%d %H:%M:%S')
     # bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     bitis_gunu = datetime.utcnow()
-    bitis_gunu = bitis_gunu_truncate_hour_precision(bitis_gunu, 4)
-
+    bitis_gunu = bitis_gunu_truncate_hour_precision(bitis_gunu, 1)
 
     trader = Trader(bitis_gunu)
     trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)
@@ -35,6 +34,7 @@ def app_calis():
 
 
 if __name__ == '__main__':
+    # os.environ["PYTHON_ENV"] = "TEST"
     c = 5
     while c > 0:
         try:
