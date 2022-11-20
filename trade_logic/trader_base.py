@@ -141,7 +141,7 @@ class TraderBase:
         return math.floor(miktar * 100) / 100
 
     def kullanici_bakiye_hesapla(self, _service):
-        self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
+        self.binance_wallet = _service.futures_hesap_bakiyesi()
         self.wallet_isle()
 
     def kullanicilari_don(self, _taraf=None):
@@ -157,8 +157,7 @@ class TraderBase:
                     if _taraf:
                         pos, leverage = _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
                                                                       miktar=self.miktar_hesapla(), kaldirac=1)
-                    print(f"###### --->  {user} {_taraf} {yon} {pos} {leverage}")
-                    print(f"{user} {_exit_}")
+                    print(f"{user} - ### ---> {_taraf} {yon} {pos} {_exit_}")
                     c = 0
                 except Exception as e:
                     print(f"kullanici donerken hata olustu!!!!!!")
@@ -189,7 +188,6 @@ class TraderBase:
         self.islem_fiyati = 0
         self.islem_miktari = 0
         self.cooldown = 0
-        self.daralt = 0
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

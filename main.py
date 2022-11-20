@@ -25,8 +25,9 @@ def app_calis():
     trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)
     trader.init_prod()
     trader_calis(trader)
-    # if os.getenv("PYTHON_ENV") != "TEST":
-    trader.borsada_islemleri_hallet()
+    if os.getenv("PYTHON_ENV") == "TEST":
+        print('HERHERHERH')
+        trader.borsada_islemleri_hallet()
     print_islem_detay(trader)
     if trader.karar.value == 3:
         trader.reset_trader()
