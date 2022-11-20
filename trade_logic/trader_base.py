@@ -1,4 +1,4 @@
-import os
+import math
 import pandas as pd
 import copy
 from datetime import timedelta, datetime
@@ -8,8 +8,6 @@ from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
-
-from trade_logic.traders.swing_strategy import SwingStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 from service.bam_bam_service import bam_bama_sinyal_gonder
@@ -132,6 +130,16 @@ class TraderBase:
         self.dolar = float(self.config["wallet"].get('USDT'))
         self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
 
+    def miktar_hesapla(self):
+        miktar = self.dolar / self.suanki_fiyat
+        self.islem_miktari = miktar
+        self.islem_fiyati = self.suanki_fiyat
+        return math.floor(miktar * 100) / 100
+
+    def kullanici_bakiye_hesapla(self, _service):
+        self.binance_wallet = _service.futures_hesap_bakiyesi()
+        self.wallet_isle()
+
     def kullanicilari_don(self, _taraf=None):
         _exit_, yon = None, None
         for user in users:
@@ -140,6 +148,7 @@ class TraderBase:
             while c > 0:
                 try:
                     _service = TurkishGekkoBinanceService(user_secrets)
+                    self.kullanici_bakiye_hesapla(_service)
                     _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
                     if _taraf:
                         _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
