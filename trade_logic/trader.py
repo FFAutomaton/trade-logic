@@ -21,13 +21,9 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
-        # if self.swing_strategy.karar == Karar.alis:
-        # if self.heikinashi_karar == Karar.alis:
         if self.rsi_strategy_1h.karar == Karar.alis:
             self.karar = Karar.alis
 
-        # if self.swing_strategy.karar == Karar.satis:
-        # if self.heikinashi_karar == Karar.satis:
         if self.rsi_strategy_1h.karar == Karar.satis:
             self.karar = Karar.satis
 
