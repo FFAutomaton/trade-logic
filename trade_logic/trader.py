@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta, datetime
 
 from trade_logic.utils import egim_hesapla, heikinashiye_cevir, heikinashi_mum_analiz, \
@@ -50,7 +51,8 @@ class Trader(TraderBase):
                 onceki = self.super_trend_strategy.onceki_tp
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
                 self.daralt += 1
-                print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
+                if os.getenv("PYTHON_ENV") != 'TEST':
+                    print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])

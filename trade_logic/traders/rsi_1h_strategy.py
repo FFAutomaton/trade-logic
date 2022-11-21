@@ -62,7 +62,7 @@ class RsiEmaStrategy:
         if trader.cooldown == 0:
             if ema_alt_ust == 1:
                 if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit) or \
-                        self.dipten_dondu:
+                        self.dipten_dondu or ema_alt_ust == 1:
                     self.karar = Karar.alis
                     return
 
