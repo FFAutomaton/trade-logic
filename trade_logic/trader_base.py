@@ -188,6 +188,7 @@ class TraderBase:
         self.islem_fiyati = 0
         self.islem_miktari = 0
         self.cooldown = 0
+        self.daralt = 1
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(
