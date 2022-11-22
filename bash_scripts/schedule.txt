@@ -1,5 +1,5 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-0 */1 * * * /app/bash_scripts/run.sh >> /output/schedule.log 2>&1
+*/30 * * * * /app/bash_scripts/run.sh >> /output/schedule.log 2>&1
 # An empty line is required at the end of the file for a valid cron file
