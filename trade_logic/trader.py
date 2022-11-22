@@ -36,7 +36,7 @@ class Trader(TraderBase):
         self.super_trend_update()
         self.super_trend_tp_daralt()
         self.super_trend_cikis_yap()
-        # self.rsi_cikis_veya_donus()
+        self.rsi_cikis_veya_donus()
         # self.swing_cikis()
 
     def super_trend_tp_daralt(self):
