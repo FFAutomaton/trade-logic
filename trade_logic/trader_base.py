@@ -31,10 +31,10 @@ class TraderBase:
             "supertrend_mult_big": 3, "supertrend_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window": 200, "rsi_window": 7, "sma_window": 50,
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20, "ema_bounding_limit": 0.001,
-            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02,
+            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.005
         }
         self.ema_ucustaydi = 0
-        self.daralt = 1
+        self.daralt = 0
         self.binance_wallet = None
         self.tp_daralt = 0
         self.egim = 0
@@ -188,7 +188,7 @@ class TraderBase:
         self.islem_fiyati = 0
         self.islem_miktari = 0
         self.cooldown = 0
-        self.daralt = 1
+        self.daralt = 0
 
     def mum_verilerini_guncelle(self):
         self.sqlite_service.mum_datasi_yukle(

@@ -32,9 +32,9 @@ class Trader(TraderBase):
             self.super_trend_strategy.reset_super_trend()
             return
 
-        self.super_trend_cikis_yap()
-
+        self.super_trend_update()
         self.super_trend_tp_daralt()
+        self.super_trend_cikis_yap()
         # self.rsi_cikis_veya_donus()
         # self.swing_cikis()
 
@@ -43,12 +43,19 @@ class Trader(TraderBase):
         katsayi = self.config.get("tp_daralt_katsayi")
         if kar > 0:
             kar_orani = kar / self.islem_fiyati
-            if kar_orani > katsayi * self.daralt:
+            if kar_orani > katsayi * self.daralt and self.daralt > 0:
                 onceki = self.super_trend_strategy.onceki_tp
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
-                self.daralt += 1
                 if os.getenv("PYTHON_ENV") != 'TEST':
                     print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
+                self.daralt += 1
+            elif kar_orani > self.config.get("inceltme_limit") and self.daralt < 1:
+                onceki = self.super_trend_strategy.onceki_tp
+                self.super_trend_strategy.onceki_tp = self.islem_fiyati * (
+                            1 + self.pozisyon.value * self.config.get("inceltme_oran"))
+                if os.getenv("PYTHON_ENV") != 'TEST':
+                    print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
+                self.daralt += 1
 
     def super_trend_mult_guncelle(self):
         self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
@@ -65,10 +72,12 @@ class Trader(TraderBase):
                 self.ema_ucustaydi = 0
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
 
-    def super_trend_cikis_yap(self):
+    def super_trend_update(self):
         self.super_trend_mult_guncelle()
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
         self.super_trend_strategy.update_tp(self)
+
+    def super_trend_cikis_yap(self):
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             # print("super_trend cikis")
             self.karar = Karar.cikis
@@ -110,7 +119,8 @@ class Trader(TraderBase):
     def heikinashi_kontrol(self):
         series = heikinashiye_cevir(self.series_1h)
         self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series)
-        self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
+        self.heikinashi_karar = Karar(self.heikinashi_karar_value)
+        # self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
 
     def pozisyon_al(self):
         wallet = self.config.get("wallet")
