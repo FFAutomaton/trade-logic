@@ -1,3 +1,5 @@
+import os
+
 import pandas as pd
 from datetime import datetime, timezone
 
@@ -86,8 +88,7 @@ def bitis_gunu_truncate_hour_precision(_now, arttir):
 
 
 # TODO:: bu iki fonksiyonu birlestir video bile cekilir
-def bitis_gunu_truncate_min_precision(arttir):
-    bitis_gunu = datetime.utcnow().replace(second=0, microsecond=0)
+def bitis_gunu_truncate_min_precision(bitis_gunu, arttir):
     _m = bitis_gunu.minute - (bitis_gunu.minute % arttir)
     bitis_gunu = bitis_gunu.replace(minute=_m)
     return bitis_gunu.replace(tzinfo=timezone.utc)
@@ -113,7 +114,8 @@ def okunur_date_yap(unix_ts):
 
 
 def integer_date_yap(date_str):
-    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").timestamp())
+    # if os.getenv("PYTHON_ENV") == "TEST":
+    return int(datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc).timestamp())
 
 
 def print_islem_detay(trader):

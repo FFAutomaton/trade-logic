@@ -21,11 +21,12 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
-        if self.rsi_strategy_1h.karar == Karar.alis:
-            self.karar = Karar.alis
+        if self.cooldown == 0:
+            if self.rsi_strategy_1h.karar == Karar.alis:
+                self.karar = Karar.alis
 
-        if self.rsi_strategy_1h.karar == Karar.satis:
-            self.karar = Karar.satis
+            if self.rsi_strategy_1h.karar == Karar.satis:
+                self.karar = Karar.satis
 
     def cikis_kontrol(self):
         if self.onceki_karar.value * self.karar.value < 0:  # eger pozisyon zaten yon degistirmisse, stop yapip exit yapma
@@ -82,6 +83,9 @@ class Trader(TraderBase):
             # print("super_trend cikis")
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
+            # zarar = self.pozisyon.value * (self.islem_fiyati - self.suanki_fiyat)
+            # if zarar > 0:
+            #     self.cooldown = 4
 
     def swing_cikis(self):
         if self.pozisyon != Pozisyon.notr:
@@ -111,7 +115,6 @@ class Trader(TraderBase):
 
     def rsi_ema_1h_karar_hesapla(self):
         self.rsi_strategy_1h.bitis_gunu = self.bitis_gunu
-        self.rsi_strategy_1h.suanki_fiyat = self.suanki_fiyat
         series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
         self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
         self.rsi_strategy_1h.karar_hesapla(self)

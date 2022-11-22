@@ -62,7 +62,7 @@ def backtest_multi_func(start_date, end_date):
                                                     islem_sonuc = trader.tahmin
                                                     if trader.karar.value == 3:
                                                         trader.reset_trader()
-                                                    trader.bitis_gunu = trader.bitis_gunu + timedelta(hours=trader.config.get('arttir'))
+                                                    trader.bitis_gunu = trader.bitis_gunu + timedelta(minutes=trader.config.get('arttir'))
                                                 sonuc_yazdir(start_date, end_date, mult[0], mult[1], mel, em_w, r, e, c, mom, rb, eb, me, tr, dk, trader, islem_sonuc)
                                                 c += 1
 

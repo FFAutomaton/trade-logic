@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 import copy
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
 from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
@@ -25,8 +25,8 @@ class TraderBase:
 
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT',
-            "pencere_1d": "1d", "pencere_4h": "4h", "pencere_1h": "1h", "pencere_5m": "5m",
-            "arttir": 1, "wallet": {"ETH": 0, "USDT": 1000}, "backfill_window": 10, "super_trend_window": 200,
+            "pencere_1d": "1d", "pencere_1h": "1h", "pencere_30m": "30m",
+            "arttir": 30, "wallet": {"ETH": 0, "USDT": 1000}, "backfill_window": 10, "super_trend_window": 200,
             "doldur": True,
             "supertrend_mult_big": 3, "supertrend_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window": 200, "rsi_window": 7, "sma_window": 50,
@@ -57,13 +57,13 @@ class TraderBase:
         self.bitis_gunu_str = datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
         # self.series_1d = None
         self.series_1h = None
-        self.series_4h = None
+        self.series_30m = None
         self.bugunun_mumu = None
 
         self.cooldown = 0
-        self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(5) - timedelta(
+        self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), 30) - timedelta(
             days=self.config.get("backfill_window"))
-        self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(5)
+        self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), 30)
 
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
@@ -81,10 +81,10 @@ class TraderBase:
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
             self.bitis_gunu - timedelta(days=200), self.bitis_gunu
         )
-        # self.series_4h = self.sqlite_service.veri_getir(
-        #     self.config.get("coin"), self.config.get("pencere_4h"), "mum",
-        #     self.bitis_gunu - timedelta(days=200), self.bitis_gunu
-        # )
+        self.series_30m = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("pencere_30m"), "mum",
+            self.bitis_gunu - timedelta(days=50), self.bitis_gunu
+        )
         # self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
         # self.son_mumu_guncelle()
 
@@ -113,9 +113,11 @@ class TraderBase:
         return bugun_mum
 
     def fiyat_guncelle(self):
-        data = self.series_1h
+        data = self.series_30m
+        # data = self.series_1h
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
+        self.rsi_strategy_1h.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
         self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 4)
@@ -195,16 +197,16 @@ class TraderBase:
             self.config.get("pencere_1h"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
         self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere_4h"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
+            self.config.get("pencere_30m"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
 
     def sonuc_getir(self):
-        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_4h"), 'islem')
+        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_30m"), 'islem')
         return sonuclar.iloc[0]
 
     def ciz(self):
         import matplotlib.pyplot as plt
-        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_4h"), "islem")
+        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_30m"), "islem")
         # sonuclar = sonuclar.iloc[-200:]
         # plt.style.use('dark_background')
         sonuclar = sonuclar[sonuclar.high != 0]
