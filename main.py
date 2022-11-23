@@ -50,22 +50,18 @@ if __name__ == '__main__':
     # TODO:: bir enine strateji su anki yarim saatlik, bir de trend stratejisi bir saatlik aynisi
     # TODO:: image delete ekle build scripte
     # TODO:: ATR'den tp daralt katsayi manipule edilebilir, atr dusuk iken daraltma katsayisi da kucultulebilir
-    # TODO:: 1 gunluk, 4 saatlik ve 1 saatlik sinyalleri birlestir
     # TODO:: hacim cok az ise farkli strateji girilebilir, 2022 7. ay ve 10. ay civarlarinda hacim cok dustu mesela,
     #        veya net volume indicatorune bak o da etkili olabilir
     # TODO:: destek direnc eklenebilir
     # TODO:: piyasanin durumunu atr'den cikararak rsi ayarlari degistirmek en mantikli yaklasim olabilir
     # TODO:: once alttaki maddeyi ekle sonra stateleri daha duzgun tutup strteji yaz bastan 1-rsi ve emasi, 2-ema_trend, normal ema ile cikis
-    # TODO:: daha sik calistirip su anki fiyattan erken cikis dene, basktest icin bunu yari handle etmen lazim
-    # TODO:: onceki karar ve karar verilerine pozisyonu kapatmayi dene, karar 0 iken pozisyon olsa kapatmayi dusunuebiliriz
-    # TODO:: check rsi kesisme arrayin son verilerini alip en son veri yukari kesmis mi gibi bir kontrol, uzun suren
-    #  asiri satis ve alislarda karini arttirmasi icin
+
     # TODO:: pazari 2'ye bol trending ve ranging diye ema veya rsi degerlerinden
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
     # TODO:: decorator videosu yap
     # TODO:: thread videosu yap
     # TODO:: islem acikken wallet'da usdt gozukuyor, acik islem bilgisini cekip state'i ona gore ezmek lazim
-    # TODO:: binance servis exception alirsa uygulamayi bastan baslat
+
     # TODO:: yeni versiyon cikmadan once calistirabilcegin testler yaz
     #        mesela alis yapiyor mu belli bir case'de, tp dogru takip ediyor mu, cikis yapiyor mu tp de,
     #        binance baglanti hatasi alirsa tekrar program basliyor mu gibi
