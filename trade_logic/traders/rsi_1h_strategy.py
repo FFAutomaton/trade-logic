@@ -72,7 +72,7 @@ class RsiEmaStrategy:
                     self.tavandan_dondu :
                 self.karar = Karar.satis
                 return
-            if ema_alt_ust_small != 1:
+            if not ema_alt_ust_small != 1:
                 self.karar = Karar.satis
                 return
 
@@ -81,7 +81,7 @@ class RsiEmaStrategy:
                     self.dipten_dondu :
                 self.karar = Karar.alis
                 return
-            if ema_alt_ust_small != -1:
+            if not ema_alt_ust_small != -1:
                 self.karar = Karar.alis
                 return
 
