@@ -59,7 +59,7 @@ class Trader(TraderBase):
                 self.daralt += 1
 
     def super_trend_mult_guncelle(self):
-        self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series[0], self.rsi_strategy_1h.ema_series[1])
+        self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series_big[0], self.rsi_strategy_1h.ema_series_big[1])
         # if True:
         if 1 + self.config.get("multiplier_egim_limit") < self.egim or self.egim < 1 - self.config.get("multiplier_egim_limit"):
             self.config["supertrend_mult"] = self.config.get("supertrend_mult_big")
@@ -104,7 +104,6 @@ class Trader(TraderBase):
         self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
         series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
-        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
         self.rsi_strategy_1h.karar_hesapla(self)
 
     def swing_karar_hesapla(self):
@@ -116,7 +115,7 @@ class Trader(TraderBase):
     def rsi_ema_1h_karar_hesapla(self):
         self.rsi_strategy_1h.bitis_gunu = self.bitis_gunu
         series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
-        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window"))
+        self.rsi_strategy_1h.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window_buyuk"), self.config.get("ema_window_kucuk"))
         self.rsi_strategy_1h.karar_hesapla(self)
 
     def heikinashi_kontrol(self):

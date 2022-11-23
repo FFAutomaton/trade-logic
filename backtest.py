@@ -13,27 +13,27 @@ islemler_rapor = {}
 def backtest_multi_func(start_date, end_date):
     multiplier = [(0.3, 3)]
     multiplier_egim_limit = [0.0005]
-    ema_window = [200]
+    ema_window_buyuk = [400]
+    ema_window_kucuk = [14]
     rsi_window = [7]
     # sma_window = [7, 35, 50]
     sma_window = [50]
     momentum_egim_hesabi_window = [8]
     rsi_bounding_limit = [20]
-    ema_bounding_limit = [0.001]
-    available = [2]
+    ema_bounding_limit = [0.002]
     trend_ratio = [0.005]
     daralt_katsayi = [0.02]
     c = 0
 
     for mult in multiplier:
         for mel in multiplier_egim_limit:
-            for em_w in ema_window:
+            for em_w in ema_window_buyuk:
                 for r in rsi_window:
                     for e in sma_window:
                         for mom in momentum_egim_hesabi_window:
                             for rb in rsi_bounding_limit:
                                 for eb in ema_bounding_limit:
-                                    for me in available:
+                                    for me in ema_window_kucuk:
                                         for tr in trend_ratio:
                                             for dk in daralt_katsayi:
                                                 trader = Trader(start_date)
@@ -41,7 +41,9 @@ def backtest_multi_func(start_date, end_date):
                                                 trader.config["supertrend_mult_big"] = mult[1]
                                                 trader.config["multiplier_egim_limit"] = mel
                                                 trader.config["tp_daralt_katsayi"] = dk
-                                                trader.config["ema_window"] = em_w
+                                                trader.config["ema_window_buyuk"] = em_w
+                                                trader.config["ema_window_kucuk"] = me
+
                                                 trader.config["rsi_window"] = r
                                                 trader.config["sma_window"] = e
                                                 trader.config["momentum_egim_hesabi_window"] = mom
