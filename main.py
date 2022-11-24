@@ -47,7 +47,8 @@ if __name__ == '__main__':
             print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
             c -= 1
 
-    # TODO:: emalarin bounding limitini ayir ve test et
+    # TODO:: ATR ratio diye bir sey hesaplayip doger butun bounding limitleri bu oran ile scale edebilrsin
+    # TODO:: kucuk emayi daha kontrol edecek skilde belki window arttirilabilir
     # TODO:: bir enine strateji su anki yarim saatlik, bir de trend stratejisi bir saatlik aynisi
     # TODO:: image delete ekle build scripte
     # TODO:: ATR'den tp daralt katsayi manipule edilebilir, atr dusuk iken daraltma katsayisi da kucultulebilir

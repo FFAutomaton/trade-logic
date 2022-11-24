@@ -68,12 +68,19 @@ class RsiEmaStrategy:
         elif self.ema_value_small * (1 + self.ema_bounding_kucuk) < trader.suanki_fiyat:
             ema_alt_ust_small = 1
 
+        if ema_alt_ust * ema_alt_ust_small < 0:
+            if trader.pozisyon != Pozisyon.notr:
+                self.karar = Karar.cikis
+                return
+            self.karar = Karar.notr
+            return
+
         if ema_alt_ust == -1:
             if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit) or \
                     self.tavandan_dondu :
                 self.karar = Karar.satis
                 return
-            if not ema_alt_ust_small != 1:
+            if ema_alt_ust_small == -1:
                 self.karar = Karar.satis
                 return
 
@@ -82,7 +89,7 @@ class RsiEmaStrategy:
                     self.dipten_dondu :
                 self.karar = Karar.alis
                 return
-            if not ema_alt_ust_small != -1:
+            if ema_alt_ust_small == 1:
                 self.karar = Karar.alis
                 return
 

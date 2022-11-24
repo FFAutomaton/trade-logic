@@ -23,8 +23,8 @@ def backtest_multi_func(start_date, end_date):
     sma_window = [50]
     momentum_egim_hesabi_window = [8]
     rsi_bounding_limit = [20]
-    ema_bounding_buyuk = [0.001]
-    ema_bounding_kucuk = [0.005]
+    ema_bounding_buyuk = [0.002]
+    ema_bounding_kucuk = [0.02]
     trend_ratio = [0.005]
     daralt_katsayi = [0.02]
     c = 0
@@ -98,14 +98,14 @@ def backtest_calis_multi(start_date, end_date):
 
 
 if __name__ == '__main__':
-    message = "rsi cikisi test"
+    message = "kucuk ema"
     print(f"backtest basladi {message}!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
     os.environ["DEBUG"] = "1"
     # bitis_gunu = datetime.strptime('2021-05-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    bitis_gunu = datetime.strptime('2022-11-20 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    # _son = datetime.strptime('2022-11-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-11-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     _son = datetime.strptime('2022-11-24 16:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader = Trader(bitis_gunu)
