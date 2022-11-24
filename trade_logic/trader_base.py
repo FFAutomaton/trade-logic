@@ -30,7 +30,8 @@ class TraderBase:
             "doldur": True,
             "supertrend_mult_big": 3, "supertrend_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window_buyuk": 400, "ema_window_kucuk": 14, "rsi_window": 7, "sma_window": 50,
-            "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20, "ema_bounding_limit": 0.001,
+            "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
+            "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.005,
             "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.005
         }
         self.ema_ucustaydi = 0

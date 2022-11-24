@@ -18,7 +18,8 @@ class RsiEmaStrategy:
         self.rsi_emasi_value = None
 
         self.rsi_bounding_limit = config.get("rsi_bounding_limit")
-        self.ema_bounding_limit = config.get("ema_bounding_limit")
+        self.ema_bounding_buyuk = config.get("ema_bounding_buyuk")
+        self.ema_bounding_kucuk = config.get("ema_bounding_kucuk")
         self.momentum_egim_hesabi_window = config.get("momentum_egim_hesabi_window")
         self.trend_ratio = config.get("trend_ratio")
 
@@ -57,14 +58,14 @@ class RsiEmaStrategy:
 
         ema_alt_ust = 0
         ema_alt_ust_small = 0
-        if self.ema_value_big * (1 - self.ema_bounding_limit) > trader.suanki_fiyat:
+        if self.ema_value_big * (1 - self.ema_bounding_buyuk) > trader.suanki_fiyat:
             ema_alt_ust = -1
-        elif self.ema_value_big * (1 + self.ema_bounding_limit) < trader.suanki_fiyat:
+        elif self.ema_value_big * (1 + self.ema_bounding_buyuk) < trader.suanki_fiyat:
             ema_alt_ust = 1
 
-        if self.ema_value_small * (1 - self.ema_bounding_limit) > trader.suanki_fiyat:
+        if self.ema_value_small * (1 - self.ema_bounding_kucuk) > trader.suanki_fiyat:
             ema_alt_ust_small = -1
-        elif self.ema_value_small * (1 + self.ema_bounding_limit) < trader.suanki_fiyat:
+        elif self.ema_value_small * (1 + self.ema_bounding_kucuk) < trader.suanki_fiyat:
             ema_alt_ust_small = 1
 
         if ema_alt_ust == -1:
