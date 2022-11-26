@@ -46,14 +46,15 @@ class Trader(TraderBase):
             kar_orani = kar / self.islem_fiyati
             if kar_orani > katsayi * self.daralt and self.daralt > 0:
                 onceki = self.super_trend_strategy.onceki_tp
-                self.super_trend_strategy.onceki_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
+                new_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
+                self.super_trend_strategy.onceki_tp = round(float(new_tp), 2)
                 if os.getenv("PYTHON_ENV") != 'TEST':
                     print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
                 self.daralt += 1
             elif kar_orani > self.config.get("inceltme_limit") and self.daralt < 1:
                 onceki = self.super_trend_strategy.onceki_tp
-                self.super_trend_strategy.onceki_tp = self.islem_fiyati * (
-                            1 + self.pozisyon.value * self.config.get("inceltme_oran"))
+                new_tp = self.islem_fiyati * (1 + self.pozisyon.value * self.config.get("inceltme_oran"))
+                self.super_trend_strategy.onceki_tp = round(float(new_tp), 2)
                 if os.getenv("PYTHON_ENV") != 'TEST':
                     print(f"$$$$$$ Daralatma - {onceki} --> {self.super_trend_strategy.onceki_tp} -- daralt:{self.daralt}")
                 self.daralt += 1
