@@ -39,11 +39,11 @@ class SqlLite_Service:
 
     def _tablo_yoksa_olustur(self):
         _1h = self._config.get('pencere_1h')
-        _30m = self._config.get('pencere_30m')
-        candle_tables = [_30m, _1h]
+        _15m = self._config.get('pencere_15m')
+        candle_tables = [_15m, _1h]
         coin = self._config.get('coin')
-        islemler = f'islemler_{coin}_{_30m}'
-        trader = f'trader_{coin}_{_30m}'
+        islemler = f'islemler_{coin}_{_15m}'
+        trader = f'trader_{coin}_{_15m}'
 
         for table in candle_tables:
             self.get_conn().cursor().execute(
@@ -95,7 +95,7 @@ class SqlLite_Service:
 
     def veri_yaz(self, data, _type):
         coin = self._config.get('coin')
-        tip = self._config.get('pencere_30m')
+        tip = self._config.get('pencere_15m')
         schema = None
 
         if _type == "islem":
@@ -127,7 +127,7 @@ class SqlLite_Service:
 
     def islemleri_temizle(self):
         coin = self._config.get('coin')
-        tip = self._config.get('pencere_30m')
+        tip = self._config.get('pencere_15m')
         _query = f"DELETE FROM islemler_{coin}_{tip};"
         self.get_conn().cursor().execute(_query)
         self.get_conn().commit()
@@ -194,7 +194,7 @@ class SqlLite_Service:
         self.veri_yaz(data, "trader")
 
     def trader_durumu_geri_yukle(self, trader):
-        _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere_30m"), "trader")
+        _trader = self.veri_getir(trader.config.get("coin"), trader.config.get("pencere_15m"), "trader")
         _oncekiler = ["karar", "pozisyon"]
         if not _trader.empty:
             conf_ = json.loads(_trader.config[0])
@@ -213,7 +213,7 @@ class SqlLite_Service:
     def trader_eski_verileri_temizle(self, bitis_gunu):
         _limit = bitis_gunu - timedelta(days=10)
         coin = self._config.get('coin')
-        tip = self._config.get('pencere_30m')
+        tip = self._config.get('pencere_15m')
         _query = f'DELETE FROM trader_{coin}_{tip} ' \
                  f'WHERE date(ds_str) < "{datetime.strftime(_limit, "%Y-%m-%d")}";'
         self.get_conn().cursor().execute(_query)

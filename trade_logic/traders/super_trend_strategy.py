@@ -4,6 +4,8 @@ from signal_atr.atr import ATR
 class SuperTrendStrategy:
     def __init__(self, conf):
         self.config = conf
+        self.atr_15m_series = None
+        self.atr_15m_value = None
         self.atr = None
         self.atr_value = None
         self.atr_4h_15 = None

@@ -12,21 +12,21 @@ islemler_rapor = {}
 
 def backtest_multi_func(start_date, end_date):
     params = [
-        {"key": "supertrend_mult_small", "print": True, "values": [0.3]}
+        {"key": "st_mult_small", "print": True, "values": [0.3]}
     ]
-    multiplier = [(0.3, 3)]
-    multiplier_egim_limit = [0.0005]
-    ema_window_buyuk = [400]
-    ema_window_kucuk = [14]
-    rsi_window = [7]
+    multiplier = [(0.5, 6)]
+    multiplier_egim_limit = [0.0001]
+    ema_window_buyuk = [1200]
+    ema_window_kucuk = [100]
+    rsi_window = [14]
     # sma_window = [7, 35, 50]
-    sma_window = [50]
+    sma_window = [35]
     momentum_egim_hesabi_window = [8]
-    rsi_bounding_limit = [20]
-    ema_bounding_buyuk = [0.002]
-    ema_bounding_kucuk = [0.02]
+    rsi_bounding_limit = [40]
+    ema_bounding_buyuk = [0.01]
+    ema_bounding_kucuk = [0.003]
     trend_ratio = [0.005]
-    daralt_katsayi = [0.02]
+    daralt_katsayi = [0.01]
     c = 0
 
     for mult in multiplier:
@@ -42,8 +42,8 @@ def backtest_multi_func(start_date, end_date):
                                             for tr in trend_ratio:
                                                 for dk in daralt_katsayi:
                                                     trader = Trader(start_date)
-                                                    trader.config["supertrend_mult_small"] = mult[0]
-                                                    trader.config["supertrend_mult_big"] = mult[1]
+                                                    trader.config["st_mult_small"] = mult[0]
+                                                    trader.config["st_mult_big"] = mult[1]
                                                     trader.config["multiplier_egim_limit"] = mel
                                                     trader.config["tp_daralt_katsayi"] = dk
                                                     trader.config["ema_window_buyuk"] = em_w
@@ -52,21 +52,21 @@ def backtest_multi_func(start_date, end_date):
                                                     trader.config["rsi_window"] = r
                                                     trader.config["sma_window"] = e
                                                     trader.config["momentum_egim_hesabi_window"] = mom
-                                                    trader.rsi_strategy_1h.momentum_egim_hesabi_window = mom
+                                                    trader.rsi_ema_strategy.momentum_egim_hesabi_window = mom
                                                     trader.config["rsi_bounding_limit"] = rb
-                                                    trader.rsi_strategy_1h.rsi_bounding_limit = rb
+                                                    trader.rsi_ema_strategy.rsi_bounding_limit = rb
                                                     trader.config["ema_bounding_buyuk"] = eb
                                                     trader.config["ema_bounding_kucuk"] = ek
-                                                    trader.rsi_strategy_1h.ema_bounding_buyuk = eb
-                                                    trader.rsi_strategy_1h.ema_bounding_kucuk = ek
+                                                    trader.rsi_ema_strategy.ema_bounding_buyuk = eb
+                                                    trader.rsi_ema_strategy.ema_bounding_kucuk = ek
                                                     trader.config["trend_ratio"] = tr
-                                                    trader.rsi_strategy_1h.trend_ratio = tr
+                                                    trader.rsi_ema_strategy.trend_ratio = tr
 
                                                     islem_sonuc = None
                                                     while trader.bitis_gunu < end_date:
                                                         trader_calis(trader)
                                                         if trader.dondu_4h and os.getenv("DEBUG") == "1":
-                                                            print(f'#LOG# {trader.suanki_fiyat} #### {trader.bitis_gunu} {trader.config["supertrend_mult"]}  {trader.egim} ###################')
+                                                            print(f'#LOG# {trader.bitis_gunu} - [{trader.suanki_fiyat}, {trader.super_trend_strategy.onceki_tp}] - {trader.config["supertrend_mult"]}  {trader.egim} ###################')
                                                         trader.sqlite_service.veri_yaz(trader.tahmin, "islem") if os.getenv("DEBUG") == "1" else None
                                                         islem_sonuc = trader.tahmin
                                                         if trader.karar.value == 3:

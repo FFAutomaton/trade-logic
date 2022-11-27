@@ -24,6 +24,7 @@ class RsiEmaStrategy:
         self.trend_ratio = config.get("trend_ratio")
 
         self.rsi_smasi_trend = Karar.notr
+        self.egim = 0
 
         self.prev_rsi_emasi = None
         self.diff = None
@@ -44,6 +45,7 @@ class RsiEmaStrategy:
         self.rsi_smasi_trend_hesapla(sma_w)
         self.tavandan_dondu_mu()
         self.tavan_yapti_mi()
+        # self.egim_hesapla()
 
     def reset(self):
         self.karar = Karar.notr
@@ -54,10 +56,14 @@ class RsiEmaStrategy:
         # self.momentum_trend_rsi = Karar.notr
 
     def karar_hesapla(self, trader):
-        if trader.pozisyon != Pozisyon.notr:
-            if self.tavan_yapti != 0 and self.tavan_yapti != trader.pozisyon.value:
-                self.karar = Karar.cikis
-                return
+        # if trader.pozisyon != Pozisyon.notr:
+        if self.tavan_yapti:
+            self.karar = Karar.cikis
+            return
+
+        # if self.dipten_dondu or self.tavandan_dondu:
+        #     self.karar = Karar.cikis
+        #     return
 
         ema_alt_ust = 0
         ema_alt_ust_small = 0
@@ -71,12 +77,12 @@ class RsiEmaStrategy:
         elif self.ema_value_small * (1 + self.ema_bounding_kucuk) < trader.suanki_fiyat:
             ema_alt_ust_small = 1
 
-        if ema_alt_ust * ema_alt_ust_small < 0:
-            if trader.pozisyon != Pozisyon.notr:
-                self.karar = Karar.cikis
-                return
-            self.karar = Karar.notr
-            return
+        # if ema_alt_ust * ema_alt_ust_small < 0:
+        #     if trader.pozisyon != Pozisyon.notr:
+        #         self.karar = Karar.cikis
+        #         return
+        #     self.karar = Karar.notr
+        #     return
 
         if ema_alt_ust == -1:
             if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit) or \
@@ -116,12 +122,12 @@ class RsiEmaStrategy:
         self.rsi_emasi_value = round(float(self.rsi_emasi_series[0]), 2)
 
     def egim_hesapla(self):
+        self.egim = 0
         diff = []
         for i in range(0, self.momentum_egim_hesabi_window):
             diff.append(self.rsi_series[i] - self.rsi_series[i+1])
         if diff != 0 or len(diff) != 0:
-            return round(float(sum(diff) / len(diff)), 2)
-        return 0
+            self.egim = round(float(sum(diff) / len(diff)), 2)
 
     def rsi_smasi_trend_hesapla(self, window):
         self.rsi_smasi_hesapla(window)
