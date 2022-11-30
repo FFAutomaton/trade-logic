@@ -32,11 +32,11 @@ class RsiEmaStrategy:
         self.tavan_yapti = 0
         self.dipten_dondu = False
         self.tavandan_dondu = False
-        # self.momentum_trend_rsi = Karar.notr
-
         self.rsi_kesme = 0
         self.ema_kesme = 0
         self.karar = Karar.notr
+        self.egim_big = 0
+        self.egim_small = 0
 
     def init_strategy(self, series, rsi_w, sma_w , ema_w, ema_k):
         self.reset()
@@ -45,7 +45,8 @@ class RsiEmaStrategy:
         self.rsi_smasi_trend_hesapla(sma_w)
         self.tavandan_dondu_mu()
         self.tavan_yapti_mi()
-        # self.egim_hesapla()
+        self.egim_big = self.egim_hesapla(self.ema_series_big)
+        self.egim_small = self.egim_hesapla(self.ema_series_small)
 
     def reset(self):
         self.karar = Karar.notr
@@ -67,6 +68,7 @@ class RsiEmaStrategy:
 
         ema_alt_ust = 0
         ema_alt_ust_small = 0
+        print(f"egimler {self.egim_big} -- {self.egim_small}")
         if self.ema_value_big * (1 - self.ema_bounding_buyuk) > trader.suanki_fiyat:
             ema_alt_ust = -1
         elif self.ema_value_big * (1 + self.ema_bounding_buyuk) < trader.suanki_fiyat:
@@ -121,11 +123,11 @@ class RsiEmaStrategy:
         self.rsi_emasi_series = rs_ema_.sma_indicator()
         self.rsi_emasi_value = round(float(self.rsi_emasi_series[0]), 2)
 
-    def egim_hesapla(self):
-        self.egim = 0
+    def egim_hesapla(self, series):
+        egim = 0
         diff = []
         for i in range(0, self.momentum_egim_hesabi_window):
-            diff.append(self.rsi_series[i] - self.rsi_series[i+1])
+            diff.append(series[i] - series[i+1])
         if diff != 0 or len(diff) != 0:
             self.egim = round(float(sum(diff) / len(diff)), 2)
 
