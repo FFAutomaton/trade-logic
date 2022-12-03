@@ -22,10 +22,10 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         if self.cooldown == 0:
-            if self.rsi_ema_strategy.karar == Karar.alis:
+            if self.rsi_ema_strategy.karar == Karar.alis and self.mlp_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            if self.rsi_ema_strategy.karar == Karar.satis:
+            if self.rsi_ema_strategy.karar == Karar.satis and self.mlp_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -94,12 +94,6 @@ class Trader(TraderBase):
         self.rsi_ema_strategy.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window_buyuk"), self.config.get("ema_window_kucuk"))
         self.rsi_ema_strategy.karar_hesapla(self)
 
-    def swing_cikis(self):
-        if self.pozisyon != Pozisyon.notr:
-            if self.swing_strategy.karar != self.karar:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
-
     def rsi_cikis_veya_donus(self):
         if self.pozisyon != Pozisyon.notr:
             if self.rsi_ema_strategy.karar == Karar.cikis:
@@ -111,13 +105,8 @@ class Trader(TraderBase):
         self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
         series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
-        self.rsi_ema_strategy.karar_hesapla(self)
-
-    def swing_karar_hesapla(self):
-        self.swing_strategy.bitis_gunu = self.bitis_gunu
-        self.swing_strategy.suanki_fiyat = self.suanki_fiyat
-        self.swing_strategy.swing_data = SwingTrader(self.series_1h)
-        self.swing_strategy.karar_hesapla(self)
+        self.mlp_strategy.init_strategy(self, series)
+        self.mlp_strategy.karar_hesapla(self)
 
     def heikinashi_kontrol(self):
         series = heikinashiye_cevir(self.series_1h)

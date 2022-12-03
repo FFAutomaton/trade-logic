@@ -10,7 +10,7 @@ from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 # from trade_logic.traders.swing_strategy import SwingStrategy
-# from trade_logic.traders.mlp_strategy import MlpStrategy
+from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
     bitis_gunu_truncate_day_precision
 # from service.bam_bam_service import bam_bama_sinyal_gonder
@@ -35,6 +35,7 @@ class TraderBase:
             "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007
         }
         self.ema_ucustaydi = 0
+        self.standart_scaler = None
         self.daralt = 0
         self.binance_wallet = None
         self.tp_daralt = 0
@@ -70,7 +71,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_ema_strategy = RsiEmaStrategy(self.config)
-        # self.mlp_strategy = MlpStrategy(self.config)
+        self.mlp_strategy = MlpStrategy(self.config)
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
@@ -103,8 +104,8 @@ class TraderBase:
         self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
-        self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 4)
-        self.dondu_4h = True if self._b == self.bitis_gunu else False
+        self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
+        self.dondu_1h = True if self._b == self.bitis_gunu else False
         self.super_trend_baslangic_gunu = self._b - timedelta(hours=self.config.get("st_window"))
 
     def init_prod(self):

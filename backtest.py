@@ -14,7 +14,7 @@ def backtest_multi_func(start_date, end_date):
     params = [
         {"key": "st_mult_small", "print": True, "values": [0.3]}
     ]
-    multiplier = [(0.5, 6)]
+    multiplier = [(0.5, 6), (0.3, 3), (2, 8)]
     multiplier_egim_limit = [0.0001]
     ema_window_buyuk = [1200]
     ema_window_kucuk = [100]
@@ -23,8 +23,8 @@ def backtest_multi_func(start_date, end_date):
     sma_window = [35]
     momentum_egim_hesabi_window = [8]
     rsi_bounding_limit = [40]
-    ema_bounding_buyuk = [0.01]
-    ema_bounding_kucuk = [0.003]
+    ema_bounding_buyuk = [0.01, 0.02]
+    ema_bounding_kucuk = [0.003, 0.005]
     trend_ratio = [0.005]
     daralt_katsayi = [0.01]
     c = 0
@@ -65,7 +65,7 @@ def backtest_multi_func(start_date, end_date):
                                                     islem_sonuc = None
                                                     while trader.bitis_gunu < end_date:
                                                         trader_calis(trader)
-                                                        if trader.dondu_4h and os.getenv("DEBUG") == "1":
+                                                        if trader.dondu_1h and os.getenv("DEBUG") == "1":
                                                             print(f'#LOG# {trader.bitis_gunu} - [{trader.suanki_fiyat}, {trader.super_trend_strategy.onceki_tp}] - {trader.config["supertrend_mult"]}  {trader.egim} ###################')
                                                         trader.sqlite_service.veri_yaz(trader.tahmin, "islem") if os.getenv("DEBUG") == "1" else None
                                                         islem_sonuc = trader.tahmin

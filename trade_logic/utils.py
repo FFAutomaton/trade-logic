@@ -62,7 +62,7 @@ def sonuc_yazdir(start_date, end_date, small, big, mel, em_w, r, e, c, mom, rb, 
 
 def dongu_kontrol_decorator(func):
     def inner1(*args, **kwargs):
-        if not args[0].dondu_4h:
+        if not args[0].dondu_1h:
             return
         returned_value = func(*args, **kwargs)
         return returned_value
