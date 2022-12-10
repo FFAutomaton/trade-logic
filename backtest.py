@@ -14,7 +14,7 @@ def backtest_multi_func(start_date, end_date):
     params = [
         {"key": "st_mult_small", "print": True, "values": [0.3]}
     ]
-    multiplier = [(0.5, 6), (0.3, 3), (2, 8)]
+    multiplier = [(0.5, 6)]
     multiplier_egim_limit = [0.0001]
     ema_window_buyuk = [1200]
     ema_window_kucuk = [100]

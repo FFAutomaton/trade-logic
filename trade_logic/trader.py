@@ -22,10 +22,12 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         if self.cooldown == 0:
-            if self.rsi_ema_strategy.karar == Karar.alis and self.mlp_strategy.karar == Karar.alis:
+            # if self.rsi_ema_strategy.karar == Karar.alis and self.mlp_strategy.karar == Karar.alis:
+            if self.mlp_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            if self.rsi_ema_strategy.karar == Karar.satis and self.mlp_strategy.karar == Karar.satis:
+            # if self.rsi_ema_strategy.karar == Karar.satis and self.mlp_strategy.karar == Karar.satis:
+            if self.mlp_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -36,8 +38,13 @@ class Trader(TraderBase):
         self.super_trend_update()
         self.super_trend_tp_daralt()
         self.super_trend_cikis_yap()
-        self.rsi_cikis_veya_donus()
-        # self.swing_cikis()
+        # self.rsi_cikis_veya_donus()
+        self.mlp_cikis()
+
+    def mlp_cikis(self):
+        if self.mlp_strategy.karar == Karar.cikis:
+            self.karar = Karar.cikis
+            self.super_trend_strategy.reset_super_trend()
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
@@ -104,7 +111,8 @@ class Trader(TraderBase):
     def mlp_karar_hesapla(self):
         self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
-        series = self.series_1h.sort_values(by='open_ts_int', ascending=True)
+        series = self.series_1h.sort_values(by='open_ts_int', ascending=True).reset_index(drop=True)
+        # series = self.series_15m.sort_values(by='open_ts_int', ascending=True)
         self.mlp_strategy.init_strategy(self, series)
         self.mlp_strategy.karar_hesapla(self)
 

@@ -28,18 +28,48 @@ class MlpStrategy:
             self.sc_X = trader.standart_scaler
 
         self.series = series
+        self.series = self.transpose_as_features(series)
         if not self.ilk_egitim:
             self.egit()
             self.ilk_egitim = True
         else:
             self.kismi_egit()
 
+    def transpose_as_features(self, series):
+        window = 4
+        length = len(series)
+        start = 0 + window
+        pin = 0
+        new_series = []
+        while start < length:
+            main_row = series[start:start+1]
+            rows_to_transpose = series[pin:start]
+            rows_to_transpose = rows_to_transpose[["open", "high", "low", "volume"]]
+            for i in range(0, len(rows_to_transpose)):
+                main_row = pd.concat(
+                    [main_row.reset_index(drop=True), rows_to_transpose[i:i + 1].reset_index(drop=True)], axis=1
+                )
+            if len(new_series) == 0:
+                new_series = main_row
+            else:
+                new_series = main_row.append(new_series, ignore_index=True)
+            pin += 1
+            start += 1
+            print(pin, start)
+
+        # get some roes using window
+        # transpose them to merge horizantallu
+        # collect row by row and then return that dataframe
+        return new_series
+
     def karar_hesapla(self, trader):
         self.fiyat_tahmini_hesapla()
-        if trader.suanki_fiyat < self.fiyat_tahmini:
+        if trader.suanki_fiyat * 1.01 < self.fiyat_tahmini:
             self.karar = Karar.alis
-        elif trader.suanki_fiyat > self.fiyat_tahmini:
+        elif trader.suanki_fiyat * 0.99 > self.fiyat_tahmini:
             self.karar = Karar.satis
+        else:
+            self.karar = Karar.cikis
 
     def fiyat_tahmini_hesapla(self):
         X_ = self.tahmin_satiri_getir()
@@ -58,8 +88,8 @@ class MlpStrategy:
         X_trainscaled = self.sc_X.fit_transform(X_)
 
         self.model = MLPRegressor(
-            hidden_layer_sizes=(64, 64, 64),
-            activation="relu", random_state=1, max_iter=2000
+            hidden_layer_sizes=(128, 128, 128),
+            activation="relu", random_state=1, max_iter=1500
         ).fit(X_trainscaled, Y_.values.ravel())
 
     def kismi_egit_satiri_getir(self):
