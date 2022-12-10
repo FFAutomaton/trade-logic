@@ -36,7 +36,7 @@ class MlpStrategy:
             self.kismi_egit()
 
     def transpose_as_features(self, series):
-        window = 2
+        window = 10
         length = len(series)
         start = 0 + window
         pin = 0
@@ -84,8 +84,8 @@ class MlpStrategy:
         X_trainscaled = self.sc_X.fit_transform(X_)
 
         self.model = MLPRegressor(
-            hidden_layer_sizes=(128, 128, 128),
-            activation="relu", random_state=1, max_iter=1500
+            hidden_layer_sizes=(64, 64, 64),
+            activation="relu", random_state=1, max_iter=3500
         ).fit(X_trainscaled, Y_.values.ravel())
 
     def kismi_egit_satiri_getir(self):
