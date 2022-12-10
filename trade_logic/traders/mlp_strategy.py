@@ -36,7 +36,7 @@ class MlpStrategy:
             self.kismi_egit()
 
     def transpose_as_features(self, series):
-        window = 4
+        window = 2
         length = len(series)
         start = 0 + window
         pin = 0
@@ -55,11 +55,7 @@ class MlpStrategy:
                 new_series = main_row.append(new_series, ignore_index=True)
             pin += 1
             start += 1
-            print(pin, start)
 
-        # get some roes using window
-        # transpose them to merge horizantallu
-        # collect row by row and then return that dataframe
         return new_series
 
     def karar_hesapla(self, trader):
@@ -93,17 +89,17 @@ class MlpStrategy:
         ).fit(X_trainscaled, Y_.values.ravel())
 
     def kismi_egit_satiri_getir(self):
-        X_ = self.series[['open', 'high', 'low', 'close', 'volume']][1:2].reset_index(drop=True)
+        X_ = self.series[1:2].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
         Y_ = self.series[['close']][0:1].reset_index(drop=True)
         Y_.rename(columns={"close": "target"})
         return X_, Y_
 
     def tahmin_satiri_getir(self):
-        X_ = self.series[['open', 'high', 'low', 'close', 'volume']][-1:].reset_index(drop=True)
+        X_ = self.series[-1:].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
         return X_
 
     def divide_target_and_features(self):
-        X_ = self.series[['open', 'high', 'low', 'close', 'volume']][0:-1].reset_index(drop=True)
+        X_ = self.series[0:-1].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
         Y_ = self.series[['close']][1:].reset_index(drop=True)
         Y_.rename(columns={"close": "target"})
         return X_, Y_
