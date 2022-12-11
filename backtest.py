@@ -98,7 +98,7 @@ def backtest_calis_multi(start_date, end_date):
 
 
 if __name__ == '__main__':
-    message = "kucuk ema"
+    message = "multi-layer perceptron"
     print(f"backtest basladi {message}!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"

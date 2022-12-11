@@ -2,7 +2,7 @@ import os
 from datetime import timedelta, datetime
 
 from trade_logic.utils import egim_hesapla, heikinashiye_cevir, heikinashi_mum_analiz, \
-    islem_doldur
+    islem_doldur, dongu_kontrol_decorator
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 from trade_logic.trader_base import TraderBase
@@ -37,14 +37,15 @@ class Trader(TraderBase):
 
         self.super_trend_update()
         self.super_trend_tp_daralt()
-        # self.super_trend_cikis    _yap()
+        # self.super_trend_cikis_yap()
         # self.rsi_cikis_veya_donus()
         self.mlp_cikis()
 
     def mlp_cikis(self):
-        if self.mlp_strategy.karar == Karar.cikis:
-            self.karar = Karar.cikis
-            self.super_trend_strategy.reset_super_trend()
+        if self.pozisyon.value != 0:
+            if self.mlp_strategy.karar == Karar.cikis:
+                self.karar = Karar.cikis
+                self.super_trend_strategy.reset_super_trend()
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
@@ -108,12 +109,11 @@ class Trader(TraderBase):
                 self.karar = Karar.cikis
                 self.super_trend_strategy.reset_super_trend()
 
+    @dongu_kontrol_decorator
     def mlp_karar_hesapla(self):
         self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
-        series = self.series_1h.sort_values(by='open_ts_int', ascending=True).reset_index(drop=True)
-        # series = self.series_15m.sort_values(by='open_ts_int', ascending=True)
-        self.mlp_strategy.init_strategy(self, series)
+        self.mlp_strategy.init_strategy(self)
         self.mlp_strategy.karar_hesapla(self)
 
     def heikinashi_kontrol(self):
