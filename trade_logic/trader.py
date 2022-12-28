@@ -1,12 +1,11 @@
 import os
 from datetime import timedelta, datetime
 
-from trade_logic.utils import egim_hesapla, heikinashiye_cevir, heikinashi_mum_analiz, \
+from trade_logic.utils import egim_hesapla, \
     islem_doldur, dongu_kontrol_decorator
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 from trade_logic.trader_base import TraderBase
-from swing_trader.swing_trader_class import SwingTrader
 
 
 class Trader(TraderBase):
@@ -22,11 +21,11 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         if self.cooldown == 0:
-            # if self.rsi_ema_strategy.karar == Karar.alis and self.mlp_strategy.karar == Karar.alis:
+            # if self.mlp_strategy.karar == Karar.alis and self.rsi_ema_strategy.ema_alt_ust != -1:
             if self.mlp_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            # if self.rsi_ema_strategy.karar == Karar.satis and self.mlp_strategy.karar == Karar.satis:
+            # if self.mlp_strategy.karar == Karar.satis and self.rsi_ema_strategy.ema_alt_ust != 1:
             if self.mlp_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
@@ -38,14 +37,6 @@ class Trader(TraderBase):
         self.super_trend_update()
         self.super_trend_tp_daralt()
         self.super_trend_cikis_yap()
-        # self.rsi_cikis_veya_donus()
-        # self.mlp_cikis()
-
-    def mlp_cikis(self):
-        if self.pozisyon.value != 0:
-            if self.mlp_strategy.karar == Karar.cikis:
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
@@ -102,25 +93,12 @@ class Trader(TraderBase):
         self.rsi_ema_strategy.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window_buyuk"), self.config.get("ema_window_kucuk"))
         self.rsi_ema_strategy.karar_hesapla(self)
 
-    def rsi_cikis_veya_donus(self):
-        if self.pozisyon != Pozisyon.notr:
-            if self.rsi_ema_strategy.karar == Karar.cikis:
-                # print("rsi cikis")
-                self.karar = Karar.cikis
-                self.super_trend_strategy.reset_super_trend()
-
     @dongu_kontrol_decorator
     def mlp_karar_hesapla(self):
         self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
         self.mlp_strategy.init_strategy(self)
         self.mlp_strategy.karar_hesapla(self)
-
-    def heikinashi_kontrol(self):
-        series = heikinashiye_cevir(self.series_1h)
-        self.heikinashi_yon_value, self.heikinashi_karar_value = heikinashi_mum_analiz(series)
-        self.heikinashi_karar = Karar(self.heikinashi_karar_value)
-        # self.heikinashi_karar = Karar(self.heikinashi_karar_value or self.heikinashi_yon_value)
 
     def pozisyon_al(self):
         wallet = self.config.get("wallet")

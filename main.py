@@ -24,6 +24,7 @@ def app_calis():
         trader.init_prod()
     trader_calis(trader)
     if os.getenv("PYTHON_ENV") != "TEST":
+    # if os.getenv("PYTHON_ENV") == "TEST":
         trader.borsada_islemleri_hallet()
     print_islem_detay(trader)
     if trader.karar.value == 3:
@@ -32,7 +33,7 @@ def app_calis():
 
 
 if __name__ == '__main__':
-    c = 5
+    c = 3
     while c > 0:
         try:
             app_calis()
@@ -43,6 +44,7 @@ if __name__ == '__main__':
             print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
             c -= 1
 
+    # TODO:: fear index ve eth on chain verileri gibi verileri modele ekleyebilir misin?
     # TODO:: ATR ratio diye bir sey hesaplayip doger butun bounding limitleri bu oran ile scale edebilrsin
     # TODO:: kucuk emayi daha kontrol edecek skilde belki window arttirilabilir
     # TODO:: image delete ekle build scripte
@@ -53,7 +55,6 @@ if __name__ == '__main__':
     # TODO:: piyasanin durumunu atr'den cikararak rsi ayarlari degistirmek en mantikli yaklasim olabilir
     # TODO:: once alttaki maddeyi ekle sonra stateleri daha duzgun tutup strteji yaz bastan 1-rsi ve emasi, 2-ema_trend, normal ema ile cikis
 
-    # TODO:: pazari 2'ye bol trending ve ranging diye ema veya rsi degerlerinden
     # TODO:: basarili islem oranini da islemler tablosundan hesapla
     # TODO:: decorator videosu yap
     # TODO:: thread videosu yap

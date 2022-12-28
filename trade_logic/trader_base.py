@@ -12,7 +12,7 @@ from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 # from trade_logic.traders.swing_strategy import SwingStrategy
 from trade_logic.traders.mlp_strategy import MlpStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
-    bitis_gunu_truncate_day_precision
+    bitis_gunu_truncate_day_precision, heikinashiye_cevir, heikinashi_mum_analiz
 # from service.bam_bam_service import bam_bama_sinyal_gonder
 from config_users import users
 from schemas.enums.pozisyon import Pozisyon
@@ -31,8 +31,9 @@ class TraderBase:
             "st_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window_buyuk": 400, "ema_window_kucuk": 14, "rsi_window": 7, "sma_window": 50,
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
-            "ema_bounding_buyuk": 0.002, "ema_bounding_kucuk": 0.02,
-            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007
+            "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.015,
+            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007,
+            "training_window": 100, "mlp_karar_bounding_limit": 0.01
         }
         self.ema_ucustaydi = 0
         self.standart_scaler = None
@@ -75,6 +76,7 @@ class TraderBase:
         # self.swing_strategy = SwingStrategy(self.config)
 
         # trader.config["doldur"] = False
+        self.sc_X = None
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
 

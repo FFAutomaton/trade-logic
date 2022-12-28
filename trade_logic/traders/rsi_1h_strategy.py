@@ -63,15 +63,16 @@ class RsiEmaStrategy:
         if self.tavan_yapti:
             self.karar = Karar.cikis
             return
-
         self.alt_ust_hesapla()
+        if self.rsi_smasi_trend == Karar.alis:
+            self.karar == Karar.alis
+        elif self.rsi_smasi_trend == Karar.satis:
+            self.karar == Karar. satis
 
-        if self.ema_alt_ust * self.ema_alt_ust_small <= 0:
-            if trader.pozisyon != Pozisyon.notr:
-                self.karar = Karar.cikis
-                return
-
-        self.karar = Karar(self.rsi_emasi_karar)
+        if self.tavandan_dondu:
+            self.karar == Karar.satis
+        elif self.dipten_dondu:
+            self.karar == Karar.alis
 
     def alt_ust_hesapla(self):
         self.ema_alt_ust = 0
