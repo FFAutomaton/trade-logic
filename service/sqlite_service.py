@@ -191,7 +191,7 @@ class SqlLite_Service:
             trader.daralt = conf_.get("daralt")
 
     def trader_eski_verileri_temizle(self, bitis_gunu):
-        _limit = bitis_gunu - timedelta(days=3)
+        _limit = bitis_gunu - timedelta(days=10)
         coin = self._config.get('coin')
         tip = self._config.get('pencere_30m')
         _query = f'DELETE FROM trader_{coin}_{tip} ' \
