@@ -95,7 +95,6 @@ class Trader(TraderBase):
 
     @dongu_kontrol_decorator
     def mlp_karar_hesapla(self):
-        self.mlp_strategy.bitis_gunu = self.bitis_gunu
         self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
         self.mlp_strategy.init_strategy(self)
         self.mlp_strategy.karar_hesapla(self)

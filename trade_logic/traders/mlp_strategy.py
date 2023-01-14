@@ -14,20 +14,21 @@ class MlpStrategy:
         self.config = config
         self.karar = Karar.notr
         self.series = None
-        self.model_data = []
+        self.model_data = None
         self.bitis_gunu = None
         self.suanki_fiyat = None
         self.ilk_egitim = False
         self.model = None
         self.fiyat_tahmini = None
-        self.window = 50
+        self.window = 15
         self.trader = None
         self.model_egit = False
-        self.model_filename = '../../coindate/mlp_objects/final_model.sav'
-        self.scaler_filename = '../../coindate/mlp_objects/final_scaler.sav'
+        self.model_filename = '../coindata/mlp_objects/final_model.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_model.sav'
+        self.scaler_filename = '../coindata/mlp_objects/final_scaler.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_scaler.sav'
 
     def init_strategy(self, trader):
         self.trader = trader
+        self.bitis_gunu = trader.bitis_gunu
         self.load_model_data()
         if os.getenv("PYTHON_ENV") == "TEST":
             if not self.trader.sc_X:
@@ -45,28 +46,33 @@ class MlpStrategy:
             self.save_model_objects()
 
     def load_model_data(self):
+        missing_df2 = None
+        bitis = bitis_gunu_truncate_hour_precision(datetime.utcnow(), 1)
         path = "./coindata/mlp_data/" if os.getenv("PYTHON_ENV") != "RESET_MLP" else "../coindata/mlp_data/"
-        if len(self.model_data) > 0:  # not to load again in backtest mode
+        if self.model_data:  # not to load again in backtest mode
             return
         list_of_files = glob.glob(f"{path}*.csv") if os.getenv("PYTHON_ENV") != "RESET_MLP" else glob.glob(f"{path}*.csv")
-        latest_file = max(list_of_files, key=os.path.getctime)
-        for file in list_of_files:
-            if file != latest_file:
-                os.remove(file)
-        self.model_data = pd.read_csv(latest_file)
+        if len(list_of_files) > 0:
+            latest_file = max(list_of_files, key=os.path.getctime)
+            for file in list_of_files:
+                if file != latest_file:
+                    os.remove(file)
+            self.model_data = pd.read_csv(latest_file)
+            self.model_data["open_ts_str"] = pd.to_datetime(self.model_data["open_ts_str"], format='%Y-%m-%d %H:%M:%S')
+            self.model_data = self.model_data.sort_values(by="open_ts_str", ascending=True).reset_index(drop=True)
 
-        self.model_data["open_ts_str"] = pd.to_datetime(self.model_data["open_ts_str"], format='%Y-%m-%d %H:%M:%S')
-        self.model_data = self.model_data.sort_values(by="open_ts_str", ascending=True).reset_index(drop=True)
+            missing_df2 = self.get_missing_dates_df(max(self.model_data["open_ts_str"]), bitis)
+        else:
+            missing_df2 = self.trader.series_1h
 
-        bitis = bitis_gunu_truncate_hour_precision(datetime.utcnow(), 1)
-        missing_df2 = self.get_missing_dates_df(max(self.model_data["open_ts_str"]), bitis)
         missing_df = self.prepare_matrix(missing_df2)
-        self.model_data = self.model_data.append(missing_df).sort_values("open_ts_str", ascending=False)
+        self.model_data = missing_df if not len(self.model_data) > 0 else self.model_data.append(missing_df).sort_values("open_ts_str", ascending=False)
         if os.getenv("DEBUG") == "1" or os.getenv("PYTHON_ENV") != "TEST":
             self.model_data.to_csv(f"{path}{datetime.strftime(bitis, '%Y-%m-%d-%H')}.csv", index=False)
-        self.series = self.series = self.model_data[self.model_data["open_ts_int"] < int(self.bitis_gunu.timestamp()) * 1000]
+        self.series = self.model_data[self.model_data["open_ts_int"] < int(self.bitis_gunu.timestamp()) * 1000]
 
     def save_model_objects(self):
+        print(os.getcwd())
         pickle.dump(self.model, open(self.model_filename, 'wb'))
         pickle.dump(self.trader.sc_X, open(self.scaler_filename, 'wb'))
 
