@@ -16,18 +16,17 @@ def trader_calis(trader):
 
 
 def app_calis():
-    # bitis_gunu = datetime.strptime('2022-04-03 00:00:00', '%Y-%m-%d %H:%M:%S')
+    # bitis_gunu = datetime.strptime('2023-01-13 22:30:00', '%Y-%m-%d %H:%M:%S')
     # bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     bitis_gunu = datetime.utcnow()
-    # bitis_gunu = bitis_gunu_truncate_hour_precision(bitis_gunu, 1)
     bitis_gunu = bitis_gunu_truncate_min_precision(bitis_gunu, 30)
 
     trader = Trader(bitis_gunu)
     trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)
-    trader.init_prod()
+    if os.getenv("PYTHON_ENV") != "TEST":
+        trader.init_prod()
     trader_calis(trader)
     if os.getenv("PYTHON_ENV") != "TEST":
-    # if os.getenv("PYTHON_ENV") == "TEST":
         trader.borsada_islemleri_hallet()
     print_islem_detay(trader)
     if trader.karar.value == 3:

@@ -169,8 +169,22 @@ class SqlLite_Service:
                 _trader[key] = _val
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
+        karar_params = {
+            "ema_value_big": trader.rsi_strategy_1h.ema_value_big,
+            "ema_value_small": trader.rsi_strategy_1h.ema_value_small,
+            "rsi_smasi_trend": trader.rsi_strategy_1h.rsi_smasi_trend.value,
+            "rsi_value": trader.rsi_strategy_1h.rsi_value,
+            "tavan_yapti": trader.rsi_strategy_1h.tavan_yapti,
+            "dipten_dondu": int(trader.rsi_strategy_1h.dipten_dondu),
+            "tavandan_dondu": int(trader.rsi_strategy_1h.tavandan_dondu),
 
-        data = {"ds_str": okunur_date_yap(datetime.now().timestamp()*1000), "config": json.dumps(_trader)}
+        }
+        data = {
+            "ds_str": okunur_date_yap(datetime.now().timestamp()*1000),
+            "config": json.dumps(_trader),
+            "tahmin": json.dumps(trader.tahmin),
+            "karar_params": json.dumps(karar_params)
+        }
         self.veri_yaz(data, "trader")
 
     def trader_durumu_geri_yukle(self, trader):
