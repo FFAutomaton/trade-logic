@@ -13,7 +13,7 @@ def trader_calis(trader):
 
 
 def app_calis():
-    # bitis_gunu = datetime.strptime('2023-01-16 17:30:00', '%Y-%m-%d %H:%M:%S')
+    # bitis_gunu = datetime.strptime('2023-01-21 17:30:04', '%Y-%m-%d %H:%M:%S')
     # bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     bitis_gunu = datetime.utcnow()
     bitis_gunu = bitis_gunu_truncate_min_precision(bitis_gunu, 30)

@@ -78,40 +78,17 @@ class TraderBase:
             self.mum_verilerini_guncelle()
 
     def mumlari_guncelle(self):
+        bitis_30m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 30)
+        bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
         self.series_1h = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
-            self.bitis_gunu - timedelta(days=200), self.bitis_gunu
+            self.bitis_gunu - timedelta(days=200), bitis_1h
         )
+
         self.series_30m = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_30m"), "mum",
-            self.bitis_gunu - timedelta(days=50), self.bitis_gunu
+            self.bitis_gunu - timedelta(days=50), bitis_30m
         )
-        # self.bugunun_mumu = self.bugunun_4hlik_mumlarini_topla()
-        # self.son_mumu_guncelle()
-
-    def son_mumu_guncelle(self):
-        _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
-        if self.series_1d[self.series_1d["open_ts_str"] == datetime.strftime(_bas, '%Y-%m-%d %H:%M:%S')].empty:
-            self.series_1d = pd.concat([self.bugunun_mumu, self.series_1d], ignore_index=True)
-        else:
-            self.series_1d[0:1] = self.bugunun_mumu
-
-    def bugunun_4hlik_mumlarini_topla(self):
-        _bas = bitis_gunu_truncate_day_precision(self.bitis_gunu)
-        _son = self.bitis_gunu
-        df = copy.deepcopy(self.series_1h[0:6])
-
-        bugun_mum = copy.deepcopy(self.series_1h[0:1])
-
-        bugun_mum.at[0, "open_ts_int"] = int(_bas.timestamp()) * 1000
-        bugun_mum.at[0, "open_ts_str"] = datetime.strftime(_bas, '%Y-%m-%d %H:%M:%S')
-        bugun_mum.at[0, "open"] = df.iloc[-1]["open"]
-        bugun_mum.at[0, "close"] = df.iloc[0]["close"]
-        bugun_mum.at[0, 'high'] = df["high"].max()
-        bugun_mum.at[0, 'low'] = df["low"].min()
-        bugun_mum.at[0, "volume"] = df["volume"].sum()
-
-        return bugun_mum
 
     def fiyat_guncelle(self):
         data = self.series_30m

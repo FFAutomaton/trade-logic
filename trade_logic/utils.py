@@ -90,7 +90,7 @@ def bitis_gunu_truncate_hour_precision(_now, arttir):
 # TODO:: bu iki fonksiyonu birlestir video bile cekilir
 def bitis_gunu_truncate_min_precision(bitis_gunu, arttir):
     _m = bitis_gunu.minute - (bitis_gunu.minute % arttir)
-    bitis_gunu = bitis_gunu.replace(minute=_m)
+    bitis_gunu = bitis_gunu.replace(minute=_m, second=0, microsecond=0)
     return bitis_gunu.replace(tzinfo=timezone.utc)
 
 
