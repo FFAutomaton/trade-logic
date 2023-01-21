@@ -6,6 +6,7 @@ class SuperTrendStrategy:
         self.config = conf
         self.atr = None
         self.atr_value = None
+        self.atr_4h_15 = None
         self.suanki_fiyat = 0
         self.tp = 0
         self.onceki_tp = 0
@@ -13,7 +14,7 @@ class SuperTrendStrategy:
     def atr_hesapla(self, trader):
         series_1h = trader.series_1h.sort_values(by='open_ts_int', ascending=True)
         self.atr_4h_15 = ATR(series_1h, 15).average_true_range
-        self.atr_value_4h_15 = float(self.atr_4h_15[0])
+        self.atr_value_4h_15 = round(float(self.atr_4h_15[0]), 2)
 
     def update_tp(self, trader):
         # pozisyon 0 iken bu fonksiyon aslinda calismiyor

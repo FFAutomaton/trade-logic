@@ -6,17 +6,14 @@ from datetime import datetime, timezone
 
 def trader_calis(trader):
     trader.init()
-    # trader.heikinashi_kontrol()
     trader.rsi_ema_1h_karar_hesapla()
-    # trader.ema_4h_karar_hesapla()
-    # trader.swing_karar_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()
     trader.pozisyon_al()
 
 
 def app_calis():
-    # bitis_gunu = datetime.strptime('2023-01-13 22:30:00', '%Y-%m-%d %H:%M:%S')
+    # bitis_gunu = datetime.strptime('2023-01-16 17:30:00', '%Y-%m-%d %H:%M:%S')
     # bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     bitis_gunu = datetime.utcnow()
     bitis_gunu = bitis_gunu_truncate_min_precision(bitis_gunu, 30)
@@ -46,10 +43,8 @@ if __name__ == '__main__':
             print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
             c -= 1
 
-    # TODO:: tum islem hesaplarini kontrol edip round 2 yap, main ile backtest ayni calismiyor
     # TODO:: ATR ratio diye bir sey hesaplayip doger butun bounding limitleri bu oran ile scale edebilrsin
     # TODO:: kucuk emayi daha kontrol edecek skilde belki window arttirilabilir
-    # TODO:: bir enine strateji su anki yarim saatlik, bir de trend stratejisi bir saatlik aynisi
     # TODO:: image delete ekle build scripte
     # TODO:: ATR'den tp daralt katsayi manipule edilebilir, atr dusuk iken daraltma katsayisi da kucultulebilir
     # TODO:: hacim cok az ise farkli strateji girilebilir, 2022 7. ay ve 10. ay civarlarinda hacim cok dustu mesela,

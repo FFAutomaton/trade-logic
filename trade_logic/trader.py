@@ -60,7 +60,7 @@ class Trader(TraderBase):
                 self.daralt += 1
 
     def super_trend_mult_guncelle(self):
-        self.egim = egim_hesapla(self.rsi_strategy_1h.ema_series_big[0], self.rsi_strategy_1h.ema_series_big[1])
+        self.egim = egim_hesapla(self.rsi_strategy_1h.ema_value_big, self.rsi_strategy_1h.ema_value_big_prev)
         # if True:
         if 1 + self.config.get("multiplier_egim_limit") < self.egim or self.egim < 1 - self.config.get("multiplier_egim_limit"):
             self.config["supertrend_mult"] = self.config.get("supertrend_mult_big")

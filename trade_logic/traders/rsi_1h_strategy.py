@@ -25,6 +25,9 @@ class RsiEmaStrategy:
 
         self.rsi_smasi_trend = Karar.notr
 
+        self.prev_rsi_emasi = None
+        self.diff = None
+
         self.tavan_yapti = 0
         self.dipten_dondu = False
         self.tavandan_dondu = False
@@ -96,52 +99,52 @@ class RsiEmaStrategy:
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
         self.rsi_series = rsi_.rsi()
-        self.rsi_value = self.rsi_series[0]
+        self.rsi_value = round(float(self.rsi_series[0]), 2)
 
     def ema_hesapla(self, series, window_big, window_small):
         ema_big = EMAIndicator(series["close"], window_big)
         ema_small = EMAIndicator(series["close"], window_small)
         self.ema_series_big = ema_big.ema_indicator()
         self.ema_series_small = ema_small.ema_indicator()
-        self.ema_value_big = self.ema_series_big[0]
-        self.ema_value_small = self.ema_series_small[0]
+        self.ema_value_big = round(float(self.ema_series_big[0]), 2)
+        self.ema_value_big_prev = round(float(self.ema_series_big[1]), 2)
+        self.ema_value_small = round(float(self.ema_series_small[0]), 2)
 
     def rsi_smasi_hesapla(self, window):
         rs_ema_ = SMAIndicator(self.rsi_series, window)
         self.rsi_emasi_series = rs_ema_.sma_indicator()
-        self.rsi_emasi_value = self.rsi_emasi_series[0]
+        self.rsi_emasi_value = round(float(self.rsi_emasi_series[0]), 2)
 
     def egim_hesapla(self):
         diff = []
         for i in range(0, self.momentum_egim_hesabi_window):
             diff.append(self.rsi_series[i] - self.rsi_series[i+1])
         if diff != 0 or len(diff) != 0:
-            return sum(diff) / len(diff)
+            return round(float(sum(diff) / len(diff)), 2)
         return 0
 
     def rsi_smasi_trend_hesapla(self, window):
-        ratio_limit = self.trend_ratio
         self.rsi_smasi_hesapla(window)
         self.rsi_smasi_trend = Karar(0)
-        prev_rsi_emasi = self.rsi_emasi_series[1]
-        if prev_rsi_emasi < self.rsi_emasi_value:
-            diff = self.rsi_emasi_value - prev_rsi_emasi
-            if diff == 0:
+        self.prev_rsi_emasi = round(float(self.rsi_emasi_series[1]), 2)
+        if self.prev_rsi_emasi < self.rsi_emasi_value:
+            self.diff = self.rsi_emasi_value - self.prev_rsi_emasi
+            if self.diff == 0:
                 return
-            ratio = diff / self.rsi_emasi_value
-            if ratio > ratio_limit:
+            ratio = round(float(self.diff / self.rsi_emasi_value), 5)
+            if ratio > self.trend_ratio:
                 self.rsi_smasi_trend = Karar.alis
         else:
-            diff = prev_rsi_emasi - self.rsi_emasi_value
-            if diff == 0:
+            self.diff = self.prev_rsi_emasi - self.rsi_emasi_value
+            if self.diff == 0:
                 return
-            ratio = diff / prev_rsi_emasi
-            if ratio > ratio_limit:
+            ratio = round(float(self.diff / self.prev_rsi_emasi), 5)
+            if ratio > self.trend_ratio:
                 self.rsi_smasi_trend = Karar.satis
 
     def tavandan_dondu_mu(self):
-        prev_rsi = self.rsi_series[1]
-        _rsi = self.rsi_series[0]
+        prev_rsi = round(float(self.rsi_series[1]), 2)
+        _rsi = round(float(self.rsi_series[0]), 2)
         if prev_rsi < self.rsi_bounding_limit:
             if _rsi > self.rsi_bounding_limit:
                 self.dipten_dondu = True
@@ -150,7 +153,7 @@ class RsiEmaStrategy:
                 self.tavandan_dondu = True
 
     def tavan_yapti_mi(self):
-        _rsi = self.rsi_series[0]
+        _rsi = round(float(self.rsi_series[0]), 2)
         if _rsi > 100 - self.rsi_bounding_limit:
             self.tavan_yapti = 1
         if _rsi < self.rsi_bounding_limit:
