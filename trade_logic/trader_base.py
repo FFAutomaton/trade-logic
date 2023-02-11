@@ -95,7 +95,6 @@ class TraderBase:
 
     def fiyat_guncelle(self):
         data = self.series_15m
-        # data = self.series_1h
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
         self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat

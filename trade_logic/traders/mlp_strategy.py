@@ -7,6 +7,8 @@ import pandas as pd
 import glob
 from schemas.enums.karar import Karar
 from datetime import datetime, timedelta
+from ta.trend import EMAIndicator, SMAIndicator
+from ta.momentum import RSIIndicator
 
 
 class MlpStrategy:
@@ -14,7 +16,6 @@ class MlpStrategy:
         self.config = config
         self.karar = Karar.notr
         self.series = None
-        self.model_data = None
         self.bitis_gunu = None
         self.suanki_fiyat = None
         self.ilk_egitim = False
@@ -29,47 +30,45 @@ class MlpStrategy:
     def init_strategy(self, trader):
         self.trader = trader
         self.bitis_gunu = trader.bitis_gunu
-        self.load_model_data()
+        self.series = self.trader.series_1h
+        self.append_other_features()
         if os.getenv("PYTHON_ENV") == "TEST":
             if not self.trader.sc_X:
                 self.trader.sc_X = StandardScaler()
-            self.series = self.series[self.series["open_ts_int"] > int((self.bitis_gunu - timedelta(days=trader.config.get("training_window", 30))).timestamp())*1000]
             self.egitim_sureci_control()
         elif os.getenv("PYTHON_ENV") == "RESET_MLP":
             if not self.trader.sc_X:
                 self.trader.sc_X = StandardScaler()
             self.egit()
             self.save_model_objects()
-        else:
+        else:  # production demek
             self.load_model_objects()
             self.kismi_egit()
             self.save_model_objects()
 
-    def load_model_data(self):
-        missing_df2 = None
-        bitis = bitis_gunu_truncate_hour_precision(datetime.utcnow(), 1)
-        path = "./coindata/mlp_data/" if os.getenv("PYTHON_ENV") != "RESET_MLP" else "../coindata/mlp_data/"
-        if self.model_data:  # not to load again in backtest mode
-            return
-        list_of_files = glob.glob(f"{path}*.csv") if os.getenv("PYTHON_ENV") != "RESET_MLP" else glob.glob(f"{path}*.csv")
-        if len(list_of_files) > 0:
-            latest_file = max(list_of_files, key=os.path.getctime)
-            for file in list_of_files:
-                if file != latest_file:
-                    os.remove(file)
-            self.model_data = pd.read_csv(latest_file)
-            self.model_data["open_ts_str"] = pd.to_datetime(self.model_data["open_ts_str"], format='%Y-%m-%d %H:%M:%S')
-            self.model_data = self.model_data.sort_values(by="open_ts_str", ascending=True).reset_index(drop=True)
+    def append_other_features(self):
+        rsi_dfs, ema_dfs = self.rsi_hesapla(24, 6), self.ema_hesapla(100, 35)
+        self.append_to_series(rsi_dfs, ema_dfs)
 
-            missing_df2 = self.get_missing_dates_df(max(self.model_data["open_ts_str"]), bitis)
-        else:
-            missing_df2 = self.trader.series_1h
+    def append_to_series(self, rsi_dfs, ema_dfs):
+        indicators = pd.concat([rsi_dfs, ema_dfs], axis=1)
+        self.series = pd.concat([self.series, indicators], axis=1)
 
-        missing_df = self.prepare_matrix(missing_df2)
-        self.model_data = missing_df if not len(self.model_data) > 0 else self.model_data.append(missing_df).sort_values("open_ts_str", ascending=False)
-        if os.getenv("DEBUG") == "1" or os.getenv("PYTHON_ENV") != "TEST":
-            self.model_data.to_csv(f"{path}{datetime.strftime(bitis, '%Y-%m-%d-%H')}.csv", index=False)
-        self.series = self.model_data[self.model_data["open_ts_int"] < int(self.bitis_gunu.timestamp()) * 1000]
+    def rsi_hesapla(self, window_big, window_small):
+        rsi_big = RSIIndicator(self.series["close"], window_big, fillna=True)
+        rsi_small = RSIIndicator(self.series["close"], window_small, fillna=True)
+        rsi_dfs = pd.concat([rsi_big.rsi().round(decimals=2), rsi_small.rsi().round(decimals=2)], axis=1)
+        rsi_dfs = rsi_dfs.rename(columns={'rsi': f'rsi{window_big}', 'rsi': f'rsi{window_small}'})
+        return rsi_dfs
+
+    def ema_hesapla(self, window_big, window_small):
+        ema_big = EMAIndicator(self.series["close"], window_big)
+        ema_small = EMAIndicator(self.series["close"], window_small)
+        ema_series_big = ema_big.ema_indicator().round(decimals=2)
+        ema_series_small = ema_small.ema_indicator().round(decimals=2)
+        ema_dfs = pd.concat([ema_series_big, ema_series_small], axis=1)
+        # ema duzgun kolon adiyla geliyor
+        return ema_dfs
 
     def save_model_objects(self):
         print(os.getcwd())
@@ -90,38 +89,13 @@ class MlpStrategy:
             self.kismi_egit()
 
     def prepare_matrix(self, series):
-        length = len(series)
-        start = 0 + self.window
-        pin = 0
-        new_series = []
-        while start < length:
-            main_row = series[start:start + 1]
-            rows_to_transpose = series[pin:start]
-            # rows_to_transpose = rows_to_transpose[["open", "high", "low", "volume"]]
-            rows_to_transpose = rows_to_transpose[["open","close", "volume"]]
-            for i in range(0, len(rows_to_transpose)):
-                xxx = rows_to_transpose[i:i + 1].rename(columns={
-                    # "open": f"open{i}", "high": f"high{i}", "low": f"low{i}", "volume": f"volume{i}"
-                    "open": f"open{i}", "close": f"close{i}", "volume": f"volume{i}"
-                })
-                main_row = pd.concat(
-                    [main_row.reset_index(drop=True), xxx.reset_index(drop=True)], axis=1
-                )
-            if len(new_series) == 0:
-                new_series = main_row
-            else:
-                new_series = main_row.append(new_series, ignore_index=True)
-            pin += 1
-            start += 1
-
-            print(f"{length - start} remaining")
-
-        return new_series
+        series = series.drop(["open"], axis=1)
+        return series
 
     def get_missing_dates_df(self, max_date, bitis):
         return self.trader.sqlite_service.veri_getir(
             self.trader.config.get("coin"), self.trader.config.get("pencere_1h"), "mum",
-            max_date-timedelta(hours=self.window), bitis
+            max_date, bitis
         ).sort_values(by='open_ts_int', ascending=True)
 
     def karar_hesapla(self, trader):

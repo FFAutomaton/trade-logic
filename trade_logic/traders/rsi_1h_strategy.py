@@ -96,7 +96,7 @@ class RsiEmaStrategy:
 
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
-        self.rsi_series = rsi_.rsi()
+        self.rsi_series = rsi_.rsi().round(decimals=2)
         self.rsi_value = round(float(self.rsi_series[0]), 2)
 
     def ema_hesapla(self, series, window_big, window_small):
