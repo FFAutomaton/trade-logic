@@ -82,16 +82,11 @@ class TraderBase:
 
     def mumlari_guncelle(self):
         bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
-        bitis_30m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 30)
         bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
         self.series_1h = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
             self.bitis_gunu - timedelta(days=200), bitis_1h
         )
-
-        self.series_30m = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_30m"), "mum",
-            self.bitis_gunu - timedelta(days=50), bitis_30m)
 
         self.series_15m = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_15m"), "mum",

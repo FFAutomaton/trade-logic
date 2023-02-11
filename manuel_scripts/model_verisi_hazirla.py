@@ -17,8 +17,8 @@ def model_verisi_hazirla(trader, baslangic, bitis):
 
 if __name__ == '__main__':
     os.environ["PYTHON_ENV"] = "RESET_MLP"
-    baslangic = datetime.strptime('2021-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    bitis = datetime.strptime('2023-01-08 12:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    baslangic = datetime.strptime('2020-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis = datetime.strptime('2023-02-11 11:30:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     trader = Trader(bitis)
     model_series = model_verisi_hazirla(trader, baslangic, bitis)
     model_series.to_csv(f"../coindata/mlp_data/{datetime.strftime(bitis, '%Y-%m-%d-%H')}.csv", index=False)
