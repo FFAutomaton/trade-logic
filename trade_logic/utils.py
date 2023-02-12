@@ -1,5 +1,3 @@
-import os
-
 import pandas as pd
 from datetime import datetime, timezone
 
@@ -47,7 +45,7 @@ def heikinashiye_cevir(df):
     return df
 
 
-def sonuc_yazdir(start_date, end_date, small, big, mel, em_w, r, e, c, mom, rb, eb, ek, me, tr, dk, tw, trader, islem_sonuc):
+def sonuc_yazdir(start_date, end_date, trader, islem_sonuc, opt_conf, c):
     if trader.pozisyon.value > 0:
         usdt = islem_sonuc.get("eth") * trader.suanki_fiyat
         kar = f"{round((usdt - 1000) / 1000, 2)}"
@@ -57,7 +55,12 @@ def sonuc_yazdir(start_date, end_date, small, big, mel, em_w, r, e, c, mom, rb, 
     else:
         kar = f"{round((islem_sonuc.get('usdt') - 1000) / 1000, 2)}"
 
-    print(f"{c}-{start_date}-{end_date}-[({small},{big})-{mel}]-{em_w}-{r}-{e}-{mom}-{rb}-[{eb}-{ek}]--{me}--{tr}--{dk}--{tw}:\t{kar}")
+    params_list = []
+    for i in list(opt_conf.keys()):
+        params_list.append(str(trader.config.get(i)))
+    params_str = '\t'.join(params_list)
+
+    print(f"{c}\t{start_date}\t{params_str}:\t{kar}")
 
 
 def dongu_kontrol_decorator(func):

@@ -33,7 +33,7 @@ class TraderBase:
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
             "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.015,
             "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007,
-            "training_window": 100, "mlp_karar_bounding_limit": 0.01
+            "training_window": 100, "mlp_karar_bounding_limit": 0.001
         }
         self.ema_ucustaydi = 0
         self.standart_scaler = None
@@ -57,6 +57,8 @@ class TraderBase:
         self.islem_miktari = 0
         self.islem_fiyati = 0
         self.bitis_gunu = bitis_gunu
+        self.bitis_15m = None
+        self.bitis_1h = None
         self.bitis_gunu_str = datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
         # self.series_1d = None
         self.series_1h = None
@@ -64,33 +66,34 @@ class TraderBase:
         self.bugunun_mumu = None
 
         self.cooldown = 0
+        self.ilk_egitim = 0
         self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(
             datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir")) - timedelta(days=self.config.get("backfill_window"))
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir"))
 
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
-        self.super_trend_strategy = SuperTrendStrategy(self.config)
-        self.rsi_ema_strategy = RsiEmaStrategy(self.config)
-        self.mlp_strategy = MlpStrategy(self.config)
-        # self.swing_strategy = SwingStrategy(self.config)
-
-        # trader.config["doldur"] = False
+        self.super_trend_strategy = None
+        self.rsi_ema_strategy = None
+        self.mlp_strategy = None
         self.sc_X = None
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
 
+    def stratejileri_guncelle(self):
+        self.super_trend_strategy = SuperTrendStrategy(self.config)
+        self.rsi_ema_strategy = RsiEmaStrategy(self.config)
+        self.mlp_strategy = MlpStrategy(self.config)
+
     def mumlari_guncelle(self):
-        bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
-        bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
         self.series_1h = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
-            self.bitis_gunu - timedelta(days=200), bitis_1h
+            self.bitis_gunu - timedelta(days=200), self.bitis_1h
         )
 
         self.series_15m = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_15m"), "mum",
-            self.bitis_gunu - timedelta(days=20), bitis_15m
+            self.bitis_gunu - timedelta(days=20), self.bitis_15m
         )
 
     def fiyat_guncelle(self):
@@ -100,9 +103,10 @@ class TraderBase:
         self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
-        self._b = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
-        self.dondu_1h = True if self._b == self.bitis_gunu else False
-        self.super_trend_baslangic_gunu = self._b - timedelta(hours=self.config.get("st_window"))
+        self.bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
+        self.bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
+        self.dondu_1h = True if self.bitis_1h == self.bitis_15m else False
+        self.super_trend_baslangic_gunu = self.bitis_1h - timedelta(hours=self.config.get("st_window"))
 
     def init_prod(self):
         self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()

@@ -19,11 +19,9 @@ class MlpStrategy:
         self.bitis_gunu = None
         self.suanki_fiyat = None
         self.ilk_egitim = False
-        self.model = None
         self.fiyat_tahmini = None
         self.window = 15
         self.trader = None
-        self.model_egit = False
         self.model_filename = '../coindata/mlp_objects/final_model.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_model.sav'
         self.scaler_filename = '../coindata/mlp_objects/final_scaler.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_scaler.sav'
 
@@ -62,8 +60,8 @@ class MlpStrategy:
         return rsi_dfs
 
     def ema_hesapla(self, window_big, window_small):
-        ema_big = EMAIndicator(self.series["close"], window_big)
-        ema_small = EMAIndicator(self.series["close"], window_small)
+        ema_big = EMAIndicator(self.series["close"], window_big, fillna=True)
+        ema_small = EMAIndicator(self.series["close"], window_small, fillna=True)
         ema_series_big = ema_big.ema_indicator().round(decimals=2)
         ema_series_small = ema_small.ema_indicator().round(decimals=2)
         ema_dfs = pd.concat([ema_series_big, ema_series_small], axis=1)
@@ -72,19 +70,19 @@ class MlpStrategy:
 
     def save_model_objects(self):
         print(os.getcwd())
-        pickle.dump(self.model, open(self.model_filename, 'wb'))
+        pickle.dump(self.trader.model, open(self.model_filename, 'wb'))
         pickle.dump(self.trader.sc_X, open(self.scaler_filename, 'wb'))
 
     def load_model_objects(self):
         model = pickle.load(open(self.model_filename, 'rb'))
         scaler = pickle.load(open(self.scaler_filename, 'rb'))
         self.trader.sc_X = scaler
-        self.model = model
+        self.trader.model = model
 
     def egitim_sureci_control(self):
-        if not self.ilk_egitim:
+        if not self.trader.ilk_egitim:
             self.egit()
-            self.ilk_egitim = True
+            self.trader.ilk_egitim = True
         else:
             self.kismi_egit()
 
@@ -100,9 +98,9 @@ class MlpStrategy:
 
     def karar_hesapla(self, trader):
         self.fiyat_tahmini_hesapla()
-        if trader.suanki_fiyat * (1 + trader.config.get('mlp_karar_bounding_limit')) < self.fiyat_tahmini:
+        if self.suanki_fiyat * (1 + trader.config.get('mlp_karar_bounding_limit')) < self.fiyat_tahmini:
             self.karar = Karar.alis
-        elif trader.suanki_fiyat * (1 - trader.config.get('mlp_karar_bounding_limit')) > self.fiyat_tahmini:
+        elif self.suanki_fiyat * (1 - trader.config.get('mlp_karar_bounding_limit')) > self.fiyat_tahmini:
             self.karar = Karar.satis
         else:
             self.karar = Karar.cikis
@@ -110,20 +108,19 @@ class MlpStrategy:
     def fiyat_tahmini_hesapla(self):
         X_ = self.tahmin_satiri_getir()
         X_transformed = self.trader.sc_X.transform(X_)
-        y_pred = self.model.predict(X_transformed)
+        y_pred = self.trader.model.predict(X_transformed)
         self.fiyat_tahmini = float(y_pred[0])
 
     def kismi_egit(self):
         X_, Y_ = self.kismi_egit_satiri_getir()
         X_trainscaled = self.trader.sc_X.transform(X_)
-        self.model = self.model.partial_fit(X_trainscaled, Y_.values.ravel())
-        pass
+        self.trader.model = self.trader.model.partial_fit(X_trainscaled, Y_.values.ravel())
 
     def egit(self):
         X_, Y_ = self.divide_target_and_features()
         X_trainscaled = self.trader.sc_X.fit_transform(X_)
 
-        self.model = MLPRegressor(
+        self.trader.model = MLPRegressor(
             hidden_layer_sizes=(64, 64, 64, 64),
             activation="relu", random_state=1, max_iter=10000
         ).fit(X_trainscaled, Y_.values.ravel())
