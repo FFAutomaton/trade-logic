@@ -24,7 +24,6 @@ class RsiEmaStrategy:
         self.trend_ratio = config.get("trend_ratio")
 
         self.rsi_smasi_trend = Karar.notr
-        self.egim = 0
 
         self.prev_rsi_emasi = None
         self.diff = None
@@ -32,13 +31,11 @@ class RsiEmaStrategy:
         self.tavan_yapti = 0
         self.dipten_dondu = False
         self.tavandan_dondu = False
+        # self.momentum_trend_rsi = Karar.notr
+
         self.rsi_kesme = 0
         self.ema_kesme = 0
         self.karar = Karar.notr
-        self.egim_big = 0
-        self.egim_small = 0
-        self.ema_alt_ust = 0
-        self.ema_alt_ust_small = 0
 
     def init_strategy(self, series, rsi_w, sma_w , ema_w, ema_k):
         self.reset()
@@ -47,9 +44,6 @@ class RsiEmaStrategy:
         self.rsi_smasi_trend_hesapla(sma_w)
         self.tavandan_dondu_mu()
         self.tavan_yapti_mi()
-        self.egim_big = self.egim_hesapla(self.ema_series_big)
-        self.egim_small = self.egim_hesapla(self.ema_series_small)
-        self.rsi_emasi_karar_hesapla()
 
     def reset(self):
         self.karar = Karar.notr
@@ -60,43 +54,62 @@ class RsiEmaStrategy:
         # self.momentum_trend_rsi = Karar.notr
 
     def karar_hesapla(self, trader):
-        if self.tavan_yapti:
-            self.karar = Karar.cikis
+
+        # if self.tavan_yapti != 0 and self.tavan_yapti != trader.pozisyon.value:
+        #     if trader.pozisyon != Pozisyon.notr:
+        #         self.karar = Karar.cikis
+        #         return
+        # elif self.tavan_yapti != 0:
+        if trader.pozisyon == Pozisyon.notr and self.tavan_yapti != 0:
+            self.karar = Karar.notr
             return
-        self.alt_ust_hesapla()
-        if self.rsi_smasi_trend == Karar.alis:
-            self.karar == Karar.alis
-        elif self.rsi_smasi_trend == Karar.satis:
-            self.karar == Karar. satis
+
+        ema_alt_ust, ema_alt_ust_small = self.alt_ust_hesapla(trader)
+
+        if ema_alt_ust * ema_alt_ust_small < 0:
+            if trader.pozisyon != Pozisyon.notr:
+                self.karar = Karar.cikis
+                return
+            self.karar = Karar.notr
+            return
+
+        if ema_alt_ust == -1:
+            if (self.rsi_smasi_trend == Karar.satis and self.rsi_value > self.rsi_bounding_limit):
+                self.karar = Karar.satis
+                return
+            if ema_alt_ust_small == -1:
+                self.karar = Karar.satis
+                return
+        if ema_alt_ust == 1:
+            if (self.rsi_smasi_trend == Karar.alis and self.rsi_value < 100 - self.rsi_bounding_limit):
+                self.karar = Karar.alis
+                return
+            if ema_alt_ust_small == 1:
+                self.karar = Karar.alis
+                return
 
         if self.tavandan_dondu:
-            self.karar == Karar.satis
+            self.karar = Karar.satis
         elif self.dipten_dondu:
-            self.karar == Karar.alis
+            self.karar = Karar.alis
 
-    def alt_ust_hesapla(self):
-        self.ema_alt_ust = 0
-        self.ema_alt_ust_small = 0
-        # print(f"egimler {self.egim_big} -- {self.egim_small}")
-        if self.ema_value_big * (1 - self.ema_bounding_buyuk) > self.suanki_fiyat:
-            self.ema_alt_ust = -1
-        elif self.ema_value_big * (1 + self.ema_bounding_buyuk) < self.suanki_fiyat:
-            self.ema_alt_ust = 1
+    def alt_ust_hesapla(self, trader):
+        ema_alt_ust = 0
+        ema_alt_ust_small = 0
+        if self.ema_value_big * (1 - self.ema_bounding_buyuk) > trader.suanki_fiyat:
+            ema_alt_ust = -1
+        elif self.ema_value_big * (1 + self.ema_bounding_buyuk) < trader.suanki_fiyat:
+            ema_alt_ust = 1
 
-        if self.ema_value_small * (1 - self.ema_bounding_kucuk) > self.suanki_fiyat:
-            self.ema_alt_ust_small = -1
-        elif self.ema_value_small * (1 + self.ema_bounding_kucuk) < self.suanki_fiyat:
-            self.ema_alt_ust_small = 1
-
-    def rsi_emasi_karar_hesapla(self):
-        if self.rsi_value > self.rsi_emasi_value:
-            self.rsi_emasi_karar = Karar.alis
-        else:
-            self.rsi_emasi_karar = Karar.satis
+        if self.ema_value_small * (1 - self.ema_bounding_kucuk) > trader.suanki_fiyat:
+            ema_alt_ust_small = -1
+        elif self.ema_value_small * (1 + self.ema_bounding_kucuk) < trader.suanki_fiyat:
+            ema_alt_ust_small = 1
+        return ema_alt_ust, ema_alt_ust_small
 
     def rsi_hesapla(self, series, window):
         rsi_ = RSIIndicator(series["close"], window)
-        self.rsi_series = rsi_.rsi().round(decimals=2)
+        self.rsi_series = rsi_.rsi()
         self.rsi_value = round(float(self.rsi_series[0]), 2)
 
     def ema_hesapla(self, series, window_big, window_small):
@@ -113,13 +126,13 @@ class RsiEmaStrategy:
         self.rsi_emasi_series = rs_ema_.sma_indicator()
         self.rsi_emasi_value = round(float(self.rsi_emasi_series[0]), 2)
 
-    def egim_hesapla(self, series):
-        egim = 0
+    def egim_hesapla(self):
         diff = []
         for i in range(0, self.momentum_egim_hesabi_window):
-            diff.append(series[i] - series[i+1])
+            diff.append(self.rsi_series[i] - self.rsi_series[i+1])
         if diff != 0 or len(diff) != 0:
-            self.egim = round(float(sum(diff) / len(diff)), 2)
+            return round(float(sum(diff) / len(diff)), 2)
+        return 0
 
     def rsi_smasi_trend_hesapla(self, window):
         self.rsi_smasi_hesapla(window)

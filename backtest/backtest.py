@@ -5,7 +5,8 @@ from datetime import timedelta
 from trade_logic.trader import Trader
 from trade_logic.utils import *
 from main import trader_calis
-from baktest_params import opt_confs
+from baktest_params import opt_confs, params
+from manuel_scripts.sonuc_rapor import sonuc_rapor
 
 
 def backtest_multi_func(start_date, end_date):
@@ -51,20 +52,24 @@ def backtest_calis_multi(start_date, end_date):
 
 if __name__ == '__main__':
     message = "multi-layer perceptron"
+    # sonuc_rapor(params)
+
+    f1 = open('./manuel_scripts/data/sonuclar.csv', 'w')
+    f1.close()
     print(f"backtest basladi {message}!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["DEBUG"] = "1"
-    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-02-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # bitis_gunu = datetime.strptime('2023-02-01 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2023-02-12 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2023-02-15 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader = Trader(bitis_gunu)
 
     trader.sqlite_service.islemleri_temizle()
     backtest_calis_multi(bitis_gunu, _son)
-    # backtest_calis_thread(bitis_gunu, _son)
+    sonuc_rapor(params)
     if os.getenv("DEBUG") == "1":
         trader.ciz()
     print(f"it took {(time.time() - _s)/60} minutes")

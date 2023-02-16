@@ -102,8 +102,10 @@ class MlpStrategy:
             self.karar = Karar.alis
         elif self.suanki_fiyat * (1 - trader.config.get('mlp_karar_bounding_limit')) > self.fiyat_tahmini:
             self.karar = Karar.satis
-        else:
+        elif self.suanki_fiyat * (1 + trader.config.get('mlp_cikis_bounding_limit')) > self.fiyat_tahmini > self.suanki_fiyat * (1 - trader.config.get('mlp_cikis_bounding_limit')):
             self.karar = Karar.cikis
+        else:
+            self.karar = Karar.notr
 
     def fiyat_tahmini_hesapla(self):
         X_ = self.tahmin_satiri_getir()
@@ -121,8 +123,8 @@ class MlpStrategy:
         X_trainscaled = self.trader.sc_X.fit_transform(X_)
 
         self.trader.model = MLPRegressor(
-            hidden_layer_sizes=(64, 64, 64, 64),
-            activation="relu", random_state=1, max_iter=10000
+            hidden_layer_sizes=self.trader.config.get("mlp_layers"),
+            activation="relu", random_state=self.trader.config.get("mlp_random_state"), max_iter=self.trader.config.get("mlp_max_iter")
         ).fit(X_trainscaled, Y_.values.ravel())
 
     def kismi_egit_satiri_getir(self):

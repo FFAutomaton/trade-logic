@@ -22,12 +22,14 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         if self.cooldown == 0:
-            # if self.mlp_strategy.karar == Karar.alis and self.rsi_ema_strategy.ema_alt_ust != -1:
-            if self.mlp_strategy.karar == Karar.alis:
+            # if self.mlp_strategy.karar == Karar.alis or self.rsi_ema_strategy.karar == Karar.alis:
+            if self.mlp_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar not in [Karar.satis, Karar.cikis]:
+            # if self.mlp_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            # if self.mlp_strategy.karar == Karar.satis and self.rsi_ema_strategy.ema_alt_ust != 1:
-            if self.mlp_strategy.karar == Karar.satis:
+            # if self.mlp_strategy.karar == Karar.satis or self.rsi_ema_strategy.karar == Karar.satis:
+            if self.mlp_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar not in [Karar.alis, Karar.cikis]:
+            # if self.mlp_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -38,6 +40,12 @@ class Trader(TraderBase):
         self.super_trend_update()
         self.super_trend_tp_daralt()
         self.super_trend_cikis_yap()
+        self.mlp_cikis_yap()
+
+    def mlp_cikis_yap(self):
+        if self.pozisyon.value != 0:
+            if self.mlp_strategy.karar == Karar.cikis:
+                self.karar = Karar.cikis
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)

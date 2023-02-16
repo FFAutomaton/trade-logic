@@ -33,7 +33,7 @@ class TraderBase:
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
             "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.015,
             "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007,
-            "training_window": 100, "mlp_karar_bounding_limit": 0.001
+            "mlp_karar_bounding_limit": 0.001
         }
         self.ema_ucustaydi = 0
         self.standart_scaler = None
