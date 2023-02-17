@@ -60,10 +60,10 @@ if __name__ == '__main__':
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
     # os.environ["DEBUG"] = "1"
-    bitis_gunu = datetime.strptime('2022-02-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2022-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # bitis_gunu = datetime.strptime('2023-02-01 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2023-02-15 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2023-02-16 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader = Trader(bitis_gunu)
 
