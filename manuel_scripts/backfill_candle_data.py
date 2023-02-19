@@ -19,8 +19,8 @@ _config = {
 sqlite_service = SqlLite_Service(_config)
 binance_serve = TurkishGekkoBinanceService(_secrets)
 
-window_end = datetime.strptime('2020-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-start = datetime.strptime('2021-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+window_end = datetime.strptime('2018-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+start = datetime.strptime('2020-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 _son = bitis_gunu_truncate_min_precision(start, 15)
 
 while window_end < _son:

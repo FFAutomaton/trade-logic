@@ -29,6 +29,7 @@ class MlpStrategy:
         self.trader = trader
         self.bitis_gunu = trader.bitis_gunu
         self.series = self.trader.series_1h
+        self.series = self.series.drop(["open"], axis=1)
         self.append_other_features()
         if os.getenv("PYTHON_ENV") == "TEST":
             if not self.trader.sc_X:
@@ -85,10 +86,6 @@ class MlpStrategy:
             self.trader.ilk_egitim = True
         else:
             self.kismi_egit()
-
-    def prepare_matrix(self, series):
-        series = series.drop(["open"], axis=1)
-        return series
 
     def get_missing_dates_df(self, max_date, bitis):
         return self.trader.sqlite_service.veri_getir(
