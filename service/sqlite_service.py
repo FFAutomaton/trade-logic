@@ -72,6 +72,20 @@ class SqlLite_Service:
         self.get_conn().commit()
         return data
 
+    # def faiz_datasi_yukle(self):
+    #     coin = self._config.get('coin')
+    #     data = binance_service.get_client().get_historical_klines(
+    #         symbol=coin, interval=tip,
+    #         start_str=str(baslangic_gunu), end_str=str(bitis_gunu), limit=500
+    #     )
+    #     data = self.veri_listesi_olustur(data)
+    #     _query = f"""INSERT INTO {f'{coin}_{tip}'} {self.values_ifadesi_olustur(mum_schema)}
+    #                     ON CONFLICT({mum_schema[0]["name"]}) {self.update_ifadesi_olustur(mum_schema)};"""
+    #
+    #     self.get_conn().cursor().executemany(_query, data)
+    #     self.get_conn().commit()
+    #     return data
+
     @staticmethod
     def veri_listesi_olustur(tempdata):
         data = []
