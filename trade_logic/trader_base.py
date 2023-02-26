@@ -1,6 +1,4 @@
 import math
-import pandas as pd
-import copy
 from datetime import timedelta, datetime, timezone
 
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
@@ -9,19 +7,17 @@ from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
-# from trade_logic.traders.swing_strategy import SwingStrategy
 from trade_logic.traders.mlp_strategy import MlpStrategy
-from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision, \
-    bitis_gunu_truncate_day_precision, heikinashiye_cevir, heikinashi_mum_analiz
-# from service.bam_bam_service import bam_bama_sinyal_gonder
-from config_users import users
+from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
+from service.fred_service import FredService
+from config_users import users, fred_api_key
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 
 
 class TraderBase:
     def __init__(self, bitis_gunu):
-        self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
+        self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET, "FED_KEY": fred_api_key}
 
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT',"doldur": True, "wallet": {"ETH": 0, "USDT": 1000},
@@ -63,6 +59,8 @@ class TraderBase:
         # self.series_1d = None
         self.series_1h = None
         self.series_15m = None
+        self.series_fed = None
+
         self.bugunun_mumu = None
 
         self.cooldown = 0
@@ -72,6 +70,7 @@ class TraderBase:
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir"))
 
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
+        self.fed_service = FredService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = None
         self.rsi_ema_strategy = None
@@ -79,6 +78,7 @@ class TraderBase:
         self.sc_X = None
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
+            self.fed_verilerini_guncelle()
 
     def stratejileri_guncelle(self):
         self.super_trend_strategy = SuperTrendStrategy(self.config)
@@ -95,6 +95,10 @@ class TraderBase:
             self.config.get("coin"), self.config.get("pencere_15m"), "mum",
             self.bitis_gunu - timedelta(days=20), self.bitis_15m
         )
+
+    def fed_datasi_guncelle(self):
+        _df = self.sqlite_service.veri_getir(None, "1h", "fed", None, None)
+        self.series_fed = _df[_df["ds_int"] < int(self.bitis_1h.timestamp()*1000)]
 
     def fiyat_guncelle(self):
         data = self.series_15m
@@ -183,6 +187,9 @@ class TraderBase:
         self.sqlite_service.mum_datasi_yukle(
             self.config.get("pencere_15m"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
         )
+
+    def fed_verilerini_guncelle(self):
+        self.sqlite_service.fed_datasi_yukle(self.fed_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu)
 
     def sonuc_getir(self):
         sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_15m"), 'islem')

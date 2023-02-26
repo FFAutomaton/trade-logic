@@ -1,7 +1,7 @@
 import os
 import traceback
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import sqlite3
 from trade_logic.utils import okunur_date_yap
@@ -23,7 +23,7 @@ class SqlLite_Service:
         if self.conn:
             return self.conn
         if os.getenv("PYTHON_ENV") == "TEST":
-            self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
+            self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
         elif os.getenv("PYTHON_ENV") in ["BACKFILL", "RESET_MLP"]:
             self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
         else:
@@ -56,6 +56,9 @@ class SqlLite_Service:
         self.get_conn().cursor().execute(
             f'CREATE TABLE IF NOT EXISTS {trader}({self.schemayi_query_texte_cevir(trader_schema)});'
         )
+        self.get_conn().cursor().execute(
+            f'CREATE TABLE IF NOT EXISTS fed_1h({self.schemayi_query_texte_cevir(fed_schema)});'
+        )
         self.get_conn().commit()
 
     def mum_datasi_yukle(self, tip, binance_service, baslangic_gunu, bitis_gunu):
@@ -72,23 +75,28 @@ class SqlLite_Service:
         self.get_conn().commit()
         return data
 
-    # def faiz_datasi_yukle(self):
-    #     coin = self._config.get('coin')
-    #     data = binance_service.get_client().get_historical_klines(
-    #         symbol=coin, interval=tip,
-    #         start_str=str(baslangic_gunu), end_str=str(bitis_gunu), limit=500
-    #     )
-    #     data = self.veri_listesi_olustur(data)
-    #     _query = f"""INSERT INTO {f'{coin}_{tip}'} {self.values_ifadesi_olustur(mum_schema)}
-    #                     ON CONFLICT({mum_schema[0]["name"]}) {self.update_ifadesi_olustur(mum_schema)};"""
-    #
-    #     self.get_conn().cursor().executemany(_query, data)
-    #     self.get_conn().commit()
-    #     return data
+    def fed_datasi_yukle(self, fed_service, baslangic_gunu, bitis_gunu):
+        data = fed_service.yeni_datalari_getir(baslangic_gunu)
+        data = self.veri_listesi_olustur(data, tip="FED")
+        _query = f"""INSERT INTO fed_1h {self.values_ifadesi_olustur(fed_schema)}
+                        ON CONFLICT({fed_schema[0]["name"]}) {self.update_ifadesi_olustur(fed_schema)};"""
+
+        self.get_conn().cursor().executemany(_query, data)
+        self.get_conn().commit()
+        return data
 
     @staticmethod
-    def veri_listesi_olustur(tempdata):
+    def veri_listesi_olustur(tempdata, tip=None):
         data = []
+        if tip == "FED":
+            for i in range(len(tempdata)):
+                ds_int = int(tempdata.iloc[i]["index"].timestamp() * 1000)
+                _list = tempdata.iloc[i].to_list()
+                _list[0] = _list[0].strftime("%Y-%m-%d %H:%M:%S")
+                row = (ds_int, *_list)
+                data.append(row)
+            return data
+
         for i in range(len(tempdata)):
             row = (int(tempdata[i][0]), okunur_date_yap(tempdata[i][0]), float(tempdata[i][1]),
                    float(tempdata[i][2]), float(tempdata[i][3]),
@@ -160,6 +168,9 @@ class SqlLite_Service:
         elif _type == 'trader':
             query = f"""SELECT * FROM trader_{coin}_{pencere} order by ds_int desc limit 1"""
             schema = trader_schema
+        elif _type == 'fed':
+            query = f"""SELECT * FROM fed_{pencere} order by ds_int desc"""
+            schema = fed_schema
         curr = self.get_conn().cursor().execute(query)
         data = curr.fetchall()
         main_dataframe = pd.DataFrame(data, columns=[el["name"] for el in schema])

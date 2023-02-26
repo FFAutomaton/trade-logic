@@ -2,12 +2,9 @@ import os
 import pickle
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
-from trade_logic.utils import bitis_gunu_truncate_hour_precision
 import pandas as pd
-import glob
 from schemas.enums.karar import Karar
-from datetime import datetime, timedelta
-from ta.trend import EMAIndicator, SMAIndicator
+from ta.trend import EMAIndicator
 from ta.momentum import RSIIndicator
 
 
@@ -30,7 +27,7 @@ class MlpStrategy:
         self.bitis_gunu = trader.bitis_gunu
         self.series = self.trader.series_1h
         self.series = self.series.drop(["open"], axis=1)
-        self.append_other_features()
+        self.append_other_features(trader)
         if os.getenv("PYTHON_ENV") == "TEST":
             if not self.trader.sc_X:
                 self.trader.sc_X = StandardScaler()
@@ -45,12 +42,13 @@ class MlpStrategy:
             self.kismi_egit()
             self.save_model_objects()
 
-    def append_other_features(self):
+    def append_other_features(self, trader):
         rsi_dfs, ema_dfs = self.rsi_hesapla(24, 6), self.ema_hesapla(100, 35)
-        self.append_to_series(rsi_dfs, ema_dfs)
+        fed_data = trader.series_fed
+        self.append_to_series(rsi_dfs, ema_dfs, fed_data)
 
-    def append_to_series(self, rsi_dfs, ema_dfs):
-        indicators = pd.concat([rsi_dfs, ema_dfs], axis=1)
+    def append_to_series(self, rsi_dfs, ema_dfs, fed_data):
+        indicators = pd.concat([rsi_dfs, ema_dfs, fed_data], axis=1)
         self.series = pd.concat([self.series, indicators], axis=1)
 
     def rsi_hesapla(self, window_big, window_small):

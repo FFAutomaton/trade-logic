@@ -1,46 +1,29 @@
-import pandas as pd
-from fredapi import Fred
+from service.sqlite_service import SqlLite_Service
+from service.fred_service import FredService
+from config import *
 from config_users import fred_api_key
+from trade_logic.utils import datetime, timezone
+import os
 
 
-class FredService:
-    def __init__(self):
-        self.dfs_to_get = ['DTB3', 'DFF', 'DFEDTARL', 'OBFR']
+os.environ["PYTHON_ENV"] = "TEST"
 
-        self.fred = Fred(api_key=fred_api_key)
-        self.dfs = self.get_related_dataframes()
-        self.series = self.concat_dfs()
-        # res = self.fred.search("expected funds rate").sort_values(by=["popularity"], ascending=False)
-        # res2 = self.fred.search("DTB3").sort_values(by=["popularity"], ascending=False)
+_secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET, "FED_KEY": fred_api_key}
 
-    def concat_dfs(self):
-        df = None
-        for i in self.dfs:
-            _df = self.dfs[i].sort_index()
-            df = _df if df is None else pd.concat([df, _df], axis=1)
+_config = {
+    "symbol": "ETH", "coin": 'ETHUSDT', "arttir": 15,
+    "pencere_1d": "1d", "pencere_1h": "1h", "pencere_15m": "15m",
+    "wallet": {"ETH": 0, "USDT": 1000},
+    "backfill_window": 20,
+    "atr_window": 10, "supertrend_mult": 0.5, "doldur": True
+}
 
-        return df.ffill()
+fred_service = FredService(secrets=_secrets)
+sqlite_service = SqlLite_Service(_config)
 
-    def get_related_dataframes(self):
-        dfs = {}
-        for i in self.dfs_to_get:
-            dfs[i] = self.prep_data(i)
-        return dfs
-
-    def prep_data(self, i):
-        data = self.fred.get_series(i, observation_start='2018-01-01')
-        data = data.fillna(method='ffill')
-        return data.resample('H').ffill()
+start = datetime.strptime('2018-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
 
-if __name__ == '__main__':
-    fred = FredService()
-
-
-# TODO:: start_date is 2018-01-01 00:00:00
-# TODO:: explode to hourly
-# TODO:: add latest values to empty dates after api request
-# TODO:: add other coin data
-# TODO:: add market cap data
-# TODO:: add unemployement and that kind of useful data
-
+sqlite_service.fed_datasi_yukle(
+    fred_service, start, None
+)

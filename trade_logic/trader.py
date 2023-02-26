@@ -14,6 +14,7 @@ class Trader(TraderBase):
         self.stratejileri_guncelle()
         self.tarihleri_guncelle()
         self.mumlari_guncelle()
+        self.fed_datasi_guncelle()
         self.fiyat_guncelle()
         self.super_trend_strategy.atr_hesapla(self)
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
