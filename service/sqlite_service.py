@@ -83,6 +83,7 @@ class SqlLite_Service:
 
         self.get_conn().cursor().executemany(_query, data)
         self.get_conn().commit()
+        print("yeni fed datasi yuklendi")
         return data
 
     @staticmethod

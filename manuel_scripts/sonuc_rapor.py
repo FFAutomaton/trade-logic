@@ -2,7 +2,7 @@ import pandas
 
 
 def sonuc_rapor(params):
-    df = pandas.read_csv('./manuel_scripts/data/sonuclar.csv', delimiter='\t', header=None)
+    df = pandas.read_csv('../manuel_scripts/data/sonuclar.csv', delimiter='\t', header=None)
     df = df.sort_values(by=[0])
     df['run'] = df[0]
 

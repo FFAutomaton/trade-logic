@@ -2,16 +2,16 @@ import itertools
 
 
 params = {
-    "st_mult_small": [0.1],
-    "st_mult_big": [3],
-    "mlp_rsi_small": [6],
-    "mlp_rsi_big": [24],
+    "st_mult_small": [0.5],
+    "st_mult_big": [1.5],
+    "mlp_rsi_small": [7],
+    "mlp_rsi_big": [35],
     "mlp_ema_small": [14],
     "mlp_ema_big": [100],
-    "mlp_karar_bounding_limit": [0.005],
+    "mlp_karar_bounding_limit": [0.001],
     "mlp_cikis_bounding_limit": [0.0003],
     "multiplier_egim_limit": [0.0001],
-    "mlp_max_iter": [5000],
+    "mlp_max_iter": [1000],
     "mlp_random_state": [1],
     "mlp_layers": [(64, 64, 64, 64)],
     "tp_daralt_katsayi": [0.02],

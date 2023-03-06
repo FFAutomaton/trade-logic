@@ -20,9 +20,9 @@ class TraderBase:
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET, "FED_KEY": fred_api_key}
 
         self.config = {
-            "symbol": "ETH", "coin": 'ETHUSDT',"doldur": True, "wallet": {"ETH": 0, "USDT": 1000},
+            "symbol": "ETH", "coin": 'ETHUSDT', "doldur": True, "wallet": {"ETH": 0, "USDT": 1000},
             "pencere_1d": "1d", "pencere_1h": "1h", "pencere_15m": "15m",
-            "arttir": 15, "backfill_window": 10,
+            "arttir": 15, "backfill_window": 30,
             "st_window": 200, "st_mult_big": 3, "st_atr_window": 14,
             "st_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
             "ema_window_buyuk": 400, "ema_window_kucuk": 14, "rsi_window": 7, "sma_window": 50,
@@ -88,17 +88,18 @@ class TraderBase:
     def mumlari_guncelle(self):
         self.series_1h = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_1h"), "mum",
-            self.bitis_gunu - timedelta(days=200), self.bitis_1h
+            self.bitis_gunu - timedelta(days=800), self.bitis_1h
         )
 
         self.series_15m = self.sqlite_service.veri_getir(
             self.config.get("coin"), self.config.get("pencere_15m"), "mum",
-            self.bitis_gunu - timedelta(days=20), self.bitis_15m
+            self.bitis_gunu - timedelta(days=200), self.bitis_15m
         )
 
     def fed_datasi_guncelle(self):
         _df = self.sqlite_service.veri_getir(None, "1h", "fed", None, None)
         self.series_fed = _df[_df["ds_int"] < int(self.bitis_1h.timestamp()*1000)]
+        self.series_fed = self.series_fed.sort_values(by='ds_int', ascending=True)
 
     def fiyat_guncelle(self):
         data = self.series_15m

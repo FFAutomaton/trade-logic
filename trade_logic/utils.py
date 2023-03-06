@@ -62,7 +62,7 @@ def sonuc_yazdir(start_date, end_date, trader, islem_sonuc, opt_conf, c):
     params_str = '\t'.join(params_list)
     row = f"{c}\t{start_date}\t{params_str}\t{kar}"
     print(row)
-    with open('./manuel_scripts/data/sonuclar.csv', 'a', newline='') as f:
+    with open('../manuel_scripts/data/sonuclar.csv', 'a', newline='') as f:
         # Append single row to CSV
         f.write(row + '\n')
 

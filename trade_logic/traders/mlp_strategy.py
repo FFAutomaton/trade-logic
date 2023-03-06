@@ -1,7 +1,7 @@
 import os
 import pickle
 from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 import pandas as pd
 from schemas.enums.karar import Karar
 from ta.trend import EMAIndicator
@@ -25,16 +25,17 @@ class MlpStrategy:
     def init_strategy(self, trader):
         self.trader = trader
         self.bitis_gunu = trader.bitis_gunu
-        self.series = self.trader.series_1h
+        self.series = self.trader.series_1h.sort_values(by='open_ts_int', ascending=True)
         self.series = self.series.drop(["open"], axis=1)
+
         self.append_other_features(trader)
         if os.getenv("PYTHON_ENV") == "TEST":
             if not self.trader.sc_X:
-                self.trader.sc_X = StandardScaler()
+                self.trader.sc_X = MinMaxScaler(feature_range=(0, 1))
             self.egitim_sureci_control()
         elif os.getenv("PYTHON_ENV") == "RESET_MLP":
             if not self.trader.sc_X:
-                self.trader.sc_X = StandardScaler()
+                self.trader.sc_X = MinMaxScaler(feature_range=(0, 1))
             self.egit()
             self.save_model_objects()
         else:  # production demek
@@ -48,8 +49,15 @@ class MlpStrategy:
         self.append_to_series(rsi_dfs, ema_dfs, fed_data)
 
     def append_to_series(self, rsi_dfs, ema_dfs, fed_data):
-        indicators = pd.concat([rsi_dfs, ema_dfs, fed_data], axis=1)
-        self.series = pd.concat([self.series, indicators], axis=1)
+        self.series = pd.merge(self.series, fed_data, left_on=['open_ts_str'], right_on=["ds_str"])
+        self.series =self.series.sort_values(by='ds_int', ascending=True).reset_index(drop=True)
+        indicators = pd.concat([rsi_dfs, ema_dfs], axis=1)
+        indicators = indicators.sort_index(ascending=False).reset_index(drop=True)
+        self.series = pd.concat([self.series, indicators], ignore_index=False, axis=1)
+        self.series = self.series.sort_values(by='ds_int', ascending=False)
+        self.series = self.series.drop(
+            columns=["open_ts_int", "open_ts_str", "ds_str", "ds_int"]
+        )
 
     def rsi_hesapla(self, window_big, window_small):
         rsi_big = RSIIndicator(self.series["close"], window_big, fillna=True)
@@ -85,12 +93,6 @@ class MlpStrategy:
         else:
             self.kismi_egit()
 
-    def get_missing_dates_df(self, max_date, bitis):
-        return self.trader.sqlite_service.veri_getir(
-            self.trader.config.get("coin"), self.trader.config.get("pencere_1h"), "mum",
-            max_date, bitis
-        ).sort_values(by='open_ts_int', ascending=True)
-
     def karar_hesapla(self, trader):
         self.fiyat_tahmini_hesapla()
         if self.suanki_fiyat * (1 + trader.config.get('mlp_karar_bounding_limit')) < self.fiyat_tahmini:
@@ -123,17 +125,17 @@ class MlpStrategy:
         ).fit(X_trainscaled, Y_.values.ravel())
 
     def kismi_egit_satiri_getir(self):
-        X_ = self.series[1:2].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
+        X_ = self.series[1:2]
         Y_ = self.series[['close']][0:1].reset_index(drop=True)
         Y_.rename(columns={"close": "target"})
         return X_, Y_
 
     def tahmin_satiri_getir(self):
-        X_ = self.series[0:1].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
+        X_ = self.series[0:1]
         return X_
 
     def divide_target_and_features(self):
-        X_ = self.series[1:].drop(columns=["open_ts_int", "open_ts_str"]).reset_index(drop=True)
+        X_ = self.series[1:]
         Y_ = self.series[['close']][:-1].reset_index(drop=True)
         Y_.rename(columns={"close": "target"})
         return X_, Y_
