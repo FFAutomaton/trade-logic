@@ -19,14 +19,14 @@ _config = {
 sqlite_service = SqlLite_Service(_config)
 binance_serve = TurkishGekkoBinanceService(_secrets)
 
-window_end = datetime.strptime('2019-12-20 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-start = datetime.strptime('2020-03-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+window_end = datetime.strptime('2023-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+start = datetime.strptime('2023-04-05 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 _son = bitis_gunu_truncate_min_precision(start, 15)
 
 while window_end < _son:
 
     sqlite_service.mum_datasi_yukle(
-        "1h", binance_serve, window_end - timedelta(days=5), window_end
+        "15m", binance_serve, window_end - timedelta(days=5), window_end
     )
     print(f" one turn finished for {window_end}")
     window_end += timedelta(days=5)

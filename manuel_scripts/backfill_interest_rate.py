@@ -21,7 +21,7 @@ _config = {
 fred_service = FredService(secrets=_secrets)
 sqlite_service = SqlLite_Service(_config)
 
-start = datetime.strptime('2018-01-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+start = datetime.strptime('2023-03-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
 
 sqlite_service.fed_datasi_yukle(
