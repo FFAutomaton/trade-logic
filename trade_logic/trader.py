@@ -23,14 +23,14 @@ class Trader(TraderBase):
 
     def karar_calis(self):
         if self.cooldown == 0:
-            # if self.mlp_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar not in [Karar.satis, Karar.cikis]:
-            # if self.mlp_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar in [Karar.alis]:
-            if self.mlp_strategy.karar == Karar.alis:
+            # if self.lstm_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar not in [Karar.satis, Karar.cikis]:
+            # if self.lstm_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar in [Karar.alis]:
+            if self.lstm_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            # if self.mlp_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar not in [Karar.alis, Karar.cikis]:
-            # if self.mlp_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar in [Karar.satis]:
-            if self.mlp_strategy.karar == Karar.satis:
+            # if self.lstm_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar not in [Karar.alis, Karar.cikis]:
+            # if self.lstm_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar in [Karar.satis]:
+            if self.lstm_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -45,7 +45,7 @@ class Trader(TraderBase):
 
     def mlp_cikis_yap(self):
         if self.pozisyon.value != 0:
-            if self.mlp_strategy.karar == Karar.cikis:
+            if self.lstm_strategy.karar == Karar.cikis:
                 self.karar = Karar.cikis
 
     def super_trend_tp_daralt(self):
@@ -104,10 +104,10 @@ class Trader(TraderBase):
         self.rsi_ema_strategy.karar_hesapla(self)
 
     @dongu_kontrol_decorator
-    def mlp_karar_hesapla(self):
-        self.mlp_strategy.suanki_fiyat = self.suanki_fiyat
-        self.mlp_strategy.init_strategy(self)
-        self.mlp_strategy.karar_hesapla(self)
+    def lstm_karar_hesapla(self):
+        self.lstm_strategy.suanki_fiyat = self.suanki_fiyat
+        self.lstm_strategy.init_lstm_strategy(self)
+        self.lstm_strategy.karar_hesapla(self)
 
     def pozisyon_al(self):
         wallet = self.config.get("wallet")

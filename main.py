@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 def trader_calis(trader):
     trader.init()
     trader.rsi_ema_karar_hesapla()
-    trader.mlp_karar_hesapla()
+    trader.lstm_karar_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()
     trader.pozisyon_al()

@@ -7,7 +7,7 @@ from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
-from trade_logic.traders.mlp_strategy import MlpStrategy
+from trade_logic.traders.lstm_strategy import LstmStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
 from service.fred_service import FredService
 from config_users import users, fred_api_key
@@ -74,7 +74,7 @@ class TraderBase:
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = None
         self.rsi_ema_strategy = None
-        self.mlp_strategy = None
+        self.lstm_strategy = None
         self.sc_X = None
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
@@ -83,7 +83,7 @@ class TraderBase:
     def stratejileri_guncelle(self):
         self.super_trend_strategy = SuperTrendStrategy(self.config)
         self.rsi_ema_strategy = RsiEmaStrategy(self.config)
-        self.mlp_strategy = MlpStrategy(self.config)
+        self.lstm_strategy = LstmStrategy(self.config)
 
     def mumlari_guncelle(self):
         self.series_1h = self.sqlite_service.veri_getir(

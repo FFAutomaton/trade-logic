@@ -53,19 +53,20 @@ def backtest_calis_multi(start_date, end_date):
 if __name__ == '__main__':
     message = "KERAS LSTM"
 
-    try:
-        f1 = open('../manuel_scripts/data/sonuclar.csv', 'w')
-        f1.close()
-    except:
-        pass
+    # try:
+    #     f1 = open('../manuel_scripts/data/sonuclar.csv', 'w')
+    #     f1.close()
+    # except:
+    #     pass
+
     print(f"backtest basladi {message}!!")
     _s = time.time()
     os.environ["PYTHON_ENV"] = "TEST"
     os.environ["DEBUG"] = "1"
     # bitis_gunu = datetime.strptime('2022-02-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    bitis_gunu = datetime.strptime('2023-02-01 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    bitis_gunu = datetime.strptime('2023-04-01 00:00:20', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
     # _son = datetime.strptime('2022-08-01 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
-    _son = datetime.strptime('2023-04-04 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
+    _son = datetime.strptime('2023-04-22 00:00:00', '%Y-%m-%d %H:%M:%S').replace(tzinfo=timezone.utc)
 
     trader = Trader(bitis_gunu)
 

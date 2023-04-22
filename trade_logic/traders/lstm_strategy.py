@@ -8,7 +8,7 @@ from ta.trend import EMAIndicator
 from ta.momentum import RSIIndicator
 
 
-class MlpStrategy:
+class LstmStrategy:
     def __init__(self, config):
         self.config = config
         self.karar = Karar.notr
@@ -22,7 +22,7 @@ class MlpStrategy:
         self.model_filename = '../coindata/mlp_objects/final_model.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_model.sav'
         self.scaler_filename = '../coindata/mlp_objects/final_scaler.sav' if os.getenv("PYTHON_ENV") == "RESET_MLP" else '../../coindata/mlp_objects/final_scaler.sav'
 
-    def init_strategy(self, trader):
+    def init_lstm_strategy(self, trader):
         self.trader = trader
         self.bitis_gunu = trader.bitis_gunu
         self.series = self.trader.series_1h.sort_values(by='open_ts_int', ascending=True)
@@ -118,6 +118,7 @@ class MlpStrategy:
     def egit(self):
         X_, Y_ = self.divide_target_and_features()
         X_trainscaled = self.trader.sc_X.fit_transform(X_)
+        # TODO:: Y_trainscaled de hesaplanabilir
 
         self.trader.model = MLPRegressor(
             hidden_layer_sizes=self.trader.config.get("mlp_layers"),
