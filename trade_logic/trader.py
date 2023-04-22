@@ -22,14 +22,13 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
+        # TODO:: Bazı kolonları one-hot encoding dedikleri teknik ile biraz daha kategorik hale getirebiliriz. Hatta tahmin ettiğimiz fiyat için bile bunu yapıp modelin tahmin ettim datayı biraz daha temizleyebiliriz.
+        # TODO:: Sezonsallığı ve trendi veriden çıkarıp daha sonrasında tahmin etmeye çalışmalıyız
+        # TODO:: Başka veriler ile desteklemeliyiz
         if self.cooldown == 0:
-            # if self.lstm_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar not in [Karar.satis, Karar.cikis]:
-            # if self.lstm_strategy.karar == Karar.alis and self.rsi_ema_strategy.karar in [Karar.alis]:
             if self.lstm_strategy.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            # if self.lstm_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar not in [Karar.alis, Karar.cikis]:
-            # if self.lstm_strategy.karar == Karar.satis and self.rsi_ema_strategy.karar in [Karar.satis]:
             if self.lstm_strategy.karar == Karar.satis:
                 self.karar = Karar.satis
 
