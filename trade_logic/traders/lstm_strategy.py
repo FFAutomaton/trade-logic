@@ -26,7 +26,6 @@ class LstmStrategy:
         self.trader = trader
         self.bitis_gunu = trader.bitis_gunu
         self.series = self.trader.series_1h.sort_values(by='open_ts_int', ascending=True)
-        self.series = self.series.drop(["open"], axis=1)
 
         self.append_other_features(trader)
         if os.getenv("PYTHON_ENV") == "TEST":
@@ -50,13 +49,18 @@ class LstmStrategy:
 
     def append_to_series(self, rsi_dfs, ema_dfs, fed_data):
         self.series = pd.merge(self.series, fed_data, left_on=['open_ts_str'], right_on=["ds_str"])
-        self.series =self.series.sort_values(by='ds_int', ascending=True).reset_index(drop=True)
+        self.series = self.series.sort_values(by='ds_int', ascending=True).reset_index(drop=True)
         indicators = pd.concat([rsi_dfs, ema_dfs], axis=1)
         indicators = indicators.sort_index(ascending=False).reset_index(drop=True)
         self.series = pd.concat([self.series, indicators], ignore_index=False, axis=1)
         self.series = self.series.sort_values(by='ds_int', ascending=False)
+        self.kolon_tipi_ayarla()
+
+    def kolon_tipi_ayarla(self):
+        self.series['open_ts_str'] = pd.to_datetime(self.series.open_ts_str, format='%Y-%m-%d %H:%M:%S')
+        self.series.index = self.series['open_ts_str']
         self.series = self.series.drop(
-            columns=["open_ts_int", "open_ts_str", "ds_str", "ds_int"]
+            columns=["open", "open_ts_str", "open_ts_int", "ds_str", "ds_int"]
         )
 
     def rsi_hesapla(self, window_big, window_small):

@@ -22,7 +22,9 @@ class Trader(TraderBase):
             self.cooldown -= 1
 
     def karar_calis(self):
-        # TODO:: Bazı kolonları one-hot encoding dedikleri teknik ile biraz daha kategorik hale getirebiliriz. Hatta tahmin ettiğimiz fiyat için bile bunu yapıp modelin tahmin ettim datayı biraz daha temizleyebiliriz.
+        # TODO:: Bazı kolonları one-hot encoding dedikleri teknik ile biraz daha kategorik hale getirebiliriz.
+        #        Hatta tahmin ettiğimiz fiyat için bile bunu yapıp modelin tahmin ettim datayı
+        #        biraz daha temizleyebiliriz.
         # TODO:: Sezonsallığı ve trendi veriden çıkarıp daha sonrasında tahmin etmeye çalışmalıyız
         # TODO:: Başka veriler ile desteklemeliyiz
         if self.cooldown == 0:
