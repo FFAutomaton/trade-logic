@@ -2,12 +2,12 @@ import math
 from datetime import timedelta, datetime, timezone
 
 from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
-from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
+# from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
-from trade_logic.traders.lstm_strategy import LstmStrategy
+# from trade_logic.traders.lstm_strategy import LstmStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
 # from service.fred_service import FredService
 from trade_logic.traders.oracle_sentiment import OracleSentimentStrategy
