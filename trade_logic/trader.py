@@ -52,9 +52,11 @@ class Trader(TraderBase):
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
         katsayi = self.config.get("tp_daralt_katsayi")
+        print(self.super_trend_strategy)
         if kar > 0:
             kar_orani = kar / self.islem_fiyati
             if kar_orani > katsayi * self.daralt and self.daralt > 0:
+
                 onceki = self.super_trend_strategy.onceki_tp
                 new_tp = self.super_trend_strategy.onceki_tp * (1 + self.pozisyon.value * katsayi * self.daralt)
                 self.super_trend_strategy.onceki_tp = round(float(new_tp), 2)
@@ -90,8 +92,9 @@ class Trader(TraderBase):
         self.super_trend_strategy.update_tp(self)
 
     def super_trend_cikis_yap(self):
+        print(self.super_trend_strategy)
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
-            # print(f"super_trend cikis {self.super_trend_strategy.onceki_tp}")
+            print(f"super_trend cikis {self.super_trend_strategy.onceki_tp}")
             self.karar = Karar.cikis
             self.super_trend_strategy.reset_super_trend()
             # zarar = self.pozisyon.value * (self.islem_fiyati - self.suanki_fiyat)
