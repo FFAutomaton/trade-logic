@@ -74,7 +74,7 @@ class TraderBase:
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
         # self.fed_service = FredService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
-        self.super_trend_strategy = None
+        self.super_trend_strategy = SuperTrendStrategy(self.config)
         # self.rsi_ema_strategy = None
         # self.lstm_strategy = None
         self.oracle_sentiment = OracleSentimentStrategy(self.config)
@@ -178,7 +178,7 @@ class TraderBase:
         self.heikinashi_karar = Karar.notr
         self.pozisyon = Pozisyon(0)
         self.karar = Karar(0)
-        self.rsi_ema_strategy.karar = Karar(0)
+        # self.gi.karar = Karar(0)
         self.onceki_karar = Karar(3)
         self.islem_fiyati = 0
         self.islem_miktari = 0

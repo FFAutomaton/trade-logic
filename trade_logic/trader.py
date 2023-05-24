@@ -11,7 +11,7 @@ from trade_logic.trader_base import TraderBase
 class Trader(TraderBase):
     def init(self):
         # calisma siralari onemli
-        self.stratejileri_guncelle()
+        # self.stratejileri_guncelle()
         self.tarihleri_guncelle()
         self.mumlari_guncelle()
         # self.fed_datasi_guncelle()
