@@ -193,9 +193,6 @@ class SqlLite_Service:
                 _val = getattr(trader, key)
                 _val = round(_val, 2) if isinstance(_val, float) else _val
                 _trader[key] = _val
-        print("trader_durumu_kaydet")
-
-        print(trader.super_trend_strategy)
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
         _trader["current_config"] = json.dumps(trader.config)
@@ -217,10 +214,6 @@ class SqlLite_Service:
                     trader.onceki_karar = Karar(conf_[key])
                 elif key == "pozisyon":
                     trader.pozisyon = Pozisyon(conf_[key])
-            print("trader_durumu_geri_yukle")
-
-            print(trader.super_trend_strategy)
-
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")

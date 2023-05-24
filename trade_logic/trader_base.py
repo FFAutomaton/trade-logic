@@ -31,7 +31,7 @@ class TraderBase:
             "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
             "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.015,
             "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007,
-            "mlp_karar_bounding_limit": 0.001
+            "mlp_karar_bounding_limit": 0.001, "supertrend_mult": 3
         }
         self.ema_ucustaydi = 0
         self.standart_scaler = None
@@ -95,10 +95,10 @@ class TraderBase:
             self.bitis_gunu - timedelta(days=800), self.bitis_1h
         )
 
-        self.series_15m = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_15m"), "mum",
-            self.bitis_gunu - timedelta(days=200), self.bitis_15m
-        )
+        # self.series_15m = self.sqlite_service.veri_getir(
+        #     self.config.get("coin"), self.config.get("pencere_15m"), "mum",
+        #     self.bitis_gunu - timedelta(days=200), self.bitis_15m
+        # )
 
     def fed_datasi_guncelle(self):
         _df = self.sqlite_service.veri_getir(None, "1h", "fed", None, None)
@@ -106,7 +106,7 @@ class TraderBase:
         self.series_fed = self.series_fed.sort_values(by='ds_int', ascending=True)
 
     def fiyat_guncelle(self):
-        data = self.series_15m
+        data = self.series_1h
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
         # self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
@@ -118,8 +118,8 @@ class TraderBase:
         self.super_trend_baslangic_gunu = self.bitis_1h - timedelta(hours=self.config.get("st_window"))
 
     def init_prod(self):
-        self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
-        self.wallet_isle()
+        # self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
+        # self.wallet_isle()
         self.sqlite_service.trader_durumu_geri_yukle(
             self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
 

@@ -2,12 +2,11 @@ import os
 from trade_logic.trader import Trader
 from trade_logic.utils import bitis_gunu_truncate_hour_precision, print_islem_detay
 from datetime import datetime, timezone
+import sys
 
 
 def trader_calis(trader):
     trader.init()
-    # trader.rsi_ema_karar_hesapla()
-    # trader.lstm_karar_hesapla()
     trader.oracle_sentiment_hesapla()
     trader.karar_calis()
     trader.cikis_kontrol()

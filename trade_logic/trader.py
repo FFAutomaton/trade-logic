@@ -11,10 +11,8 @@ from trade_logic.trader_base import TraderBase
 class Trader(TraderBase):
     def init(self):
         # calisma siralari onemli
-        # self.stratejileri_guncelle()
         self.tarihleri_guncelle()
         self.mumlari_guncelle()
-        # self.fed_datasi_guncelle()
         self.fiyat_guncelle()
         self.super_trend_strategy.atr_hesapla(self)
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
@@ -42,17 +40,10 @@ class Trader(TraderBase):
         self.super_trend_update()
         self.super_trend_tp_daralt()
         self.super_trend_cikis_yap()
-        self.mlp_cikis_yap()
-
-    def mlp_cikis_yap(self):
-        if self.pozisyon.value != 0:
-            if self.lstm_strategy.karar == Karar.cikis:
-                self.karar = Karar.cikis
 
     def super_trend_tp_daralt(self):
         kar = self.pozisyon.value * (self.suanki_fiyat - self.islem_fiyati)
         katsayi = self.config.get("tp_daralt_katsayi")
-        print(self.super_trend_strategy)
         if kar > 0:
             kar_orani = kar / self.islem_fiyati
             if kar_orani > katsayi * self.daralt and self.daralt > 0:
@@ -92,7 +83,6 @@ class Trader(TraderBase):
         self.super_trend_strategy.update_tp(self)
 
     def super_trend_cikis_yap(self):
-        print(self.super_trend_strategy)
         if self.pozisyon.value * self.suanki_fiyat < self.pozisyon.value * self.super_trend_strategy.onceki_tp:
             print(f"super_trend cikis {self.super_trend_strategy.onceki_tp}")
             self.karar = Karar.cikis
