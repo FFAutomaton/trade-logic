@@ -23,7 +23,7 @@ class SqlLite_Service:
         if self.conn:
             return self.conn
         if os.getenv("PYTHON_ENV") == "TEST":
-            self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
+            self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
         elif os.getenv("PYTHON_ENV") in ["BACKFILL", "RESET_MLP"]:
             self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
         else:

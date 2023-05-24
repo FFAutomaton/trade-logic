@@ -51,13 +51,7 @@ def backtest_calis_multi(start_date, end_date):
 
 
 if __name__ == '__main__':
-    message = "KERAS LSTM"
-
-    # try:
-    #     f1 = open('../manuel_scripts/data/sonuclar.csv', 'w')
-    #     f1.close()
-    # except:
-    #     pass
+    message = "VurgunGPT"
 
     print(f"backtest basladi {message}!!")
     _s = time.time()

@@ -14,7 +14,7 @@ class Trader(TraderBase):
         self.stratejileri_guncelle()
         self.tarihleri_guncelle()
         self.mumlari_guncelle()
-        self.fed_datasi_guncelle()
+        # self.fed_datasi_guncelle()
         self.fiyat_guncelle()
         self.super_trend_strategy.atr_hesapla(self)
         self.tahmin = {"ds_str": datetime.strftime(self.bitis_gunu, '%Y-%m-%d %H:%M:%S'), "open": self.suanki_fiyat}
@@ -28,10 +28,10 @@ class Trader(TraderBase):
         # TODO:: Sezonsallığı ve trendi veriden çıkarıp daha sonrasında tahmin etmeye çalışmalıyız
         # TODO:: Başka veriler ile desteklemeliyiz
         if self.cooldown == 0:
-            if self.lstm_strategy.karar == Karar.alis:
+            if self.oracle_sentiment.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            if self.lstm_strategy.karar == Karar.satis:
+            if self.oracle_sentiment.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -85,7 +85,7 @@ class Trader(TraderBase):
                 self.super_trend_strategy.onceki_tp = self.super_trend_strategy.calculate_tp(self.pozisyon)
 
     def super_trend_update(self):
-        self.super_trend_mult_guncelle()
+        # self.super_trend_mult_guncelle()
         self.super_trend_strategy.tp_hesapla(self.pozisyon)
         self.super_trend_strategy.update_tp(self)
 
@@ -103,6 +103,11 @@ class Trader(TraderBase):
         series = self.series_15m.sort_values(by='open_ts_int', ascending=True)
         self.rsi_ema_strategy.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window_buyuk"), self.config.get("ema_window_kucuk"))
         self.rsi_ema_strategy.karar_hesapla(self)
+
+    @dongu_kontrol_decorator
+    def oracle_sentiment_hesapla(self):
+        self.oracle_sentiment.run(self.bitis_gunu)
+        pass
 
     @dongu_kontrol_decorator
     def lstm_karar_hesapla(self):

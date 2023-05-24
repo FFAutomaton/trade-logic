@@ -9,16 +9,18 @@ from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
 from trade_logic.traders.lstm_strategy import LstmStrategy
 from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
-from service.fred_service import FredService
+# from service.fred_service import FredService
+from trade_logic.traders.oracle_sentiment import OracleSentimentStrategy
 from config_users import users, fred_api_key
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
+from dotenv import load_dotenv
 
 
 class TraderBase:
     def __init__(self, bitis_gunu):
         self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET, "FED_KEY": fred_api_key}
-
+        load_dotenv()
         self.config = {
             "symbol": "ETH", "coin": 'ETHUSDT', "doldur": True, "wallet": {"ETH": 0, "USDT": 1000},
             "pencere_1d": "1d", "pencere_1h": "1h", "pencere_15m": "15m",
@@ -70,20 +72,22 @@ class TraderBase:
         self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir"))
 
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
-        self.fed_service = FredService(self.secrets)
+        # self.fed_service = FredService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = None
-        self.rsi_ema_strategy = None
-        self.lstm_strategy = None
+        # self.rsi_ema_strategy = None
+        # self.lstm_strategy = None
+        self.oracle_sentiment = OracleSentimentStrategy(self.config)
         self.sc_X = None
         if self.config["doldur"]:
             self.mum_verilerini_guncelle()
-            self.fed_verilerini_guncelle()
+            # self.fed_verilerini_guncelle()
 
     def stratejileri_guncelle(self):
         self.super_trend_strategy = SuperTrendStrategy(self.config)
-        self.rsi_ema_strategy = RsiEmaStrategy(self.config)
-        self.lstm_strategy = LstmStrategy(self.config)
+        self.oracle_sentiment = OracleSentimentStrategy(self.config)
+        # self.rsi_ema_strategy = RsiEmaStrategy(self.config)
+        # self.lstm_strategy = LstmStrategy(self.config)
 
     def mumlari_guncelle(self):
         self.series_1h = self.sqlite_service.veri_getir(
@@ -105,7 +109,7 @@ class TraderBase:
         data = self.series_15m
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
-        self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
+        # self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
 
     def tarihleri_guncelle(self):
         self.bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
