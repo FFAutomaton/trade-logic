@@ -197,19 +197,19 @@ class SqlLite_Service:
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
         _trader["current_config"] = json.dumps(trader.config)
         karar_params = {
-            "ema_value_big": trader.rsi_strategy_1h.ema_value_big,
-            "ema_value_small": trader.rsi_strategy_1h.ema_value_small,
-            "rsi_value": trader.rsi_strategy_1h.rsi_value,
-            "tavan_yapti": trader.rsi_strategy_1h.tavan_yapti,
-            "dipten_dondu": int(trader.rsi_strategy_1h.dipten_dondu),
-            "tavandan_dondu": int(trader.rsi_strategy_1h.tavandan_dondu),
+            # "ema_value_big": trader.rsi_strategy_1h.ema_value_big,
+            # "ema_value_small": trader.rsi_strategy_1h.ema_value_small,
+            # "rsi_value": trader.rsi_strategy_1h.rsi_value,
+            # "tavan_yapti": trader.rsi_strategy_1h.tavan_yapti,
+            # "dipten_dondu": int(trader.rsi_strategy_1h.dipten_dondu),
+            # "tavandan_dondu": int(trader.rsi_strategy_1h.tavandan_dondu),
 
         }
         tahmin_params = {
-            "rsi_smasi_trend": trader.rsi_strategy_1h.rsi_smasi_trend.value,
-            "trend_ratio": trader.rsi_strategy_1h.trend_ratio,
-            "prev_rsi_emasi": trader.rsi_strategy_1h.prev_rsi_emasi,
-            "rsi_emasi_value": trader.rsi_strategy_1h.rsi_emasi_value,
+            # "rsi_smasi_trend": trader.rsi_strategy_1h.rsi_smasi_trend.value,
+            # "trend_ratio": trader.rsi_strategy_1h.trend_ratio,
+            # "prev_rsi_emasi": trader.rsi_strategy_1h.prev_rsi_emasi,
+            # "rsi_emasi_value": trader.rsi_strategy_1h.rsi_emasi_value,
         }
         data = {
             "ds_str": okunur_date_yap(datetime.now().timestamp()*1000),
