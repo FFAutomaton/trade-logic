@@ -26,10 +26,10 @@ class Trader(TraderBase):
         # TODO:: Sezonsallığı ve trendi veriden çıkarıp daha sonrasında tahmin etmeye çalışmalıyız
         # TODO:: Başka veriler ile desteklemeliyiz
         if self.cooldown == 0:
-            if self.oracle_sentiment.karar == Karar.alis:
+            if self.oracle_sentiment.karar == Karar.alis and self.super_trader.karar == Karar.alis:
                 self.karar = Karar.alis
 
-            if self.oracle_sentiment.karar == Karar.satis:
+            if self.oracle_sentiment.karar == Karar.satis and self.super_trader.karar == Karar.satis:
                 self.karar = Karar.satis
 
     def cikis_kontrol(self):
@@ -98,9 +98,12 @@ class Trader(TraderBase):
         self.rsi_ema_strategy.karar_hesapla(self)
 
     @dongu_kontrol_decorator
+    def super_trader_kur(self):
+        self.super_trader.run(self.series_1h.sort_values(by='open_ts_int', ascending=True))
+
+    @dongu_kontrol_decorator
     def oracle_sentiment_hesapla(self):
         self.oracle_sentiment.run(self.bitis_gunu)
-        pass
 
     @dongu_kontrol_decorator
     def lstm_karar_hesapla(self):

@@ -1,8 +1,9 @@
 import math
 from datetime import timedelta, datetime, timezone
 
-from trade_logic.traders.super_trend_strategy import SuperTrendStrategy
+from trade_logic.traders.super_trend_trailing import SuperTrendStrategy
 # from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
+from trade_logic.traders.super_trader import SuperTrader
 from config import *
 from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
@@ -75,6 +76,7 @@ class TraderBase:
         # self.fed_service = FredService(self.secrets)
         self.sqlite_service = SqlLite_Service(self.config)
         self.super_trend_strategy = SuperTrendStrategy(self.config)
+        self.super_trader = SuperTrader(self.config)
         # self.rsi_ema_strategy = None
         # self.lstm_strategy = None
         self.oracle_sentiment = OracleSentimentStrategy(self.config)

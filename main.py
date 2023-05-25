@@ -3,11 +3,13 @@ from trade_logic.trader import Trader
 from trade_logic.utils import bitis_gunu_truncate_hour_precision, print_islem_detay
 from datetime import datetime, timezone
 import sys
+import traceback
 
 
 def trader_calis(trader):
     trader.init()
     trader.oracle_sentiment_hesapla()
+    trader.super_trader_kur()
     trader.karar_calis()
     trader.cikis_kontrol()
     trader.pozisyon_al()
@@ -41,7 +43,8 @@ if __name__ == '__main__':
             c = 0
         except Exception as e:
             # TODO:: send_email
-            print(str(e))
+            traceback.print_exc()
+            print(e)
             print(f"{c} can kaldi tekrar deniyor..." + (40*"#"))
             c -= 1
 

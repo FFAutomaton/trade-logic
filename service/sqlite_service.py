@@ -26,6 +26,8 @@ class SqlLite_Service:
             self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
         elif os.getenv("PYTHON_ENV") in ["BACKFILL", "RESET_MLP"]:
             self.conn = sqlite3.connect(f'../coindata/{self.db}.db')
+        elif os.getenv("PYTHON_ENV") in ["DEVELOPMENT"]:
+            self.conn = sqlite3.connect(f'./coindata/{self.db}.db')
         else:
             self.conn = sqlite3.connect(f'/app/coindata/{self.db}.db')
         return self.conn
@@ -194,6 +196,7 @@ class SqlLite_Service:
                 _val = round(_val, 2) if isinstance(_val, float) else _val
                 _trader[key] = _val
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
+        _trader["super_trader_karar"] = trader.super_trader.karar.value
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
         _trader["current_config"] = json.dumps(trader.config)
 

@@ -9,3 +9,4 @@ fredapi==0.5.0
 python-dotenv
 nltk==3.8.1
 openai
+pandas_ta
