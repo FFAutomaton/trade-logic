@@ -219,7 +219,7 @@ class SqlLite_Service:
                 elif key == "pozisyon":
                     trader.pozisyon = Pozisyon(conf_[key])
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
-            trader.oracle_sentiment.karar = Karar(conf_.get("oracle_sentiment_karar"))
+            trader.oracle_sentiment.karar = Karar(conf_.get("oracle_sentiment_karar", 0))
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")
             trader.ema_ucustaydi = conf_.get("ema_ucustaydi")
