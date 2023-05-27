@@ -67,6 +67,16 @@ def sonuc_yazdir(start_date, end_date, trader, islem_sonuc, opt_conf, c):
         f.write(row + '\n')
 
 
+def killzone_kontrol_decorator(func):
+    def inner1(*args, **kwargs):
+        if not args[0].dondu_killzone:
+            return
+        returned_value = func(*args, **kwargs)
+        return returned_value
+
+    return inner1
+
+
 def dongu_kontrol_decorator(func):
     def inner1(*args, **kwargs):
         if not args[0].dondu_1h:

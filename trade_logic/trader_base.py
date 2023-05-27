@@ -92,15 +92,15 @@ class TraderBase:
         # self.lstm_strategy = LstmStrategy(self.config)
 
     def mumlari_guncelle(self):
-        self.series_1h = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_1h"), "mum",
-            self.bitis_gunu - timedelta(days=800), self.bitis_1h
-        )
-
-        # self.series_15m = self.sqlite_service.veri_getir(
-        #     self.config.get("coin"), self.config.get("pencere_15m"), "mum",
-        #     self.bitis_gunu - timedelta(days=200), self.bitis_15m
+        # self.series_1h = self.sqlite_service.veri_getir(
+        #     self.config.get("coin"), self.config.get("pencere_1h"), "mum",
+        #     self.bitis_gunu - timedelta(days=800), self.bitis_1h
         # )
+
+        self.series_15m = self.sqlite_service.veri_getir(
+            self.config.get("coin"), self.config.get("pencere_15m"), "mum",
+            self.bitis_gunu - timedelta(days=200), self.bitis_15m
+        )
 
     def fed_datasi_guncelle(self):
         _df = self.sqlite_service.veri_getir(None, "1h", "fed", None, None)
@@ -108,7 +108,7 @@ class TraderBase:
         self.series_fed = self.series_fed.sort_values(by='ds_int', ascending=True)
 
     def fiyat_guncelle(self):
-        data = self.series_1h
+        data = self.series_15m
         self.suanki_fiyat = data.get("close")[0]
         self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
         # self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
@@ -117,6 +117,7 @@ class TraderBase:
         self.bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
         self.bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
         self.dondu_1h = True if self.bitis_1h == self.bitis_15m else False
+        self.dondu_killzone = True if self.bitis_15m.hour == 2 else False
         self.super_trend_baslangic_gunu = self.bitis_1h - timedelta(hours=self.config.get("st_window"))
 
     def init_prod(self):

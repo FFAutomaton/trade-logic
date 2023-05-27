@@ -1,6 +1,6 @@
 import os
 from trade_logic.trader import Trader
-from trade_logic.utils import bitis_gunu_truncate_hour_precision, print_islem_detay
+from trade_logic.utils import bitis_gunu_truncate_min_precision, print_islem_detay
 from datetime import datetime, timezone
 import sys
 import traceback
@@ -19,7 +19,7 @@ def app_calis():
     # bitis_gunu = datetime.strptime('2023-01-21 17:30:04', '%Y-%m-%d %H:%M:%S')
     # bitis_gunu = bitis_gunu.replace(tzinfo=timezone.utc)
     bitis_gunu = datetime.utcnow()
-    bitis_gunu = bitis_gunu_truncate_hour_precision(bitis_gunu, 1)
+    bitis_gunu = bitis_gunu_truncate_min_precision(bitis_gunu, 15)
 
     trader = Trader(bitis_gunu)
     trader.sqlite_service.trader_eski_verileri_temizle(bitis_gunu)

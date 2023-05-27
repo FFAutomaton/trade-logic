@@ -197,6 +197,7 @@ class SqlLite_Service:
                 _trader[key] = _val
         _trader["onceki_tp"] = round(float(trader.super_trend_strategy.onceki_tp), 2)
         _trader["super_trader_karar"] = trader.super_trader.karar.value
+        _trader["oracle_sentiment_karar"] = trader.oracle_sentiment.karar.value
         _trader["bitis_gunu"] = datetime.strftime(trader.bitis_gunu, "%Y-%m-%d %H:%M:%S")
         _trader["current_config"] = json.dumps(trader.config)
 
@@ -218,6 +219,7 @@ class SqlLite_Service:
                 elif key == "pozisyon":
                     trader.pozisyon = Pozisyon(conf_[key])
             trader.super_trend_strategy.onceki_tp = conf_.get("onceki_tp")
+            trader.oracle_sentiment.karar = Karar(conf_.get("oracle_sentiment_karar"))
             trader.islem_fiyati = conf_.get("islem_fiyati")
             trader.islem_miktari = conf_.get("islem_miktari")
             trader.ema_ucustaydi = conf_.get("ema_ucustaydi")

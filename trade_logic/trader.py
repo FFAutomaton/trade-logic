@@ -2,7 +2,7 @@ import os
 from datetime import timedelta, datetime
 
 from trade_logic.utils import egim_hesapla, \
-    islem_doldur, dongu_kontrol_decorator
+    islem_doldur, dongu_kontrol_decorator, killzone_kontrol_decorator
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
 from trade_logic.trader_base import TraderBase
@@ -97,19 +97,18 @@ class Trader(TraderBase):
         self.rsi_ema_strategy.init_strategy(series, self.config.get("rsi_window"), self.config.get("sma_window"), self.config.get("ema_window_buyuk"), self.config.get("ema_window_kucuk"))
         self.rsi_ema_strategy.karar_hesapla(self)
 
-    @dongu_kontrol_decorator
     def super_trader_kur(self):
-        self.super_trader.run(self.series_1h.sort_values(by='open_ts_int', ascending=True))
+        self.super_trader.run(self.series_15m.sort_values(by='open_ts_int', ascending=True))
 
-    @dongu_kontrol_decorator
+    @killzone_kontrol_decorator
     def oracle_sentiment_hesapla(self):
         self.oracle_sentiment.run(self.bitis_gunu)
 
-    @dongu_kontrol_decorator
-    def lstm_karar_hesapla(self):
-        self.lstm_strategy.suanki_fiyat = self.suanki_fiyat
-        self.lstm_strategy.init_lstm_strategy(self)
-        self.lstm_strategy.karar_hesapla(self)
+    # @dongu_kontrol_decorator
+    # def lstm_karar_hesapla(self):
+    #     self.lstm_strategy.suanki_fiyat = self.suanki_fiyat
+    #     self.lstm_strategy.init_lstm_strategy(self)
+    #     self.lstm_strategy.karar_hesapla(self)
 
     def pozisyon_al(self):
         wallet = self.config.get("wallet")
