@@ -100,7 +100,7 @@ class Trader(TraderBase):
     def super_trader_kur(self):
         self.super_trader.run(self.series_15m.sort_values(by='open_ts_int', ascending=True))
 
-    # @killzone_kontrol_decorator
+    @killzone_kontrol_decorator
     def oracle_sentiment_hesapla(self):
         self.oracle_sentiment.run(self.bitis_gunu)
 
