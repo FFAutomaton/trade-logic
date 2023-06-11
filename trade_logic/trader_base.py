@@ -154,7 +154,7 @@ class TraderBase:
                     _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
                     if _taraf:
                         pos, leverage = _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
-                                                                      miktar=self.miktar_hesapla(), kaldirac=1)
+                                                                      miktar=self.miktar_hesapla(), kaldirac=2)
                     print(f"{user} - ### ---> {_taraf} {yon} {pos} {_exit_}")
                     c = 0
                 except Exception as e:
