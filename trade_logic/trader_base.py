@@ -1,146 +1,66 @@
 import math
 from datetime import timedelta, datetime, timezone
 
-from trade_logic.traders.super_trend_trailing import SuperTrendStrategy
-# from trade_logic.traders.rsi_1h_strategy import RsiEmaStrategy
+from trade_logic.traders.super_trend_trailing import SuperTrendDaralanTakip
 from trade_logic.traders.super_trader import SuperTrader
 from config import *
-from service.sqlite_service import SqlLite_Service
 from turkish_gekko_packages.binance_service import TurkishGekkoBinanceService
 
-# from trade_logic.traders.lstm_strategy import LstmStrategy
-from trade_logic.utils import bitis_gunu_truncate_min_precision, bitis_gunu_truncate_hour_precision
-# from service.fred_service import FredService
-from trade_logic.traders.oracle_sentiment import OracleSentimentStrategy
-from config_users import users, fred_api_key
+from config_users import users
 from schemas.enums.pozisyon import Pozisyon
 from schemas.enums.karar import Karar
-from dotenv import load_dotenv
 
 
 class TraderBase:
-    def __init__(self, bitis_gunu):
-        self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET, "FED_KEY": fred_api_key}
-        load_dotenv()
+    def __init__(self, bitis_gunu, coin, candle_data):
+        self.secrets = {"API_KEY": API_KEY, "API_SECRET": API_SECRET}
         self.config = {
-            "symbol": "ETH", "coin": 'ETHUSDT', "doldur": True, "wallet": {"ETH": 0, "USDT": 1000},
-            "pencere_1d": "1d", "pencere_1h": "1h", "pencere_15m": "15m",
-            "arttir": 15, "backfill_window": 30,
-            "st_window": 200, "st_mult_big": 3, "st_atr_window": 14,
-            "st_mult_small": 0.3, "multiplier_egim_limit": 0.0005,
-            "ema_window_buyuk": 400, "ema_window_kucuk": 14, "rsi_window": 7, "sma_window": 50,
-            "momentum_egim_hesabi_window": 8, "rsi_bounding_limit": 20,
-            "ema_bounding_buyuk": 0.001, "ema_bounding_kucuk": 0.015,
-            "trend_ratio": 0.005, "tp_daralt_katsayi": 0.02, "inceltme_limit": 0.007, "inceltme_oran": 0.007,
-            "mlp_karar_bounding_limit": 0.001, "supertrend_mult": 3
+            "symbol": coin.replace("USDT", ""), "coin": coin, "supertrend_mult": 3, "wallet": {},
+            "tp_daralt_katsayi": 0.01, "inceltme_limit": 0.007, "kaldirac": 1, "inceltme_oran": 0.001
         }
-        self.ema_ucustaydi = 0
-        self.standart_scaler = None
         self.daralt = 0
+        self.entryPrice = 0
+        self.unRealizedProfit = 0
+        self.positionAmt = 0
+        self.onceki_pozisyon = Pozisyon(0)
+        self.stop_oldu_mu = 0
         self.binance_wallet = None
         self.tp_daralt = 0
-        self.egim = 0
         self.secrets.update(self.config)
         self.wallet = None
-        self.tahmin = None
-        self.heikinashi_yon_value, self.heikinashi_karar_value = 0, 0
-        self.suanki_fiyat, self.running_price = 0, 0
+        self.suanki_fiyat = 0
         self.karar = Karar.notr
-        self.heikinashi_karar = Karar.notr
-        self.onceki_karar = Karar.notr
-        self.return_karar = 0
         self.pozisyon = Pozisyon.notr  # 0-baslangic, 1 long, -1 short
-        self.dolar = 1000
-        self.coin = 0
-        self.islem_ts = 0
-        self.islem_miktari = 0
-        self.islem_fiyati = 0
         self.bitis_gunu = bitis_gunu
-        self.bitis_15m = None
-        self.bitis_1h = None
-        self.bitis_gunu_str = datetime.strftime(bitis_gunu, '%Y-%m-%d %H:%M:%S')
-        # self.series_1d = None
-        self.series_1h = None
-        self.series_15m = None
-        self.series_fed = None
-
-        self.bugunun_mumu = None
-
-        self.cooldown = 0
-        self.ilk_egitim = 0
-        self.backfill_baslangic_gunu = bitis_gunu_truncate_min_precision(
-            datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir")) - timedelta(days=self.config.get("backfill_window"))
-        self.backfill_bitis_gunu = bitis_gunu_truncate_min_precision(datetime.utcnow().replace(tzinfo=timezone.utc), self.config.get("arttir"))
-
         self.binance_service = TurkishGekkoBinanceService(self.secrets)
-        # self.fed_service = FredService(self.secrets)
-        self.sqlite_service = SqlLite_Service(self.config)
-        self.super_trend_strategy = SuperTrendStrategy(self.config)
+        self.super_trend_daralan_takip = SuperTrendDaralanTakip(self.config)
         self.super_trader = SuperTrader(self.config)
-        # self.rsi_ema_strategy = None
-        # self.lstm_strategy = None
-        self.oracle_sentiment = OracleSentimentStrategy(self.config)
-        self.sc_X = None
-        if self.config["doldur"]:
-            self.mum_verilerini_guncelle()
-            # self.fed_verilerini_guncelle()
-
-    def stratejileri_guncelle(self):
-        self.super_trend_strategy = SuperTrendStrategy(self.config)
-        self.oracle_sentiment = OracleSentimentStrategy(self.config)
-        # self.rsi_ema_strategy = RsiEmaStrategy(self.config)
-        # self.lstm_strategy = LstmStrategy(self.config)
-
-    def mumlari_guncelle(self):
-        # self.series_1h = self.sqlite_service.veri_getir(
-        #     self.config.get("coin"), self.config.get("pencere_1h"), "mum",
-        #     self.bitis_gunu - timedelta(days=800), self.bitis_1h
-        # )
-
-        self.series_15m = self.sqlite_service.veri_getir(
-            self.config.get("coin"), self.config.get("pencere_15m"), "mum",
-            self.bitis_gunu - timedelta(days=200), self.bitis_15m
-        )
-
-    def fed_datasi_guncelle(self):
-        _df = self.sqlite_service.veri_getir(None, "1h", "fed", None, None)
-        self.series_fed = _df[_df["ds_int"] < int(self.bitis_1h.timestamp()*1000)]
-        self.series_fed = self.series_fed.sort_values(by='ds_int', ascending=True)
+        if len(candle_data) > 0:
+            self.quantityPrecision = int(candle_data["quantityPrecision"][0])
+            candle_data.drop('quantityPrecision', axis=1, inplace=True)
+            self.series_candle = candle_data
 
     def fiyat_guncelle(self):
-        data = self.series_15m
-        self.suanki_fiyat = data.get("close")[0]
-        self.super_trend_strategy.suanki_fiyat = self.suanki_fiyat
-        # self.rsi_ema_strategy.suanki_fiyat = self.suanki_fiyat
-
-    def tarihleri_guncelle(self):
-        self.bitis_15m = bitis_gunu_truncate_min_precision(self.bitis_gunu, 15)
-        self.bitis_1h = bitis_gunu_truncate_hour_precision(self.bitis_gunu, 1)
-        self.dondu_1h = True if self.bitis_1h == self.bitis_15m else False
-        self.dondu_killzone = True if self.bitis_15m.hour == 2 else False
-        self.super_trend_baslangic_gunu = self.bitis_1h - timedelta(hours=self.config.get("st_window"))
+        data = self.series_candle
+        self.suanki_fiyat = data.get("close")[len(data) - 1]
+        self.super_trend_daralan_takip.suanki_fiyat = self.suanki_fiyat
 
     def init_prod(self):
-        # self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
-        # self.wallet_isle()
-        self.sqlite_service.trader_durumu_geri_yukle(
-            self)  # backtestte surekli db'ye gitmemek icin memory'den traderi zaman serisinde tasiyoruz
-
-    def wallet_isle(self):
-        for symbol in self.binance_wallet:
-            self.config["wallet"][symbol.get("asset")] = symbol.get("balance")
-        self.dolar = float(self.config["wallet"].get('USDT'))
-        self.coin = float(self.config["wallet"].get(self.config.get('symbol')))
+        self.binance_wallet = self.binance_service.futures_hesap_bakiyesi()
+        position = self.binance_service.get_client().futures_position_information(symbol=self.config.get("coin"))
+        amount = position[0]['positionAmt']
+        if float(amount) > 0:
+            self.pozisyon = Pozisyon(1)
+        elif float(amount) < 0:
+            self.pozisyon = Pozisyon(-1)
+        else:
+            self.pozisyon = Pozisyon(0)
+        self.entryPrice = float(position[0]['entryPrice'])
+        self.unRealizedProfit = float(position[0]['unRealizedProfit'])
+        self.positionAmt = float(position[0]['positionAmt'])
 
     def miktar_hesapla(self):
-        miktar = self.dolar / self.suanki_fiyat
-        self.islem_miktari = miktar
-        self.islem_fiyati = self.suanki_fiyat
-        return math.floor(miktar * 100) / 100
-
-    def kullanici_bakiye_hesapla(self, _service):
-        self.binance_wallet = _service.futures_hesap_bakiyesi()
-        self.wallet_isle()
+        return 15
 
     def kullanicilari_don(self, _taraf=None):
         _exit_, yon, pos, leverage = None, None, None, None
@@ -150,11 +70,11 @@ class TraderBase:
             while c > 0:
                 try:
                     _service = TurkishGekkoBinanceService(user_secrets)
-                    self.kullanici_bakiye_hesapla(_service)
                     _exit_, yon = _service.futures_market_exit(self.config.get("coin"))
                     if _taraf:
+                        miktar = round(self.miktar_hesapla() / self.suanki_fiyat, self.quantityPrecision)
                         pos, leverage = _service.futures_market_islem(self.config.get("coin"), taraf=_taraf,
-                                                                      miktar=self.miktar_hesapla(), kaldirac=2)
+                                                                      miktar=miktar, kaldirac=self.config.get("kaldirac"))
                     print(f"{user} - ### ---> {_taraf} {yon} {pos} {_exit_}")
                     c = 0
                 except Exception as e:
@@ -165,59 +85,15 @@ class TraderBase:
         return yon
 
     def borsada_islemleri_hallet(self):
-        islem = self.tahmin
-        yon = None
-        if islem["alis"] > 0:
+        if self.karar == Karar.alis and self.pozisyon != Pozisyon.long:
             yon = self.kullanicilari_don('BUY')
-        elif islem["satis"] > 0:
+            self.pozisyon = Pozisyon(1)
+        elif self.karar == Karar.satis and self.pozisyon != Pozisyon.short:
             yon = self.kullanicilari_don('SELL')
-        elif islem["cikis"] > 0:
+            self.pozisyon = Pozisyon(-1)
+        elif self.karar == Karar.cikis:
             yon = self.kullanicilari_don(None)
-            self.reset_trader()
-        # if not os.getenv("PYTHON_ENV") == "TEST":
-        # bam_bama_sinyal_gonder(islem, yon)
+            self.stop_oldu_mu = 1
+            self.onceki_pozisyon = self.pozisyon
+            self.super_trend_daralan_takip.reset_super_trend()
 
-    def reset_trader(self):
-        self.heikinashi_karar = Karar.notr
-        self.pozisyon = Pozisyon(0)
-        self.karar = Karar(0)
-        # self.gi.karar = Karar(0)
-        self.onceki_karar = Karar(3)
-        self.islem_fiyati = 0
-        self.islem_miktari = 0
-        self.cooldown = 0
-        self.daralt = 0
-
-    def mum_verilerini_guncelle(self):
-        self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere_1h"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
-        )
-        self.sqlite_service.mum_datasi_yukle(
-            self.config.get("pencere_15m"), self.binance_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu
-        )
-
-    def fed_verilerini_guncelle(self):
-        self.sqlite_service.fed_datasi_yukle(self.fed_service, self.backfill_baslangic_gunu, self.backfill_bitis_gunu)
-
-    def sonuc_getir(self):
-        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_15m"), 'islem')
-        return sonuclar.iloc[0]
-
-    def ciz(self):
-        import matplotlib.pyplot as plt
-        sonuclar = self.sqlite_service.veri_getir(self.config.get("coin"), self.config.get("pencere_15m"), "islem")
-        # sonuclar = sonuclar.iloc[-200:]
-        # plt.style.use('dark_background')
-        sonuclar = sonuclar[sonuclar.high != 0]
-        sonuclar = sonuclar[sonuclar.low != 0]
-        sonuclar = sonuclar.set_index(sonuclar['ds_str'])
-        plt.plot(sonuclar['high'], label='high', linestyle='--', color='green')
-        plt.plot(sonuclar['low'], label='low', linestyle='--', color='red')
-        plt.plot(sonuclar['open'], label='open', color='black')
-        # cuzdan = sonuclar['USDT'] + (sonuclar['Open'] * sonuclar['ETH'])
-        # plt.plot(cuzdan)
-        plt.scatter(sonuclar.index, sonuclar['alis'].astype(float), s=150, marker='^', color='#00ff00')
-        plt.scatter(sonuclar.index, sonuclar['satis'].astype(float), s=150, marker='v', color='#ff0f02')
-        plt.scatter(sonuclar.index, sonuclar['cikis'].astype(float), s=150, marker='.', color='#1f1d33')
-        plt.legend(loc='upper right')
-        plt.show()

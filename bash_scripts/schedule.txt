@@ -1,5 +1,5 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-*/15 * * * * /app/bash_scripts/run.sh >> /output/schedule.log 2>&1
+*/5 * * * * /Users/sevki/Documents/repos/FFAutomaton/trade-logic/bash_scripts/run.sh >> /Users/sevki/Documents/repos/FFAutomaton/trade-logic/logs/log.log 2>&1
 # An empty line is required at the end of the file for a valid cron file
